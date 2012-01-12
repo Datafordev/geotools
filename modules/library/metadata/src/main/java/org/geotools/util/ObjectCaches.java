@@ -16,7 +16,10 @@
  */
 package org.geotools.util;
 
-import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.geotools.factory.FactoryRegistryException;
 import org.geotools.factory.GeoTools;
@@ -24,6 +27,11 @@ import org.geotools.factory.Hints;
 import org.geotools.metadata.iso.citation.Citations;
 import org.opengis.metadata.citation.Citation;
 import org.opengis.util.GenericName;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheStats;
+import com.google.common.collect.ImmutableMap;
 
 
 /**
@@ -111,73 +119,110 @@ public final class ObjectCaches {
      * <li>create uses: chain( cache, findCache )
      * <li>find uses: chain( findCache, cache )
      * </ul>
+     * <p>
      * In this manner the find operation does not upset normal cache. It will not create any
      * objects already present in the cache.
+     * <p>
+     * Note however that all the mutating calls on the returned cache only affect the level1 cache. (e.g. invalidateAll(), etc).
      *
      * @param level1
      * @param level2
      * @return ObjectCache
      */
-    public static ObjectCache chain( final ObjectCache level1, final ObjectCache level2 ){
+    public static Cache<Object, Object> chain( final Cache<Object, Object> level1, final Cache<Object, Object> level2 ){
         if ( level1 == level2 ) {
             return level1;
         }
         if( level1 == null ) return level2;
         if( level2 == null ) return level1;
-        return new ObjectCache(){
-            public void clear() {
-                level1.clear();
-            }
-            public Object get( Object key ) {
-                Object value = level1.get( key );
-                if( value == null ){
-                    Object check = level2.get( key );
-                    if( check != null ) {
-                        try {
-                            level1.writeLock(key);
-                            value = level1.peek(key);
-                            if( value == null ){
-                                level1.put(key, check );
-                                value = check;
-                            }
-                        }
-                        finally {
-                            level1.writeUnLock(key);
-                        }
-                    }
-                }
-                return value;
-            }
-
-            public Object peek( Object key ) {
-                return level1.peek(key);
-            }
-
-            public void put( Object key, Object object ) {
-                level1.put(key, object );
-            }
-
-            public void writeLock( Object key ) {
-                level1.writeLock(key);
-            }
-
-            public void writeUnLock( Object key ) {
-                level1.writeLock(key);
-            }
+        
+        return new Cache<Object, Object>() {
+            private final Cache<Object, Object> l1 = level1;
+            private final Cache<Object, Object> l2 = level2;
             
-            public Set<Object> getKeys(){
-            	return level1.getKeys();
+            @Override
+            public Object getIfPresent(Object key) {
+                Object value = l1.getIfPresent(key);
+                return value == null ? l2.getIfPresent(key) : value;
             }
-            
-            public void remove(Object key){
-            	level1.remove(key);
+
+            @Override
+            public Object get(Object key, Callable<? extends Object> valueLoader)
+                    throws ExecutionException {
+                Object value = l1.get(key, valueLoader);
+                return value == null ? l2.get(key, valueLoader) : value;
+            }
+
+            @Override
+            public ImmutableMap<Object, Object> getAllPresent(Iterable<? extends Object> keys) {
+                ImmutableMap<Object, Object> allPresent = ImmutableMap.builder()
+                        .putAll(l1.getAllPresent(keys)).putAll(l2.getAllPresent(keys)).build();
+                return allPresent;
+            }
+
+            @Override
+            public void put(Object key, Object value) {
+                l1.put(key, value);
+            }
+
+            @Override
+            public void invalidate(Object key) {
+                l1.invalidate(key);
+            }
+
+            @Override
+            public void invalidateAll(Iterable<?> keys) {
+                l1.invalidateAll(keys);
+            }
+
+            @Override
+            public void invalidateAll() {
+                l1.invalidateAll();
+            }
+
+            @Override
+            public long size() {
+                return l1.size() + l2.size();
+            }
+
+            @Override
+            public CacheStats stats() {
+                return l1.stats();
+            }
+
+            @Override
+            public ConcurrentMap<Object, Object> asMap() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void cleanUp() {
+                l1.cleanUp();
+            }
+
+            @Override
+            public Object get(Object key) throws ExecutionException {
+                Object value = l1.get(key);
+                return value == null ? l2.get(key) : value;
+            }
+
+            @Override
+            public Object getUnchecked(Object key) {
+                Object value = l1.getUnchecked(key);
+                return value == null ? l2.getUnchecked(key) : value;
+            }
+
+            @Override
+            public Object apply(Object key) {
+                return l1.apply(key);
             }
         };
     }
+    
     /**
      * Utility method used to produce cache based on provide Hint
      */
-    public static ObjectCache create( Hints hints )
+    public static Cache<Object, Object> create( Hints hints )
             throws FactoryRegistryException {
         if( hints == null ) hints = GeoTools.getDefaultHints();
         String policy = (String) hints.get(Hints.CACHE_POLICY);
@@ -192,20 +237,29 @@ public final class ObjectCaches {
      * @return A new ObjectCache
      * @see Hints.BUFFER_POLICY
      */
-    public static ObjectCache create( String policy, int size ){
+    public static Cache<Object, Object> create( String policy, int size ){
+        CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder();
+        builder.concurrencyLevel(10);
+        builder.expireAfterAccess(60, TimeUnit.MINUTES);
+        
         if ("weak".equalsIgnoreCase(policy)) {
-            return new WeakObjectCache(0);
+            builder.weakValues();
+            builder.maximumSize(size);
         } else if ("all".equalsIgnoreCase(policy)) {
-            return new DefaultObjectCache(size);
+            builder.maximumSize(size);
         } else if ("none".equalsIgnoreCase(policy)) {
-            return NullObjectCache.INSTANCE;
+            builder.maximumSize(0);
         } else if ("fixed".equalsIgnoreCase(policy)) {
-            return new FixedSizeObjectCache(size);
+            builder.initialCapacity(size);
+            builder.maximumSize(size);
         } else if ("soft".equals(policy)){
-        	return new SoftObjectCache(size);
+            builder.maximumSize(size);
+            builder.softValues();
         } else {
-            return new DefaultObjectCache(size);
+            builder.maximumSize(size);
         }
+        
+        return builder.build();
     }
 
     /**

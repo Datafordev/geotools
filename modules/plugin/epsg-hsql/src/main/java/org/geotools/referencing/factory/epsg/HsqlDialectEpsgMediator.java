@@ -85,17 +85,10 @@ public class HsqlDialectEpsgMediator extends AbstractEpsgMediator {
     }
 
     /**
-     * Reinitialize an instance to be returned by the pool.
-     */
-    protected void activateWorker(AbstractCachedAuthorityFactory obj) throws Exception {
-        HsqlDialectEpsgFactory factory = (HsqlDialectEpsgFactory) obj;
-        factory.connect();
-    }
-
-    /**
      * Destroys an instance no longer needed by the pool.
      */
-    protected void destroyWorker(AbstractCachedAuthorityFactory obj) throws Exception {
+    @Override
+    protected void disposeWorker(AbstractCachedAuthorityFactory obj) throws Exception {
         HsqlDialectEpsgFactory factory = (HsqlDialectEpsgFactory) obj;
         factory.disconnect();
         factory.dispose();
@@ -105,24 +98,10 @@ public class HsqlDialectEpsgMediator extends AbstractEpsgMediator {
     /**
      * Creates an instance that can be returned by the pool.
      */
+    @Override
     protected AbstractCachedAuthorityFactory makeWorker() throws Exception {
         HsqlDialectEpsgFactory factory = new HsqlDialectEpsgFactory(hints, datasource);
         return factory;
-    }
-
-    /**
-     * Uninitialize an instance to be returned to the pool.
-     */
-    protected void passivateWorker(AbstractCachedAuthorityFactory obj) throws Exception {
-        HsqlDialectEpsgFactory factory = (HsqlDialectEpsgFactory) obj;
-        factory.disconnect();
-    }
-
-    /**
-     * Ensures that the instance is safe to be returned by the pool.
-     */
-    protected boolean validateWorker(AbstractCachedAuthorityFactory obj) {
-        return true;
     }
 
 }

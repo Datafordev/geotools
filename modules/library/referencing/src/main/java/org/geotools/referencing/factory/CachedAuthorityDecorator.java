@@ -20,6 +20,8 @@
 package org.geotools.referencing.factory;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import javax.measure.unit.Unit;
 
@@ -27,7 +29,6 @@ import org.geotools.factory.BufferedFactory;
 import org.geotools.factory.FactoryRegistryException;
 import org.geotools.factory.GeoTools;
 import org.geotools.factory.Hints;
-import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.opengis.metadata.citation.Citation;
 import org.opengis.referencing.AuthorityFactory;
@@ -67,6 +68,9 @@ import org.opengis.referencing.operation.CoordinateOperation;
 import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
 import org.opengis.util.InternationalString;
 
+import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+
 
 /**
  * An authority factory that caches all objects created by delegate factories.
@@ -100,7 +104,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 		BufferedFactory {
 
 	/** Cache to be used for referencing objects. */
-	ObjectCache cache;
+	Cache<Object, Object> cache;
 
 	/** The delegate authority. */
 	private AuthorityFactory authority;
@@ -155,7 +159,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 	 *            The maximum number of objects to keep by strong reference.
 	 */
 	protected CachedAuthorityDecorator(AuthorityFactory factory,
-			ObjectCache cache) {
+	        Cache<Object, Object> cache) {
 	    super( ((ReferencingFactory)factory).getPriority() ); // TODO
 		this.cache = cache;
 		authority = factory;
@@ -167,7 +171,7 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 	}
 
 	/** Utility method used to produce cache based on hint */
-	protected static ObjectCache createCache(final Hints hints)
+	protected static Cache<Object, Object> createCache(final Hints hints)
 			throws FactoryRegistryException {
 		return ObjectCaches.create(hints);
 	}
@@ -182,22 +186,16 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 	//
 	// AuthorityFactory
 	//
-	public IdentifiedObject createObject(String code) throws FactoryException {
+	public IdentifiedObject createObject(final String code) throws FactoryException {
 		final String key = toKey(code);
-		IdentifiedObject obj = (IdentifiedObject) cache.get(key);
-		if (obj == null) {
-			try {
-				cache.writeLock(key);
-				obj = (IdentifiedObject) cache.peek(key);
-				if (obj == null) {
-					obj = authority.createObject(code);
-					cache.put(key, obj);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return obj;
+        IdentifiedObject obj = get(key, new Callable<IdentifiedObject>() {
+
+            @Override
+            public IdentifiedObject call() throws Exception {
+                return authority.createObject(code);
+            }
+        });
+        return obj;
 	}
 
 	public Citation getAuthority() {
@@ -219,547 +217,371 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 	public synchronized CompoundCRS createCompoundCRS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CompoundCRS crs = (CompoundCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (CompoundCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createCompoundCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        CompoundCRS crs = get(key, new Callable<CompoundCRS>() {
+
+            @Override
+            public CompoundCRS call() throws Exception {
+                return crsAuthority.createCompoundCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
+	public CoordinateReferenceSystem createCoordinateReferenceSystem(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateReferenceSystem crs = (CoordinateReferenceSystem) cache
-				.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (CoordinateReferenceSystem) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createCoordinateReferenceSystem(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        CoordinateReferenceSystem crs = get(key, new Callable<CoordinateReferenceSystem>() {
+
+            @Override
+            public CoordinateReferenceSystem call() throws Exception {
+                return crsAuthority.createCoordinateReferenceSystem(code);
+            }
+        });
+        return crs;
 	}
 
-	public DerivedCRS createDerivedCRS(String code) throws FactoryException {
+	public DerivedCRS createDerivedCRS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		DerivedCRS crs = (DerivedCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (DerivedCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createDerivedCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        DerivedCRS crs = get(key, new Callable<DerivedCRS>() {
+
+            @Override
+            public DerivedCRS call() throws Exception {
+                return crsAuthority.createDerivedCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public EngineeringCRS createEngineeringCRS(String code)
+	public EngineeringCRS createEngineeringCRS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		EngineeringCRS crs = (EngineeringCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (EngineeringCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createEngineeringCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        EngineeringCRS crs = get(key, new Callable<EngineeringCRS>() {
+
+            @Override
+            public EngineeringCRS call() throws Exception {
+                return crsAuthority.createEngineeringCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public GeocentricCRS createGeocentricCRS(String code)
+	public GeocentricCRS createGeocentricCRS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		GeocentricCRS crs = (GeocentricCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (GeocentricCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createGeocentricCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        GeocentricCRS crs = get(key, new Callable<GeocentricCRS>() {
+
+            @Override
+            public GeocentricCRS call() throws Exception {
+                return crsAuthority.createGeocentricCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public GeographicCRS createGeographicCRS(String code)
+	public GeographicCRS createGeographicCRS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		GeographicCRS crs = (GeographicCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (GeographicCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createGeographicCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        GeographicCRS crs = get(key, new Callable<GeographicCRS>() {
+
+            @Override
+            public GeographicCRS call() throws Exception {
+                return crsAuthority.createGeographicCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public ImageCRS createImageCRS(String code) throws FactoryException {
+	public ImageCRS createImageCRS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		ImageCRS crs = (ImageCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (ImageCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createImageCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        ImageCRS crs = get(key, new Callable<ImageCRS>() {
+
+            @Override
+            public ImageCRS call() throws Exception {
+                return crsAuthority.createImageCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public ProjectedCRS createProjectedCRS(String code) throws FactoryException {
+	public ProjectedCRS createProjectedCRS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		ProjectedCRS crs = (ProjectedCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (ProjectedCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createProjectedCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        ProjectedCRS crs = get(key, new Callable<ProjectedCRS>() {
+
+            @Override
+            public ProjectedCRS call() throws Exception {
+                return crsAuthority.createProjectedCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public TemporalCRS createTemporalCRS(String code) throws FactoryException {
+	public TemporalCRS createTemporalCRS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		TemporalCRS crs = (TemporalCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (TemporalCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createTemporalCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        TemporalCRS crs = get(key, new Callable<TemporalCRS>() {
+
+            @Override
+            public TemporalCRS call() throws Exception {
+                return crsAuthority.createTemporalCRS(code);
+            }
+        });
+        return crs;
 	}
 
-	public VerticalCRS createVerticalCRS(String code) throws FactoryException {
+	public VerticalCRS createVerticalCRS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		VerticalCRS crs = (VerticalCRS) cache.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (VerticalCRS) cache.peek(key);
-				if (crs == null) {
-					crs = crsAuthority.createVerticalCRS(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
+        VerticalCRS crs = get(key, new Callable<VerticalCRS>() {
+
+            @Override
+            public VerticalCRS call() throws Exception {
+                return crsAuthority.createVerticalCRS(code);
+            }
+        });
+        return crs;
 	}
 
 	//
 	// CSAuthority
 	//
-	public CartesianCS createCartesianCS(String code) throws FactoryException {
+	public CartesianCS createCartesianCS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		CartesianCS cs = (CartesianCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (CartesianCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createCartesianCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        CartesianCS cs = get(key, new Callable<CartesianCS>() {
+
+            @Override
+            public CartesianCS call() throws Exception {
+                return csAuthority.createCartesianCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public CoordinateSystem createCoordinateSystem(String code)
+	public CoordinateSystem createCoordinateSystem(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateSystem cs = (CoordinateSystem) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (CoordinateSystem) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createCoordinateSystem(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        CoordinateSystem cs = get(key, new Callable<CoordinateSystem>() {
+
+            @Override
+            public CoordinateSystem call() throws Exception {
+                return csAuthority.createCoordinateSystem(code);
+            }
+        });
+        return cs;
 	}
 
 	// sample implemenation with get/test
-	public CoordinateSystemAxis createCoordinateSystemAxis(String code)
+	public CoordinateSystemAxis createCoordinateSystemAxis(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateSystemAxis axis = (CoordinateSystemAxis) cache.get(key);
-		if (axis == null) {
-			try {
-				cache.writeLock(key);
-				axis = (CoordinateSystemAxis) cache.peek(key);
-				if (axis == null) {
-					axis = csAuthority.createCoordinateSystemAxis(code);
-					cache.put(key, axis);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return axis;
+        CoordinateSystemAxis axis = get(key, new Callable<CoordinateSystemAxis>() {
+
+            @Override
+            public CoordinateSystemAxis call() throws Exception {
+                return csAuthority.createCoordinateSystemAxis(code);
+            }
+        });
+        return axis;
 	}
 
-	public CylindricalCS createCylindricalCS(String code)
+	public CylindricalCS createCylindricalCS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CylindricalCS cs = (CylindricalCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (CylindricalCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createCylindricalCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        CylindricalCS cs = get(key, new Callable<CylindricalCS>() {
+
+            @Override
+            public CylindricalCS call() throws Exception {
+                return csAuthority.createCylindricalCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public EllipsoidalCS createEllipsoidalCS(String code)
+	public EllipsoidalCS createEllipsoidalCS(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		EllipsoidalCS cs = (EllipsoidalCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (EllipsoidalCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createEllipsoidalCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        EllipsoidalCS cs = get(key, new Callable<EllipsoidalCS>() {
+
+            @Override
+            public EllipsoidalCS call() throws Exception {
+                return csAuthority.createEllipsoidalCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public PolarCS createPolarCS(String code) throws FactoryException {
+	public PolarCS createPolarCS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		PolarCS cs = (PolarCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (PolarCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createPolarCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        PolarCS cs = get(key, new Callable<PolarCS>() {
+
+            @Override
+            public PolarCS call() throws Exception {
+                return csAuthority.createPolarCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public SphericalCS createSphericalCS(String code) throws FactoryException {
+	public SphericalCS createSphericalCS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		SphericalCS cs = (SphericalCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (SphericalCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createSphericalCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        SphericalCS cs = get(key, new Callable<SphericalCS>() {
+
+            @Override
+            public SphericalCS call() throws Exception {
+                return csAuthority.createSphericalCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public TimeCS createTimeCS(String code) throws FactoryException {
+	public TimeCS createTimeCS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		TimeCS cs = (TimeCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (TimeCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createTimeCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        TimeCS cs = get(key, new Callable<TimeCS>() {
+
+            @Override
+            public TimeCS call() throws Exception {
+                return csAuthority.createTimeCS(code);
+            }
+        });
+        return cs;
 	}
 
-	public Unit<?> createUnit(String code) throws FactoryException {
+	public Unit<?> createUnit(final String code) throws FactoryException {
 		final String key = toKey(code);
-		Unit<?> unit = (Unit) cache.get(key);
-		if (unit == null) {
-			try {
-				cache.writeLock(key);
-				unit = (Unit) cache.peek(key);
-				if (unit == null) {
-					unit = csAuthority.createUnit(code);
-					cache.put(key, unit);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return unit;
+        Unit<?> unit = get(key, new Callable<Unit<?>>() {
+
+            @Override
+            public Unit<?> call() throws Exception {
+                return csAuthority.createUnit(code);
+            }
+        });
+        return unit;
 	}
 
-	public VerticalCS createVerticalCS(String code) throws FactoryException {
+	public VerticalCS createVerticalCS(final String code) throws FactoryException {
 		final String key = toKey(code);
-		VerticalCS cs = (VerticalCS) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (VerticalCS) cache.peek(key);
-				if (cs == null) {
-					cs = csAuthority.createVerticalCS(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
+        VerticalCS cs = get(key, new Callable<VerticalCS>() {
+
+            @Override
+            public VerticalCS call() throws Exception {
+                return csAuthority.createVerticalCS(code);
+            }
+        });
+        return cs;
 	}
 
 	//
 	// DatumAuthorityFactory
 	//
-	public Datum createDatum(String code) throws FactoryException {
+	public Datum createDatum(final String code) throws FactoryException {
 		final String key = toKey(code);
-		Datum datum = (Datum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (Datum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        Datum datum = get(key, new Callable<Datum>() {
+
+            @Override
+            public Datum call() throws Exception {
+                return datumAuthority.createDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public Ellipsoid createEllipsoid(String code) throws FactoryException {
+	public Ellipsoid createEllipsoid(final String code) throws FactoryException {
 		final String key = toKey(code);
-		Ellipsoid ellipsoid = (Ellipsoid) cache.get(key);
-		if (ellipsoid == null) {
-			try {
-				cache.writeLock(key);
-				ellipsoid = (Ellipsoid) cache.peek(key);
-				if (ellipsoid == null) {
-					ellipsoid = datumAuthority.createEllipsoid(code);
-					cache.put(key, ellipsoid);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return ellipsoid;
+        Ellipsoid ellipsoid = get(key, new Callable<Ellipsoid>() {
+
+            @Override
+            public Ellipsoid call() throws Exception {
+                return datumAuthority.createEllipsoid(code);
+            }
+        });
+        return ellipsoid;
 	}
 
-	public EngineeringDatum createEngineeringDatum(String code)
+	public EngineeringDatum createEngineeringDatum(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		EngineeringDatum datum = (EngineeringDatum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (EngineeringDatum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createEngineeringDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        EngineeringDatum datum = get(key, new Callable<EngineeringDatum>() {
+
+            @Override
+            public EngineeringDatum call() throws Exception {
+                return datumAuthority.createEngineeringDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public GeodeticDatum createGeodeticDatum(String code)
+	public GeodeticDatum createGeodeticDatum(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		GeodeticDatum datum = (GeodeticDatum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (GeodeticDatum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createGeodeticDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        GeodeticDatum datum = get(key, new Callable<GeodeticDatum>() {
+
+            @Override
+            public GeodeticDatum call() throws Exception {
+                return datumAuthority.createGeodeticDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public ImageDatum createImageDatum(String code) throws FactoryException {
+	public ImageDatum createImageDatum(final String code) throws FactoryException {
 		final String key = toKey(code);
-		ImageDatum datum = (ImageDatum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (ImageDatum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createImageDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        ImageDatum datum = get(key, new Callable<ImageDatum>() {
+
+            @Override
+            public ImageDatum call() throws Exception {
+                return datumAuthority.createImageDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public PrimeMeridian createPrimeMeridian(String code)
+	public PrimeMeridian createPrimeMeridian(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		PrimeMeridian datum = (PrimeMeridian) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (PrimeMeridian) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createPrimeMeridian(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        PrimeMeridian datum = get(key, new Callable<PrimeMeridian>() {
+
+            @Override
+            public PrimeMeridian call() throws Exception {
+                return datumAuthority.createPrimeMeridian(code);
+            }
+        });
+        return datum;
 	}
 
-	public TemporalDatum createTemporalDatum(String code)
+	public TemporalDatum createTemporalDatum(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		TemporalDatum datum = (TemporalDatum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (TemporalDatum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createTemporalDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        TemporalDatum datum = get(key, new Callable<TemporalDatum>() {
+
+            @Override
+            public TemporalDatum call() throws Exception {
+                return datumAuthority.createTemporalDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public VerticalDatum createVerticalDatum(String code)
+	public VerticalDatum createVerticalDatum(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		VerticalDatum datum = (VerticalDatum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (VerticalDatum) cache.peek(key);
-				if (datum == null) {
-					datum = datumAuthority.createVerticalDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+        VerticalDatum datum = get(key, new Callable<VerticalDatum>() {
+
+            @Override
+            public VerticalDatum call() throws Exception {
+                return datumAuthority.createVerticalDatum(code);
+            }
+        });
+        return datum;
 	}
 
-	public CoordinateOperation createCoordinateOperation(String code)
+	public CoordinateOperation createCoordinateOperation(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateOperation operation = (CoordinateOperation) cache.get(key);
-		if (operation == null) {
-			try {
-				cache.writeLock(key);
-				operation = (CoordinateOperation) cache.peek(key);
-				if (operation == null) {
-					operation = operationAuthority
-							.createCoordinateOperation(code);
-					cache.put(key, operation);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return operation;
+        CoordinateOperation operation = get(key, new Callable<CoordinateOperation>() {
+
+            @Override
+            public CoordinateOperation call() throws Exception {
+                return operationAuthority.createCoordinateOperation(code);
+            }
+        });
+        return operation;
 	}
 
 	public synchronized Set/*<CoordinateOperation>*/ createFromCoordinateReferenceSystemCodes(
@@ -767,25 +589,28 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 			throws FactoryException {
 
 		final Object key = ObjectCaches.toKey( getAuthority(),  sourceCode, targetCode );
-		Set operations = (Set) cache.get(key);
-		if (operations == null) {
-			try {
-				cache.writeLock(key);
-				operations = (Set) cache.peek(key);
-				if (operations == null) {
-					operations = operationAuthority.createFromCoordinateReferenceSystemCodes( sourceCode, targetCode );
-					// can we not trust operationAuthority to return us an unmodifiableSet ?
-					//operations = Collections.unmodifiableSet( operations );
+        Set operations = get(key, new Callable<Set>() {
 
-					cache.put( key, operations );
-				}
-			}
-			finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return operations;
+            @Override
+            public Set call() throws Exception {
+                return operationAuthority.createFromCoordinateReferenceSystemCodes(sourceCode,
+                        targetCode);
+            }
+        });
+        return operations;
 	}
+	
+    protected <T> T get(final Object key, final Callable<T> loader) throws FactoryException {
+        Object object;
+        try {
+            object = cache.get(key, loader);
+        } catch (ExecutionException e) {
+            Throwables.propagateIfInstanceOf(e.getCause(), FactoryException.class);
+            throw Throwables.propagate(e.getCause());
+        }
+        return (T) object;
+    }
+
 	//
 	// AbstractAuthorityFactory
 	//
@@ -795,7 +620,8 @@ public final class CachedAuthorityDecorator extends AbstractAuthorityFactory
 
     public void dispose() throws FactoryException {
         delegate.dispose();
-        cache.clear();
+        cache.invalidateAll();
+        cache.cleanUp();
         cache = null;
         delegate = null;
     }

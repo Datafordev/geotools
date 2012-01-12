@@ -86,7 +86,6 @@ import org.geotools.resources.i18n.LoggingKeys;
 import org.geotools.resources.i18n.Vocabulary;
 import org.geotools.resources.i18n.VocabularyKeys;
 import org.geotools.util.LocalName;
-import org.geotools.util.ObjectCache;
 import org.geotools.util.ScopedName;
 import org.geotools.util.SimpleInternationalString;
 import org.geotools.util.Version;

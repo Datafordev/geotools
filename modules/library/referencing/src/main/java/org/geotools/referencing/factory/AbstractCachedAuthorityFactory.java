@@ -20,6 +20,8 @@
 package org.geotools.referencing.factory;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 import javax.measure.unit.Unit;
 
@@ -27,7 +29,6 @@ import org.geotools.factory.BufferedFactory;
 import org.geotools.factory.Hints;
 import org.geotools.metadata.iso.citation.Citations;
 import org.geotools.util.NameFactory;
-import org.geotools.util.ObjectCache;
 import org.geotools.util.ObjectCaches;
 import org.opengis.metadata.citation.Citation;
 import org.opengis.referencing.AuthorityFactory;
@@ -69,6 +70,9 @@ import org.opengis.referencing.operation.CoordinateOperationAuthorityFactory;
 import org.opengis.util.GenericName;
 import org.opengis.util.InternationalString;
 
+import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+
 /**
  * An authority factory that consults (a possibly shared) cache before generating
  * content itself.
@@ -109,14 +113,14 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
      * 50 CoordianteReferenceSystems please keep in mind that you will need larger
      * cache size in order to prevent a bottleneck.
      */
-	protected ObjectCache cache;
+	protected Cache<Object, Object> cache;
 
 	/**
      * The findCache is used to store search results; often match a "raw"
      * CoordinateReferenceSystem created from WKT (as the key) with a
      * "real" CoordianteReferenceSystem as defined by this authority.
      */
-    ObjectCache findCache;
+	Cache<Object, Object> findCache;
 
 	/**
 	 * A container of the "real factories" actually used to construct objects.
@@ -158,7 +162,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
 	 * @param maxStrongReferences
 	 *            The maximum number of objects to keep by strong reference.
 	 */
-	protected AbstractCachedAuthorityFactory(int priority, ObjectCache cache, ReferencingFactoryContainer container) {
+	protected AbstractCachedAuthorityFactory(int priority, Cache<Object, Object> cache, ReferencingFactoryContainer container) {
 		super( priority );
 		this.factories = container;
 		this.cache = cache;
@@ -228,42 +232,38 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
 	// AuthorityFactory
 	//
 	public abstract Citation getAuthority();
-	public Set getAuthorityCodes(Class type) throws FactoryException{
-		Set codes = (Set) cache.get(type);
-		if (codes == null) {
-			try {
-				cache.writeLock(type);
-				codes = (Set) cache.peek(type);
-				if (codes == null) {
-					codes = generateAuthorityCodes(type);
-					cache.put(type, codes);
-				}
-			} finally {
-				cache.writeUnLock(type);
-			}
-		}
-		return codes;
-	}
+
+    public Set getAuthorityCodes(final Class type) throws FactoryException {
+        Set codes = get(type, new Callable<Set>() {
+
+            @Override
+            public Set call() throws Exception {
+                Set codes = generateAuthorityCodes(type);
+                return codes;
+            }
+        });
+
+        return codes;
+    }
+
 	protected abstract Set generateAuthorityCodes( Class type ) throws FactoryException;
 
 	public abstract InternationalString getDescriptionText(String code)  throws FactoryException;
-	public IdentifiedObject createObject(String code) throws FactoryException {
-		final String key = toKey(code);
-		IdentifiedObject obj = (IdentifiedObject) cache.get(key);
-		if (obj == null) {
-			try {
-				cache.writeLock(key);
-				obj = (IdentifiedObject) cache.peek(key);
-				if (obj == null) {
-					obj = generateObject(code);
-					cache.put(key, obj);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return obj;
-	}
+
+    public IdentifiedObject createObject(final String code) throws FactoryException {
+        final String key = toKey(code);
+
+        IdentifiedObject obj = get(key, new Callable<IdentifiedObject>() {
+
+            @Override
+            public IdentifiedObject call() throws Exception {
+                return generateObject(code);
+            }
+        });
+
+        return obj;
+    }
+
 	protected abstract IdentifiedObject generateObject( String code ) throws FactoryException;
 
 	//
@@ -285,25 +285,20 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
     }
 
-	public CoordinateReferenceSystem createCoordinateReferenceSystem(String code)
-			throws FactoryException {
-		final String key = toKey(code);
-		CoordinateReferenceSystem crs = (CoordinateReferenceSystem) cache
-				.get(key);
-		if (crs == null) {
-			try {
-				cache.writeLock(key);
-				crs = (CoordinateReferenceSystem) cache.peek(key);
-				if (crs == null) {
-					crs = generateCoordinateReferenceSystem(code);
-					cache.put(key, crs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return crs;
-	}
+    public CoordinateReferenceSystem createCoordinateReferenceSystem(final String code)
+            throws FactoryException {
+        final String key = toKey(code);
+        CoordinateReferenceSystem crs = get(key, new Callable<CoordinateReferenceSystem>() {
+
+            @Override
+            public CoordinateReferenceSystem call() throws Exception {
+                return generateCoordinateReferenceSystem(code);
+            }
+        });
+
+        return crs;
+    }
+
 	protected abstract CoordinateReferenceSystem generateCoordinateReferenceSystem(String code) throws FactoryException;
 
     public DerivedCRS createDerivedCRS(final String code) throws FactoryException {
@@ -399,45 +394,47 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
     }
 
-	public CoordinateSystem createCoordinateSystem(String code)
+	public CoordinateSystem createCoordinateSystem(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateSystem cs = (CoordinateSystem) cache.get(key);
-		if (cs == null) {
-			try {
-				cache.writeLock(key);
-				cs = (CoordinateSystem) cache.peek(key);
-				if (cs == null) {
-					cs = generateCoordinateSystem(code);
-					cache.put(key, cs);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return cs;
-	}
+		CoordinateSystem cs;
+        try {
+            cs = (CoordinateSystem) cache.get(key, new Callable<Object>() {
+
+                @Override
+                public Object call() throws Exception {
+                    return generateCoordinateSystem(code);
+                }
+
+            });
+        } catch (ExecutionException e) {
+            Throwables.propagateIfInstanceOf(e.getCause(), FactoryException.class);
+            throw Throwables.propagate(e.getCause());
+        }
+        return cs;
+    }
 
 	protected abstract CoordinateSystem generateCoordinateSystem(String code) throws FactoryException;
 
 	// sample implemenation with get/test
-	public CoordinateSystemAxis createCoordinateSystemAxis(String code)
+	public CoordinateSystemAxis createCoordinateSystemAxis(final String code)
 			throws FactoryException {
-		final String key = toKey(code);
-		CoordinateSystemAxis axis = (CoordinateSystemAxis) cache.get(key);
-		if (axis == null) {
-			try {
-				cache.writeLock(key);
-				axis = (CoordinateSystemAxis) cache.peek(key);
-				if (axis == null) {
-					axis = generateCoordinateSystemAxis(code);
-					cache.put(key, axis);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return axis;
+        final String key = toKey(code);
+        CoordinateSystemAxis axis;
+        try {
+            axis = (CoordinateSystemAxis) cache.get(key, new Callable<Object>() {
+
+                @Override
+                public Object call() throws Exception {
+                    return generateCoordinateSystemAxis(code);
+                }
+
+            });
+        } catch (ExecutionException e) {
+            Throwables.propagateIfInstanceOf(e.getCause(), FactoryException.class);
+            throw Throwables.propagate(e.getCause());
+        }
+        return axis;
 	}
 
 	protected abstract CoordinateSystemAxis generateCoordinateSystemAxis(String code)  throws FactoryException;
@@ -495,24 +492,30 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
     }
 
-	public Unit<?> createUnit(String code) throws FactoryException {
+	public Unit<?> createUnit(final String code) throws FactoryException {
 		final String key = toKey(code);
-		Unit<?> unit = (Unit) cache.get(key);
-		if (unit == null) {
-			try {
-				cache.writeLock(key);
-				unit = (Unit) cache.peek(key);
-				if (unit == null) {
-					unit = generateUnit(code);
-					cache.put(key, unit);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return unit;
+        Unit<?> unit = get(key, new Callable<Unit<?>>() {
+
+            @Override
+            public Unit<?> call() throws Exception {
+                return generateUnit(code);
+            }
+        });
+
+        return unit;
 	}
 
+    protected <T> T get(final Object key, final Callable<T> loader) throws FactoryException {
+        Object object;
+        try {
+            object = cache.get(key, loader);
+        } catch (ExecutionException e) {
+            Throwables.propagateIfInstanceOf(e.getCause(), FactoryException.class);
+            throw Throwables.propagate(e.getCause());
+        }
+        return (T) object;
+    }
+	
 	protected abstract Unit<?> generateUnit(String code) throws FactoryException;
 
     public VerticalCS createVerticalCS(final String code) throws FactoryException {
@@ -527,42 +530,31 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
 	//
 	// DatumAuthorityFactory
 	//
-	public Datum createDatum(String code) throws FactoryException {
-		final String key = toKey(code);
-		Datum datum = (Datum) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (Datum) cache.peek(key);
-				if (datum == null) {
-					datum = generateDatum(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return datum;
+	public Datum createDatum(final String code) throws FactoryException {
+        final String key = toKey(code);
+        Datum datum = get(key, new Callable<Datum>() {
+
+            @Override
+            public Datum call() throws Exception {
+                return generateDatum(code);
+            }
+        });
+        return datum;
 	}
 
 	protected abstract Datum generateDatum(String code) throws FactoryException;
 
-	public Ellipsoid createEllipsoid(String code) throws FactoryException {
+	public Ellipsoid createEllipsoid(final String code) throws FactoryException {
 		final String key = toKey(code);
-		Ellipsoid ellipsoid = (Ellipsoid) cache.get(key);
-		if (ellipsoid == null) {
-			try {
-				cache.writeLock(key);
-				ellipsoid = (Ellipsoid) cache.peek(key);
-				if (ellipsoid == null) {
-					ellipsoid = generateEllipsoid(code);
-					cache.put(key, ellipsoid);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return ellipsoid;
+
+        Ellipsoid ellipsoid = get(key, new Callable<Ellipsoid>() {
+
+            @Override
+            public Ellipsoid call() throws Exception {
+                return generateEllipsoid(code);
+            }
+        });
+        return ellipsoid;
 	}
 
 	protected abstract Ellipsoid generateEllipsoid(String code) throws FactoryException;
@@ -594,22 +586,16 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
     }
 
-	public PrimeMeridian createPrimeMeridian(String code)
+	public PrimeMeridian createPrimeMeridian(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		PrimeMeridian datum = (PrimeMeridian) cache.get(key);
-		if (datum == null) {
-			try {
-				cache.writeLock(key);
-				datum = (PrimeMeridian) cache.peek(key);
-				if (datum == null) {
-					datum = generatePrimeMeridian(code);
-					cache.put(key, datum);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
+        PrimeMeridian datum = get(key, new Callable<PrimeMeridian>() {
+
+            @Override
+            public PrimeMeridian call() throws Exception {
+                return generatePrimeMeridian(code);
+            }
+        });
 		return datum;
 	}
 
@@ -633,22 +619,16 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         }
     }
 
-	public CoordinateOperation createCoordinateOperation(String code)
+	public CoordinateOperation createCoordinateOperation(final String code)
 			throws FactoryException {
 		final String key = toKey(code);
-		CoordinateOperation operation = (CoordinateOperation) cache.get(key);
-		if (operation == null) {
-			try {
-				cache.writeLock(key);
-				operation = (CoordinateOperation) cache.peek(key);
-				if (operation == null) {
-					operation = generateCoordinateOperation(code);
-					cache.put(key, operation);
-				}
-			} finally {
-				cache.writeUnLock(key);
-			}
-		}
+        CoordinateOperation operation = get(key, new Callable<CoordinateOperation>() {
+
+            @Override
+            public CoordinateOperation call() throws Exception {
+                return generateCoordinateOperation(code);
+            }
+        });
 		return operation;
 	}
 
@@ -659,24 +639,14 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
 			throws FactoryException {
 
 		final Object key = ObjectCaches.toKey( getAuthority(),  sourceCode, targetCode );
-		Set operations = (Set) cache.get(key);
-		if (operations == null) {
-			try {
-				cache.writeLock(key);
-				operations = (Set) cache.peek(key);
-				if (operations == null) {
-					operations = generateFromCoordinateReferenceSystemCodes( sourceCode, targetCode );
-					// can we not trust operationAuthority to return us an unmodifiableSet ?
-					//operations = Collections.unmodifiableSet( operations );
+        Set operations = get(key, new Callable<Set>() {
 
-					cache.put( key, operations );
-				}
-			}
-			finally {
-				cache.writeUnLock(key);
-			}
-		}
-		return operations;
+            @Override
+            public Set call() throws Exception {
+                return generateFromCoordinateReferenceSystemCodes(sourceCode, targetCode);
+            }
+        });
+        return operations;
 	}
 
 	protected abstract Set generateFromCoordinateReferenceSystemCodes(String sourceCode, String targetCode)  throws FactoryException;
@@ -733,27 +703,24 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         public IdentifiedObject find(final IdentifiedObject object) throws FactoryException {
             IdentifiedObject candidate;
 
-            candidate = (IdentifiedObject) findCache.get(object);
-            if (candidate != null) {
-                return candidate;
-            }
             try {
-                findCache.writeLock(object); // avoid searching for the same object twice
-                IdentifiedObject found = super.find(object);
-                if( found == null) {
-                    return null; // not found
-                }
-                candidate = (IdentifiedObject) findCache.peek(object);
-                if( candidate == null ){
-                    findCache.put(object, found);
-                    return found;
-                }
-                else {
-                    return candidate;
-                }
-            } finally {
-                findCache.writeUnLock(object);
+                candidate = (IdentifiedObject) findCache.get(object, new Callable<Object>() {
+                    @Override
+                    public Object call() throws Exception {
+                        IdentifiedObject found = doFind(object);
+                        return found;
+                    }
+                });
+            } catch (ExecutionException e) {
+                Throwables.propagateIfInstanceOf(e.getCause(), FactoryException.class);
+                throw Throwables.propagate(e.getCause());
             }
+            
+            return candidate;
+        }
+
+        private IdentifiedObject doFind(IdentifiedObject object) throws FactoryException {
+            return super.find(object);
         }
 
         /**
@@ -762,7 +729,7 @@ public abstract class AbstractCachedAuthorityFactory extends AbstractAuthorityFa
         @Override
         public String findIdentifier(final IdentifiedObject object) throws FactoryException {
             IdentifiedObject candidate;
-            candidate = (IdentifiedObject) findCache.get(object);
+            candidate = (IdentifiedObject) findCache.getIfPresent(object);
             if (candidate != null) {
                 return getIdentifier(candidate);
             }

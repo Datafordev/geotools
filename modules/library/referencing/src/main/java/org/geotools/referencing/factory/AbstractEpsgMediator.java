@@ -132,10 +132,11 @@ public abstract class AbstractEpsgMediator extends AbstractAuthorityMediator {
         super.dispose();
         datasource = null;
     }
-
-    public boolean isConnected(){
-        return datasource != null && super.isConnected();
-    }
+    
+//GR: smells to dead code
+//    public boolean isConnected(){
+//        return datasource != null && super.isConnected();
+//    }
     
     /**
      * Gets a description of the object corresponding to a code.

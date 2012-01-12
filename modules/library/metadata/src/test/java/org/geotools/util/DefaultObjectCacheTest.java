@@ -17,6 +17,9 @@
 package org.geotools.util;
 
 import org.junit.*;
+
+import com.google.common.cache.Cache;
+
 import static org.junit.Assert.*;
 
 
@@ -34,26 +37,21 @@ public final class DefaultObjectCacheTest {
      * Tests with two values.
      */
     @Test
-    public void testSimple() {
+    public void testSimple() throws Exception {
         Integer  key1 = 1;
         Integer  key2 = 2;
         String value1 = new String("value 1");
-        String value2 = new String("value 2");
 
-        ObjectCache cache = new DefaultObjectCache();
+        Cache<Object, Object> cache = ObjectCaches.create(null, 1000);
         assertNotNull(cache);
-        assertEquals(null, cache.get(key1));
+        assertEquals(null, cache.getIfPresent(key1));
 
-        cache.writeLock(key1);
         cache.put(key1, value1);
-        cache.writeUnLock(key1);
-        assertEquals(value1, cache.get(key1));
-        assertEquals(null,   cache.get(key2));
+
+        assertEquals(value1, cache.getIfPresent(key1));
+        assertEquals(null,   cache.getIfPresent(key2));
         
-        //this is 2 because a call to get adds and item to the 
-        //cache
-        assertEquals(2, cache.getKeys().size());
-        assertTrue(cache.getKeys().contains(key1));
+        assertEquals(1, cache.size());
     }
     
     /**
@@ -66,23 +64,18 @@ public final class DefaultObjectCacheTest {
     	String value1 = new String("value 1");
     	String value2 = new String("value 2");
     	
-    	ObjectCache cache = new DefaultObjectCache();
+        Cache<Object, Object> cache = ObjectCaches.create(null, 1000);
     	assertNotNull(cache);
-    	assertEquals(null, cache.get(key1));
-    	assertEquals(1, cache.getKeys().size());
+    	assertEquals(null, cache.getIfPresent(key1));
+    	assertEquals(0, cache.size());
     	
-//    	try{
-//    		cache.writeLock(key1);
-    		cache.remove(key1);
-//    	}finally{
-//    		cache.writeUnLock(key1);
-//    	}
-    	
-    	assertEquals(0, cache.getKeys().size());
+    	cache.invalidate(key1);
+    		
+    	assertEquals(0, cache.size());
     	
     	cache.put(key1, value1);
-    	assertEquals(1, cache.getKeys().size());
-    	cache.remove(key1);
-    	assertEquals(0, cache.getKeys().size());
+    	assertEquals(1, cache.size());
+    	cache.invalidate(key1);
+    	assertEquals(0, cache.size());
     }
 }
