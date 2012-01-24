@@ -18,7 +18,7 @@ package org.geotools.data.wfs.protocol.wfs;
 
 import java.io.IOException;
 
-import org.geotools.data.wfs.v1_1_0.WFSNGDataStore;
+import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 
 /**
  * A simple interface to parse the response of a WFS request.
@@ -47,6 +47,6 @@ public interface WFSResponseParser {
      * @return the implementation dependent object that's parsed from the WFS response contents
      * @throws IOException if an exception is produced while parsing the response
      */
-    Object parse(WFSNGDataStore wfs, WFSResponse response) throws IOException;
+    Object parse(WFS_1_1_0_DataStore wfs, WFSResponse response) throws IOException;
 
 }

@@ -31,14 +31,13 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
-import org.geotools.data.DataStore;
 
 import org.geotools.data.wfs.protocol.http.HTTPProtocol;
 import org.geotools.data.wfs.v1_1_0.CubeWerxStrategy;
 import org.geotools.data.wfs.v1_1_0.GeoServerStrategy;
 import org.geotools.data.wfs.v1_1_0.IonicStrategy;
 import org.geotools.data.wfs.v1_1_0.WFSStrategy;
-import org.geotools.data.wfs.v1_1_0.WFSNGDataStore;
+import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 import org.geotools.test.TestData;
 import org.junit.After;
 import org.junit.Before;
@@ -95,21 +94,29 @@ public class WFSDataStoreFactoryTest {
         url = TestData.url(this, "geoserver_capabilities_1_1_0.xml");
         in = url.openStream();
         capabilitiesDoc = WFSDataStoreFactory.parseCapabilities(in);
-        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc);
+        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc,null);
         assertNotNull(strategy);
         assertEquals(GeoServerStrategy.class, strategy.getClass());
 
+        // try override
+        url = TestData.url(this, "geoserver_capabilities_1_1_0.xml");
+        in = url.openStream();
+        capabilitiesDoc = WFSDataStoreFactory.parseCapabilities(in);
+        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc,"cubewerx");
+        assertNotNull(strategy);
+        assertEquals(CubeWerxStrategy.class, strategy.getClass());
+        
         url = TestData.url(this, "cubewerx_capabilities_1_1_0.xml");
         in = url.openStream();
         capabilitiesDoc = WFSDataStoreFactory.parseCapabilities(in);
-        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc);
+        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc,null);
         assertNotNull(strategy);
         assertEquals(CubeWerxStrategy.class, strategy.getClass());
 
         url = TestData.url(this, "ionic_capabilities_1_1_0.xml");
         in = url.openStream();
         capabilitiesDoc = WFSDataStoreFactory.parseCapabilities(in);
-        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc);
+        strategy = WFSDataStoreFactory.determineCorrectStrategy(url, capabilitiesDoc,null);
         assertNotNull(strategy);
         assertEquals(IonicStrategy.class, strategy.getClass());
     }
@@ -146,8 +153,8 @@ public class WFSDataStoreFactoryTest {
         }
         params.put(WFSDataStoreFactory.URL.key, capabilitiesUrl);
 
-        DataStore dataStore = dsf.createDataStore(params);
-        assertTrue(dataStore instanceof WFSNGDataStore);
+        WFSDataStore dataStore = dsf.createDataStore(params);
+        assertTrue(dataStore instanceof WFS_1_1_0_DataStore);
     }
 
     @SuppressWarnings("nls")

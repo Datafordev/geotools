@@ -21,9 +21,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -84,10 +85,10 @@ public class EmfAppSchemaParser {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
 
-    private static final WFSConfiguration wfsConfiguration = new WFSConfiguration();
 
-    public static SimpleFeatureType parseSimpleFeatureType( final QName featureName,
-            final URL schemaLocation, final CoordinateReferenceSystem crs ) throws IOException {
+    public static SimpleFeatureType parseSimpleFeatureType(final QName featureName,
+            final URL schemaLocation, final CoordinateReferenceSystem crs,
+            final Configuration wfsConfiguration) throws IOException {
         return parseSimpleFeatureType(wfsConfiguration, featureName, schemaLocation, crs);
     }
 
@@ -140,20 +141,18 @@ public class EmfAppSchemaParser {
 
         // HACK HACK!! the parser sets no namespace to the properties so we're
         // doing a hardcode property name black list
-        final List<String> ignoreList = Arrays.asList(new String[]{GML.location.getLocalPart(),
-                GML.metaDataProperty.getLocalPart(), GML.description.getLocalPart(),
-                GML.name.getLocalPart(), GML.boundedBy.getLocalPart()});
-
-        for( Iterator<PropertyDescriptor> it = attributes.iterator(); it.hasNext(); ) {
-            PropertyDescriptor property = it.next();
-            if (!(property instanceof AttributeDescriptor)) {
-                continue;
+        final Set<String> ignoreList = new HashSet<String>(Arrays.asList(new String[] {
+                GML.location.getLocalPart(), GML.metaDataProperty.getLocalPart(),
+                GML.description.getLocalPart(), GML.name.getLocalPart(),
+                GML.boundedBy.getLocalPart() }));
+        
+        if(attributes.size() > ignoreList.size()){
+            Set<String> firstAtts = new HashSet<String>();
+            for(int i = 0; i < ignoreList.size();i++){
+                firstAtts.add(attributes.get(i).getName().getLocalPart());
             }
-            AttributeDescriptor descriptor = (AttributeDescriptor) property;
-            Name name = descriptor.getName();
-
-            if (ignoreList.contains(name.getLocalPart())) {
-                it.remove();
+            if(ignoreList.equals(firstAtts)){
+                attributes = attributes.subList(ignoreList.size(), attributes.size());
             }
         }
         // / HACK END
@@ -275,7 +274,7 @@ public class EmfAppSchemaParser {
      * @param schemaLocation
      * @return
      */
-    private static XSDElementDeclaration parseFeatureType( final QName featureTypeName,
+    private static XSDElementDeclaration parseFeatureType(final QName featureTypeName,
             final URL schemaLocation ) throws DataSourceException {
         ApplicationSchemaConfiguration configuration;
         {
@@ -292,6 +291,10 @@ public class EmfAppSchemaParser {
 
         XSDElementDeclaration elementDeclaration;
         elementDeclaration = schemaIndex.getElementDeclaration(featureTypeName);
+        schemaIndex.destroy();
+        if (elementDeclaration == null) {
+            throw new DataSourceException("No XSDElementDeclaration found for " + featureTypeName);
+        }
         return elementDeclaration;
     }
 }

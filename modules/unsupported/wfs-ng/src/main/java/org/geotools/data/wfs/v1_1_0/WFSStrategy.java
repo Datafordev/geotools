@@ -22,6 +22,7 @@ import java.util.Map;
 
 import net.opengis.wfs.GetFeatureType;
 
+import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.data.wfs.protocol.wfs.GetFeature;
 import org.geotools.data.wfs.protocol.wfs.WFSOperationType;

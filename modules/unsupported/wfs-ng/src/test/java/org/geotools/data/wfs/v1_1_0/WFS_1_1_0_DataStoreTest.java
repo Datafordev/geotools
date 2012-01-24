@@ -30,8 +30,8 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-import org.geotools.data.DefaultQuery;
 import org.geotools.data.FeatureReader;
+import org.geotools.data.Query;
 import org.geotools.data.SchemaNotFoundException;
 import org.geotools.data.Transaction;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHttpProtocol;
@@ -64,15 +64,16 @@ public class WFS_1_1_0_DataStoreTest {
      */
     @Test
     public void testGetTypeNames() throws IOException {
-        String[] expected = {"GovernmentalUnitMCD", "HydroElementLIMD", "HydroElementARHI",
-        "RoadSeg", "HydroElementFLHI","HydroElementWBMD", "GovernmentalUnitCE",
-        "HydroElementPTHI", "GovernmentalUnitST","HydroElementWBHI","HydroElementARMD",
-        "HydroElementFLMD","HydroElementLIHI","HydroElementPTMD"};
+        String[] expected = {"gubs:GovernmentalUnitCE", "gubs:GovernmentalUnitMCD",
+                "gubs:GovernmentalUnitST", "hyd:HydroElementARHI", "hyd:HydroElementARMD",
+                "hyd:HydroElementFLHI", "hyd:HydroElementFLMD", "hyd:HydroElementLIHI",
+                "hyd:HydroElementLIMD", "hyd:HydroElementPTHI", "hyd:HydroElementPTMD",
+                "hyd:HydroElementWBHI", "hyd:HydroElementWBMD", "trans:RoadSeg"};
         List<String> expectedTypeNames = Arrays.asList(expected);
 
         createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES);
 
-        WFSNGDataStore ds = new WFSNGDataStore(wfs);
+        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
 
         String[] typeNames = ds.getTypeNames();
         assertNotNull(typeNames);
@@ -98,12 +99,12 @@ public class WFS_1_1_0_DataStoreTest {
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
         wfs.setDescribeFeatureTypeURLOverride(describeUrl);
 
-        WFSNGDataStore ds = new WFSNGDataStore(wfs);
+        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
 
         try {
             ds.getSchema("nonExistentTypeName");
-            fail("Expected IOException");
-        } catch (IOException e) {
+            fail("Expected SchemaNotFoundException");
+        } catch (SchemaNotFoundException e) {
             assertTrue(true);
         }
 
@@ -123,8 +124,8 @@ public class WFS_1_1_0_DataStoreTest {
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
         wfs.setDescribeFeatureTypeURLOverride(describeUrl);
 
-        WFSNGDataStore ds = new WFSNGDataStore(wfs);
-        DefaultQuery query = new DefaultQuery(CUBEWERX_GOVUNITCE.FEATURETYPENAME);
+        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
+        Query query = new Query(CUBEWERX_GOVUNITCE.FEATURETYPENAME);
         FeatureReader<SimpleFeatureType, SimpleFeature> featureReader;
         featureReader = ds.getFeatureReader(query, Transaction.AUTO_COMMIT);
         assertNotNull(featureReader);

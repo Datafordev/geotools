@@ -36,12 +36,12 @@ import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.geotools.data.DefaultQuery;
 import org.geotools.data.Query;
 import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -76,7 +76,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
     /**
      * The DataStore under test, static so we create it only once
      */
-    protected static WFSNGDataStore wfs = null;
+    protected static WFSDataStore wfs = null;
 
     protected final DataTestSupport.TestDataType testType;
 
@@ -134,7 +134,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
             params.put(WFSDataStoreFactory.URL.key, SERVER_URL);
             params.put("USE_PULL_PARSER", Boolean.TRUE);
             WFSDataStoreFactory dataStoreFactory = new WFSDataStoreFactory();
-            wfs = (WFSNGDataStore) dataStoreFactory.createDataStore(params);
+            wfs = dataStoreFactory.createDataStore(params);
             LOGGER.fine("WFS datastore created");
         }
     }
@@ -145,7 +145,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
             return;
         }
 
-        assertTrue(wfs instanceof WFSNGDataStore);
+        assertTrue(wfs instanceof WFS_1_1_0_DataStore);
 
         String types[] = wfs.getTypeNames();
         List<String> typeNames = Arrays.asList(types);
@@ -198,7 +198,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
 
         assertEquals(infoBounds, bounds);
 
-        DefaultQuery query = new DefaultQuery(featureSource.getInfo().getName());
+        Query query = new Query(featureSource.getInfo().getName());
         CoordinateReferenceSystem queryCrs = CRS.decode("EPSG:23030");
         query.setCoordinateSystem(queryCrs);
 
@@ -249,7 +249,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
         featureSource = wfs.getFeatureSource(testType.FEATURETYPENAME);
         assertNotNull(featureSource);
 
-        DefaultQuery query = new DefaultQuery(featureSource.getInfo().getName());
+        Query query = new Query(featureSource.getInfo().getName());
         query.setFilter(fidFilter);
 
         assertEquals(1, featureSource.getCount(query));

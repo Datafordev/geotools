@@ -17,55 +17,56 @@
 package org.geotools.data.wfs.v1_1_0;
 
 import java.io.IOException;
-import java.net.URL;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.Set;
-import javax.xml.namespace.QName;
 
-import org.geotools.data.FeatureReader;
+import org.geotools.data.DataStore;
+import org.geotools.data.FeatureListener;
 import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.data.QueryCapabilities;
 import org.geotools.data.ResourceInfo;
-import org.geotools.data.store.ContentEntry;
-import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
-import org.geotools.data.wfs.v1_1_0.parsers.EmfAppSchemaParser;
-import org.geotools.feature.AttributeTypeBuilder;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.referencing.CRS;
-import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.Name;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.opengis.filter.Filter;
 
 /**
+ * Simple implementation of FeatureSource for a WFS 1.1 server.
+ * <p>
+ * This implementation is really simple in the sense that it delegates all the hard work to the
+ * {@link WFSDataStore} provided.
+ * </p>
  * 
+ * @author Gabriel Roldan (TOPP)
+ * @version $Id$
+ * @since 2.5.x
+ *
+ *
  *
  * @source $URL$
+ *         http://svn.geotools.org/trunk/modules/plugin/wfs/src/main/java/org/geotools/wfs/v_1_1_0
+ *         /data/XmlSimpleFeatureParser.java $
  */
-public class WFSFeatureSource extends ContentFeatureSource {
+
+public class WFSFeatureSource implements SimpleFeatureSource {
 
     private String typeName;
 
-    private WFSNGDataStore dataStore;
+    private WFS_1_1_0_DataStore dataStore;
 
     private SimpleFeatureType featureType;
 
     private QueryCapabilities queryCapabilities;
 
-    /*public WFSFeatureSource(final WFS_1_1_0_DataStore dataStore, final String typeName) throws IOException {
+    public WFSFeatureSource(final WFS_1_1_0_DataStore dataStore, final String typeName)
+            throws IOException {
         this.typeName = typeName;
         this.dataStore = dataStore;
         this.queryCapabilities = new QueryCapabilities();
         this.featureType = dataStore.getSchema(typeName);
-    }*/
-    public WFSFeatureSource(ContentEntry entry,Query query) throws IOException {
-        super(entry,query);
     }
 
     public Name getName() {
@@ -75,16 +76,16 @@ public class WFSFeatureSource extends ContentFeatureSource {
     /**
      * @see FeatureSource#getDataStore()
      */
-    /*public WFSDataStore getDataStore() {
+    public DataStore getDataStore() {
         return dataStore;
     }
-*/
+
     /**
      * @see FeatureSource#getSchema()
      */
-    /*public SimpleFeatureType getSchema() {
+    public SimpleFeatureType getSchema() {
         return featureType;
-    }*/
+    }
 
     /**
      * Returns available metadata for this resource
@@ -98,162 +99,82 @@ public class WFSFeatureSource extends ContentFeatureSource {
     /**
      * @see FeatureSource#addFeatureListener(FeatureListener)
      */
-   /* public void addFeatureListener(FeatureListener listener) {
+    public void addFeatureListener(FeatureListener listener) {
 
-    }*/
+    }
 
     /**
      * @see FeatureSource#removeFeatureListener(FeatureListener)
      */
-   /* public void removeFeatureListener(FeatureListener listener) {
-    }*/
+    public void removeFeatureListener(FeatureListener listener) {
+    }
 
     /**
      * @see FeatureSource#getBounds()
      */
-/*    public ReferencedEnvelope getBounds() throws IOException {
+    public ReferencedEnvelope getBounds() throws IOException {
         return getInfo().getBounds();
-    }*/
+    }
 
     /**
      * @see FeatureSource#getBounds(Query)
      */
-    /*public ReferencedEnvelope getBounds(Query query) throws IOException {
+    public ReferencedEnvelope getBounds(Query query) throws IOException {
         Query namedQuery = namedQuery(typeName, query);
         ReferencedEnvelope bounds = dataStore.getBounds(namedQuery);
         return bounds;
-    }*/
+    }
 
     /**
      * @see FeatureSource#getCount(Query)
      */
-  /*  public int getCount(Query query) throws IOException {
+    public int getCount(Query query) throws IOException {
         Query namedQuery = namedQuery(typeName, query);
         int count = dataStore.getCount(namedQuery);
         return count;
-    }*/
+    }
 
     /**
      * @see FeatureSource#getFeatures(Filter)
      */
-    /*public WFSFeatureCollection getFeatures(Filter filter) throws IOException {
-        return getFeatures(new DefaultQuery(typeName, filter));
-    }*/
+    public WFSFeatureCollection getFeatures(Filter filter) throws IOException {
+        return getFeatures(new Query(typeName, filter));
+    }
 
     /**
      * @see FeatureSource#getFeatures()
      */
-/*    public WFSFeatureCollection getFeatures() throws IOException {
-        return getFeatures(new DefaultQuery(typeName));
-    }*/
+    public WFSFeatureCollection getFeatures() throws IOException {
+        return getFeatures(new Query(typeName));
+    }
 
     /**
      * @see FeatureSource#getFeatures(Query)
      */
-/*    public WFSFeatureCollection getFeatures(final Query query) throws IOException {
+    public WFSFeatureCollection getFeatures(final Query query) throws IOException {
         Query namedQuery = namedQuery(typeName, query);
         return new WFSFeatureCollection(dataStore, namedQuery);
-    }*/
+    }
 
     /**
      * @see FeatureSource#getSupportedHints()
      */
-/*    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     public Set getSupportedHints() {
         return Collections.EMPTY_SET;
-    }*/
+    }
 
-  /* private Query namedQuery(final String typeName, final Query query) {
+    private Query namedQuery(final String typeName, final Query query) {
         if (query.getTypeName() != null && !query.getTypeName().equals(typeName)) {
             throw new IllegalArgumentException("Wrong query type name: " + query.getTypeName()
                     + ". It should be " + typeName);
         }
-        DefaultQuery named = new DefaultQuery(query);
+        Query named = new Query(query);
         named.setTypeName(typeName);
         return named;
-    }*/
+    }
 
     public QueryCapabilities getQueryCapabilities() {
         return this.queryCapabilities;
     }
-
-    @Override
-    protected ReferencedEnvelope getBoundsInternal(Query query) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    protected int getCountInternal(Query query) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    protected FeatureReader<SimpleFeatureType, SimpleFeature> getReaderInternal(Query query) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    protected SimpleFeatureType buildFeatureType() throws IOException {       
-        WFSNGDataStore datastore=(WFSNGDataStore) getDataStore();
-        WFSProtocol wfs= datastore.getWFSProtocol();
-
-        //make the prefixedTypeName
-        String prefixedTypeName=null;
-        Set<QName> names=wfs.getFeatureTypeNames();
-        Iterator<QName> it=names.iterator();
-        while(it.hasNext()&& prefixedTypeName==null){
-            QName name=it.next();
-            if (entry.getName().getLocalPart().equals(name.getLocalPart()) &&
-                    entry.getName().getNamespaceURI().equals(name.getNamespaceURI())){
-                prefixedTypeName=name.getPrefix()+entry.getName().getSeparator()+name.getLocalPart();
-            }
-        }
-        /*Parser not working (yet)
-        WFSResponse response;
-        String outputFormat=wfs.getDefaultOutputFormat(WFSOperationType.GET_FEATURE);
-        if(datastore.isPreferPostOverGet()){
-            response = wfs.describeFeatureTypePOST(getCapTypeName, outputFormat);
-        }else{
-            response = wfs.describeFeatureTypeGET(getCapTypeName, outputFormat);
-        }
-        Object result = WFSExtensions.process(datastore, response);
-        */
-        final SimpleFeatureType fType;
-        //CoordinateReferenceSystem crs = getFeatureTypeCRS(prefixedTypeName);
-        CoordinateReferenceSystem crs;
-        try {
-            crs = CRS.decode(wfs.getDefaultCRS(prefixedTypeName));
-        } catch (NoSuchAuthorityCodeException ex) {
-            IOException exception = new IOException("can't decode default CRS for featureType "+prefixedTypeName);
-            exception.initCause(ex);
-            throw exception;
-        } catch (FactoryException ex) {
-            IOException exception = new IOException("can't decode default CRS for featureType "+prefixedTypeName);
-            exception.initCause(ex);
-            throw exception;
-        }
-        final URL describeUrl = wfs.getDescribeFeatureTypeURLGet(prefixedTypeName);
-        QName featureDescriptorName = wfs.getFeatureTypeName(prefixedTypeName);
-        fType = EmfAppSchemaParser.parseSimpleFeatureType(featureDescriptorName,
-                describeUrl, crs);
-        
-        SimpleFeatureTypeBuilder tb = new SimpleFeatureTypeBuilder();
-        //tb.setFeatureTypeFactory( getDataStore().getFeatureTypeFactory() );
-
-        tb.init(fType);
-        //set name
-        tb.setName(entry.getName());
-        GeometryDescriptor defaultGeometry = fType.getGeometryDescriptor();
-        if (defaultGeometry != null) {
-            tb.setDefaultGeometry(defaultGeometry.getLocalName());
-            tb.setCRS(defaultGeometry.getCoordinateReferenceSystem());
-        }
-        try{
-            featureType = tb.buildFeatureType();
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-        return featureType;    
-    }
- 
 }
