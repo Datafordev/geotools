@@ -22,27 +22,23 @@ package org.geotools.data.wfs.protocol.wfs;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public enum WFSOperationType {
-    GET_CAPABILITIES("GetCapabilities"), 
-    DESCRIBE_FEATURETYPE("DescribeFeatureType"),
-    GET_FEATURE("GetFeature"), 
-    GET_GML_OBJECT("GetGmlObject"), 
-    LOCK_FEATURE("LockFeature"), 
-    GET_FEATURE_WITH_LOCK("GetFeatureWithLock"), 
-    TRANSACTION("Transaction");
+    GET_CAPABILITIES("GetCapabilities"), DESCRIBE_FEATURETYPE("DescribeFeatureType"), GET_FEATURE(
+            "GetFeature"), GET_GML_OBJECT("GetGmlObject"), LOCK_FEATURE("LockFeature"), GET_FEATURE_WITH_LOCK(
+            "GetFeatureWithLock"), TRANSACTION("Transaction");
 
     private String operationName;
 
-    private WFSOperationType(String operationName){
+    private WFSOperationType(String operationName) {
         this.operationName = operationName;
     }
-    
-    public String getName(){
+
+    public String getName() {
         return operationName;
     }
 }

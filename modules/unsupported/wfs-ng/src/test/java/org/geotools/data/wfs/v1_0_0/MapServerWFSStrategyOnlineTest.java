@@ -38,7 +38,7 @@ import org.geotools.xml.XMLHandlerHints;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class MapServerWFSStrategyOnlineTest extends TestCase {
@@ -48,19 +48,20 @@ public class MapServerWFSStrategyOnlineTest extends TestCase {
 
     public void testWfsStrategyOverride() throws Exception {
         String getCapabilities = "http://212.0.113.22:8080/cgi-bin/mywfs?WIDTH=512&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities";
-        
+
         Map connectionParameters = new HashMap();
-        connectionParameters.put("WFSDataStoreFactory:GET_CAPABILITIES_URL", getCapabilities );
-        connectionParameters.put("WFSDataStoreFactory:WFS_STRATEGY", "mapserver" );
-        connectionParameters.put("WFSDataStoreFactory:FILTER_COMPLIANCE", XMLHandlerHints.VALUE_FILTER_COMPLIANCE_HIGH );
+        connectionParameters.put("WFSDataStoreFactory:GET_CAPABILITIES_URL", getCapabilities);
+        connectionParameters.put("WFSDataStoreFactory:WFS_STRATEGY", "mapserver");
+        connectionParameters.put("WFSDataStoreFactory:FILTER_COMPLIANCE",
+                XMLHandlerHints.VALUE_FILTER_COMPLIANCE_HIGH);
 
         // Step 2 - connection
-        DataStore data = DataStoreFinder.getDataStore( connectionParameters );
+        DataStore data = DataStoreFinder.getDataStore(connectionParameters);
         WFS_1_0_0_DataStore wfs = (WFS_1_0_0_DataStore) data;
         System.out.println(wfs.strategy.getClass());
         assertTrue(wfs.strategy instanceof MapServerWFSStrategy);
     }
-    
+
     public void XtestFilterNONE() throws Exception {
         final String TYPE_NAME = "hospitals"; //$NON-NLS-1$
 
@@ -68,7 +69,8 @@ public class MapServerWFSStrategyOnlineTest extends TestCase {
 
         int totalFeatures;
 
-        URL host=new URL("http://mapserver.refractions.net/cgi-bin/mapserv48?map=/home/www/mapserv/maps/victoria-wms.map&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities");
+        URL host = new URL(
+                "http://mapserver.refractions.net/cgi-bin/mapserv48?map=/home/www/mapserv/maps/victoria-wms.map&SERVICE=WFS&VERSION=1.0.0&REQUEST=GetCapabilities");
         WFSDataStoreFactory dsfac = new WFSDataStoreFactory();
         Map params = new HashMap();
         params.put(WFSDataStoreFactory.URL.key, host);
@@ -77,35 +79,35 @@ public class MapServerWFSStrategyOnlineTest extends TestCase {
         params.put(WFSDataStoreFactory.TRY_GZIP.key, Boolean.TRUE);
         params.put(WFSDataStoreFactory.LENIENT.key, Boolean.TRUE);
 
-        //ds=new WFSDataStore(host, null, null, null, 10000, 100, true, true);
+        // ds=new WFSDataStore(host, null, null, null, 10000, 100, true, true);
         ds = (WFS_1_0_0_DataStore) dsfac.createDataStore(params);
-        assertTrue( ds.strategy instanceof MapServerWFSStrategy );
-        FilterFactory fac=FilterFactoryFinder.createFilterFactory();
-        
+        assertTrue(ds.strategy instanceof MapServerWFSStrategy);
+        FilterFactory fac = FilterFactoryFinder.createFilterFactory();
+
         GeometryFilter filter = fac.createGeometryFilter(FilterType.GEOMETRY_BBOX);
-        
+
         String attName = ds.getSchema(TYPE_NAME).getGeometryDescriptor().getLocalName();
         filter.addLeftGeometry(fac.createAttributeExpression(attName));
-        
+
         filter.addRightGeometry(fac.createBBoxExpression(ds.getBounds(new Query(TYPE_NAME))));
-        
-        Query query=new Query(TYPE_NAME, filter);
-        
+
+        Query query = new Query(TYPE_NAME, filter);
+
         SimpleFeatureCollection features = ds.getFeatureSource(TYPE_NAME).getFeatures(query);
-        
+
         SimpleFeatureIterator iter = features.features();
-        try{
-            int count=0;
-            while(iter.hasNext()){
+        try {
+            int count = 0;
+            while (iter.hasNext()) {
                 iter.next();
                 count++;
             }
-            totalFeatures=count;
-        }finally{
+            totalFeatures = count;
+        } finally {
             iter.close();
         }
 
-        SimpleFeatureSource source=ds.getFeatureSource(TYPE_NAME);
+        SimpleFeatureSource source = ds.getFeatureSource(TYPE_NAME);
 
         SimpleFeatureCollection reader = source.getFeatures(Query.ALL);
         assertCorrectSize(reader, totalFeatures);
@@ -115,20 +117,21 @@ public class MapServerWFSStrategyOnlineTest extends TestCase {
 
         reader = source.getFeatures(new Query(TYPE_NAME, Filter.NONE));
         assertCorrectSize(reader, totalFeatures);
-}
+    }
 
-    private void assertCorrectSize( SimpleFeatureCollection collection, Object totalFeatures ) throws Exception{
+    private void assertCorrectSize(SimpleFeatureCollection collection, Object totalFeatures)
+            throws Exception {
         SimpleFeatureIterator iter = collection.features();
-        
-        try{
-            int count=0;
-            while( iter.hasNext() ){
+
+        try {
+            int count = 0;
+            while (iter.hasNext()) {
                 count++;
                 iter.next();
             }
-            assertEquals( totalFeatures, count );
-            
-        }finally{
+            assertEquals(totalFeatures, count);
+
+        } finally {
             iter.close();
         }
     }

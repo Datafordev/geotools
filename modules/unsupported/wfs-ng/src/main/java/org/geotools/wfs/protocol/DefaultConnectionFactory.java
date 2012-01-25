@@ -16,7 +16,7 @@
  */
 package org.geotools.wfs.protocol;
 
-import static org.geotools.data.wfs.protocol.http.HttpMethod.POST;
+import static org.geotools.data.wfs.protocol.HttpMethod.POST;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -30,21 +30,19 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.codec.binary.Base64;
-import org.geotools.data.wfs.protocol.http.DefaultHTTPProtocol;
-import org.geotools.data.wfs.protocol.http.HttpMethod;
+import org.geotools.data.wfs.protocol.HttpMethod;
 import org.geotools.util.logging.Logging;
 
 /**
- * Handles setting up connections to a WFS based on a WFS capabilities document,
- * taking care of GZIP and authentication.
- *
+ * Handles setting up connections to a WFS based on a WFS capabilities document, taking care of GZIP
+ * and authentication.
+ * 
  * @author Gabriel Roldan
- * @version $Id: DefaultConnectionFactory.java 29055 2008-02-02 17:38:44Z
- *          groldan $
+ * @version $Id: DefaultConnectionFactory.java 29055 2008-02-02 17:38:44Z groldan $
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  * @deprecated use {@link DefaultHTTPProtocol}
  */
@@ -68,19 +66,19 @@ public class DefaultConnectionFactory implements ConnectionFactory {
 
     /**
      * A simple user/password authenticator
-     *
+     * 
      * @author Gabriel Roldan
-     * @version $Id: DefaultConnectionFactory.java 29055 2008-02-02 17:38:44Z
-     *          groldan $
+     * @version $Id: DefaultConnectionFactory.java 29055 2008-02-02 17:38:44Z groldan $
      * @since 2.5.x
      * @source $URL:
-     *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools/data/wfs/WFSDataStoreFactory.java $
+     *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
+     *         /data/wfs/WFSDataStoreFactory.java $
      */
     private static class WFSAuthenticator extends Authenticator {
         private java.net.PasswordAuthentication pa;
 
         /**
-         *
+         * 
          * @param user
          * @param pass
          */
@@ -94,9 +92,9 @@ public class DefaultConnectionFactory implements ConnectionFactory {
     }
 
     /**
-     * Creates a connection factory set up for the given tryGzip flag, HTTP
-     * authentication if needed, and default character encoding.
-     *
+     * Creates a connection factory set up for the given tryGzip flag, HTTP authentication if
+     * needed, and default character encoding.
+     * 
      * @param tryGzip
      * @param user
      * @param pass
@@ -120,7 +118,7 @@ public class DefaultConnectionFactory implements ConnectionFactory {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see org.geotools.wfs.protocol.ConnectionFactory#getEncoding()
      */
     public Charset getEncoding() {
@@ -129,24 +127,27 @@ public class DefaultConnectionFactory implements ConnectionFactory {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see org.geotools.wfs.protocol.ConnectionFactory#getConnection(java.net.URL,
-     *      org.geotools.wfs.protocol.HttpMethod)
+     * org.geotools.wfs.protocol.HttpMethod)
      */
     public HttpURLConnection getConnection(URL query, HttpMethod method) throws IOException {
         return getConnection(query, tryGzip, method, auth, timeoutMillis);
     }
 
     private static HttpURLConnection getConnection(final URL url, final boolean tryGzip,
-            final HttpMethod method, final Authenticator auth, final int timeoutMillis) throws IOException {
+            final HttpMethod method, final Authenticator auth, final int timeoutMillis)
+            throws IOException {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
         if (POST == method) {
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
-            /*ESRI ArcGis has a bug when sending xml and content-type = text/xml. When omitting
-            it, it works fine.*/
-            if (url==null || !url.toString().contains("/ArcGIS/services/")){
+            /*
+             * ESRI ArcGis has a bug when sending xml and content-type = text/xml. When omitting it,
+             * it works fine.
+             */
+            if (url == null || !url.toString().contains("/ArcGIS/services/")) {
                 connection.setRequestProperty("Content-type", "text/xml, application/xml");
             }
         } else {
@@ -160,7 +161,6 @@ public class DefaultConnectionFactory implements ConnectionFactory {
         connection.setConnectTimeout(timeoutMillis);
         connection.setReadTimeout(timeoutMillis);
 
-
         // auth must be after connection because one branch makes the connection
         if (auth != null) {
             if (auth instanceof WFSAuthenticator) {
@@ -172,17 +172,17 @@ public class DefaultConnectionFactory implements ConnectionFactory {
                 byte[] authBytes = combined.getBytes("US-ASCII");
                 String encoded = new String(Base64.encodeBase64(authBytes));
                 String authorization = "Basic " + encoded;
-                connection.setRequestProperty("Authorization" ,authorization);
+                connection.setRequestProperty("Authorization", authorization);
             } else {
                 /*
-                 * FIXME this could breaks uDig. Not quite sure what to do otherwise.
-                 * Maybe have a mechanism that would allow an authenticator to ask the
-                 * datastore itself for a previously supplied user/pass.
+                 * FIXME this could breaks uDig. Not quite sure what to do otherwise. Maybe have a
+                 * mechanism that would allow an authenticator to ask the datastore itself for a
+                 * previously supplied user/pass.
                  */
                 synchronized (Authenticator.class) {
                     Authenticator.setDefault(auth);
                     connection.connect();
-    //                Authenticator.setDefault(null);
+                    // Authenticator.setDefault(null);
                 }
             }
         }
@@ -201,10 +201,9 @@ public class DefaultConnectionFactory implements ConnectionFactory {
     }
 
     /**
-     * If the connection content-encoding contains the {@code gzip} flag creates
-     * a gzip inputstream, otherwise returns a normal buffered input stream by
-     * opening the http connection.
-     *
+     * If the connection content-encoding contains the {@code gzip} flag creates a gzip inputstream,
+     * otherwise returns a normal buffered input stream by opening the http connection.
+     * 
      * @param hc
      *            the connection to use to create the stream
      * @return an input steam from the provided connection

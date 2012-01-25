@@ -26,9 +26,9 @@ import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  * @see WFSResponseParserFactory
  * @see WFSResponse
@@ -42,10 +42,13 @@ public interface WFSResponseParser {
      * parser produces for it.
      * </p>
      * 
-     * @param wfs the datastore that issued the request and obtained the given response
-     * @param response the handle to the WFS response contents
+     * @param wfs
+     *            the datastore that issued the request and obtained the given response
+     * @param response
+     *            the handle to the WFS response contents
      * @return the implementation dependent object that's parsed from the WFS response contents
-     * @throws IOException if an exception is produced while parsing the response
+     * @throws IOException
+     *             if an exception is produced while parsing the response
      */
     Object parse(WFS_1_1_0_DataStore wfs, WFSResponse response) throws IOException;
 

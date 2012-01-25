@@ -33,9 +33,9 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author Jesse
  * @since 2.4
  * 
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.osgeo.org/geotools/trunk/modules/unsupported/wfs/src/main/java/org/geotools
  *         /xml/gml/WFSFeatureTypeTransformer.java $
@@ -99,8 +99,8 @@ public class WFSFeatureTypeTransformer {
 
         geometry = new ChoiceGeometryTypeImpl(geometryType.getName(), geometryType.getChoices(),
                 geometryType.getBinding(), geometryType.isNillable(), geometryType.getMinOccurs(),
-                geometryType.getMaxOccurs(), geometryType.createDefaultValue(), crs, geometryType
-                        .getRestrictions());
+                geometryType.getMaxOccurs(), geometryType.createDefaultValue(), crs,
+                geometryType.getRestrictions());
 
         if (defaultGeometryType == null || geometryType == schema.getGeometryDescriptor()) {
             defaultGeometryType = geometry;

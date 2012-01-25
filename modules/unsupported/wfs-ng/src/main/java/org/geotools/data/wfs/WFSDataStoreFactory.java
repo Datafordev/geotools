@@ -16,8 +16,8 @@
  */
 package org.geotools.data.wfs;
 
-import static org.geotools.data.wfs.protocol.http.HttpMethod.GET;
-import static org.geotools.data.wfs.protocol.http.HttpMethod.POST;
+import static org.geotools.data.wfs.protocol.HttpMethod.GET;
+import static org.geotools.data.wfs.protocol.HttpMethod.POST;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,10 +46,11 @@ import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Parameter;
-import org.geotools.data.wfs.protocol.http.HTTPProtocol;
-import org.geotools.data.wfs.protocol.http.HTTPResponse;
-import org.geotools.data.wfs.protocol.http.HttpMethod;
-import org.geotools.data.wfs.protocol.http.SimpleHttpProtocol;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.wfs.protocol.HttpMethod;
+import org.geotools.data.wfs.protocol.URIs;
 import org.geotools.data.wfs.protocol.wfs.Version;
 import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
 import org.geotools.data.wfs.v1_0_0.WFS100ProtocolHandler;
@@ -94,10 +95,10 @@ import org.xml.sax.SAXException;
  * server and client support that version, that version will be used.
  * </p>
  * <p>
- * That said, for the time being, the current default version is {@code 1.0.0} instead of {@code
- * 1.1.0}, since the former is the one that supports transactions. When further development provides
- * transaction support for the WFS 1.1.0 version, propper version negotiation capabilities will be
- * added.
+ * That said, for the time being, the current default version is {@code 1.0.0} instead of
+ * {@code 1.1.0}, since the former is the one that supports transactions. When further development
+ * provides transaction support for the WFS 1.1.0 version, propper version negotiation capabilities
+ * will be added.
  * </p>
  * <p>
  * Among feeding the wfs datastore with a {@link WFSProtocol} that can handle the WFS version agreed
@@ -109,9 +110,9 @@ import org.xml.sax.SAXException;
  * 
  * @author dzwiers
  * @author Gabriel Roldan (TOPP)
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
  *         /data/wfs/WFSDataStoreFactory.java $
@@ -119,7 +120,7 @@ import org.xml.sax.SAXException;
  * @see WFSProtocol
  * @see WFSStrategy
  */
-@SuppressWarnings( { "unchecked", "nls" })
+@SuppressWarnings({ "unchecked", "nls" })
 public class WFSDataStoreFactory extends AbstractDataStoreFactory {
     private static final Logger logger = Logging.getLogger("org.geotools.data.wfs");
 
@@ -165,14 +166,14 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             super(key, type, description, false, defaultValue, metadata);
             this.defaultValue = defaultValue;
         }
-        
+
         public T lookUp(final Map params) throws IOException {
             T parameter = (T) super.lookUp(params);
             return parameter == null ? defaultValue : parameter;
         }
     }
 
-    /** Access with {@link WFSDataStoreFactory#getParametersInfo() */
+    /** Access with {@link WFSDataStoreFactory#getParametersInfo()  */
     private static final WFSFactoryParam<?>[] parametersInfo = new WFSFactoryParam[13];
 
     /**
@@ -200,7 +201,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String description = "Sets a preference for the HTTP protocol to use when requesting "
                 + "WFS functionality. Set this value to Boolean.TRUE for POST, Boolean.FALSE "
                 + "for GET or NULL for AUTO";
-        parametersInfo[1] = PROTOCOL = new WFSFactoryParam<Boolean>(name, Boolean.class, description,null);
+        parametersInfo[1] = PROTOCOL = new WFSFactoryParam<Boolean>(name, Boolean.class,
+                description, null);
     }
 
     /**
@@ -249,18 +251,18 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:ENCODING";
         String description = "This allows the user to specify the character encoding of the "
                 + "XML-Requests sent to the Server. Defaults to UTF-8";
-        
+
         String defaultValue = "UTF-8";
         List<String> options = new ArrayList<String>(Charset.availableCharsets().keySet());
         Collections.sort(options);
         parametersInfo[4] = ENCODING = new WFSFactoryParam<String>(name, String.class, description,
                 defaultValue, Parameter.OPTIONS, options);
     }
-    
+
     /**
      * Optional {@code Integer} DataStore parameter indicating a timeout in milliseconds for the
-     * HTTP connections.
-     * <>p>
+     * HTTP connections. <>p>
+     * 
      * @TODO: specify if its just a connection timeout or also a read timeout
      */
     public static final WFSFactoryParam<Integer> TIMEOUT;
@@ -268,7 +270,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:TIMEOUT";
         String description = "This allows the user to specify a timeout in milliseconds. This param"
                 + " has a default value of 3000ms.";
-        parametersInfo[5] = TIMEOUT = new WFSFactoryParam<Integer>(name, Integer.class, description, 3000);
+        parametersInfo[5] = TIMEOUT = new WFSFactoryParam<Integer>(name, Integer.class,
+                description, 3000);
     }
 
     /**
@@ -280,8 +283,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:BUFFER_SIZE";
         String description = "This allows the user to specify a buffer size in features. This param "
                 + "has a default value of 10 features.";
-        parametersInfo[6] = BUFFER_SIZE = new WFSFactoryParam<Integer>(name, Integer.class, description, 10);
+        parametersInfo[6] = BUFFER_SIZE = new WFSFactoryParam<Integer>(name, Integer.class,
+                description, 10);
     }
+
     /**
      * Optional {@code Boolean} data store parameter indicating whether to set the accept GZip
      * encoding on the HTTP request headers sent to the server
@@ -291,7 +296,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:TRY_GZIP";
         String description = "Indicates that datastore should use gzip to transfer data if the server "
                 + "supports it. Default is true";
-        parametersInfo[7] = TRY_GZIP = new WFSFactoryParam<Boolean>(name, Boolean.class, description, Boolean.TRUE);
+        parametersInfo[7] = TRY_GZIP = new WFSFactoryParam<Boolean>(name, Boolean.class,
+                description, Boolean.TRUE);
     }
 
     /**
@@ -318,9 +324,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:MAXFEATURES";
         String description = "Positive integer used as a hard limit for the amount of Features to retrieve"
                 + " for each FeatureType. A value of zero or not providing this parameter means no limit.";
-        parametersInfo[9] = MAXFEATURES = new WFSFactoryParam<Integer>(name, Integer.class, description, 0 );
+        parametersInfo[9] = MAXFEATURES = new WFSFactoryParam<Integer>(name, Integer.class,
+                description, 0);
     }
-    
+
     /**
      * Optional {@code Integer} DataStore parameter indicating level of compliance to WFS
      * specification
@@ -335,10 +342,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
 
         String name = "WFSDataStoreFactory:FILTER_COMPLIANCE";
         String description = "Level of compliance to WFS specification (0-low,1-medium,2-high)";
-        List<Integer> options = Arrays.asList(new Integer[]{0,1,2} );
+        List<Integer> options = Arrays.asList(new Integer[] { 0, 1, 2 });
 
         parametersInfo[10] = FILTER_COMPLIANCE = new WFSFactoryParam<Integer>(name, Integer.class,
-                description, null, Parameter.OPTIONS, options );
+                description, null, Parameter.OPTIONS, options);
     }
 
     /**
@@ -350,8 +357,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:WFS_STRATEGY";
         String description = "Override wfs stragegy with either arcgis, cubwerx, ionic, mapserver"
                 + ", geoserver, strict or nonstrict strategy.";
-        List<String> options = Arrays.asList(new String[] { "strict", "nonstrict",
-                "mapserver", "geoserver", "arcgis", "cubewerx", "ionix" });
+        List<String> options = Arrays.asList(new String[] { "strict", "nonstrict", "mapserver",
+                "geoserver", "arcgis", "cubewerx", "ionix" });
         parametersInfo[11] = WFS_STRATEGY = new WFSFactoryParam<String>(name, String.class,
                 description, null, Parameter.OPTIONS, options);
     }
@@ -396,7 +403,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         final String wfsStrategy = (String) WFS_STRATEGY.lookUp(params);
         final Integer filterCompliance = (Integer) FILTER_COMPLIANCE.lookUp(params);
         final String namespaceOverride = (String) NAMESPACE.lookUp(params);
-        
+
         if (((user == null) && (pass != null)) || ((pass == null) && (user != null))) {
             throw new IOException(
                     "Cannot define only one of USERNAME or PASSWORD, must define both or neither");
@@ -404,10 +411,12 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
 
         final WFSDataStore dataStore;
 
-        final HTTPProtocol http = new SimpleHttpProtocol();
-        http.setTryGzip(tryGZIP);
-        http.setAuth(user, pass);
-        http.setTimeoutMillis(timeoutMillis);
+        final HTTPClient http = new SimpleHttpClient();
+        // TODO: let HTTPClient be configured for gzip
+        // http.setTryGzip(tryGZIP);
+        http.setUser(user);
+        http.setPassword(pass);
+        http.setConnectTimeout(timeoutMillis / 1000);
 
         final byte[] wfsCapabilitiesRawData = loadCapabilities(getCapabilitiesRequest, http);
         final Document capsDoc = parseCapabilities(wfsCapabilitiesRawData);
@@ -436,7 +445,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
 
             WFS_1_1_0_Protocol wfs = new WFS_1_1_0_Protocol(capsIn, http, defaultEncoding);
 
-            WFSStrategy strategy = determineCorrectStrategy(getCapabilitiesRequest, capsDoc, wfsStrategy );
+            WFSStrategy strategy = determineCorrectStrategy(getCapabilitiesRequest, capsDoc,
+                    wfsStrategy);
             wfs.setStrategy(strategy);
             dataStore = new WFS_1_1_0_DataStore(wfs);
             dataStore.setMaxFeatures(maxFeatures);
@@ -495,32 +505,31 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * 
      * @param getCapabilitiesRequest
      * @param capabilitiesDoc
-     * @param override optional override provided by user
+     * @param override
+     *            optional override provided by user
      * @return WFSStrategy to use
      */
-    static WFSStrategy determineCorrectStrategy(URL getCapabilitiesRequest, Document capabilitiesDoc, String override) {
+    static WFSStrategy determineCorrectStrategy(URL getCapabilitiesRequest,
+            Document capabilitiesDoc, String override) {
         WFSStrategy strategy = null;
         // override
-        if( override != null ){
-            if( override.equalsIgnoreCase("geoserver")){
+        if (override != null) {
+            if (override.equalsIgnoreCase("geoserver")) {
                 strategy = new GeoServerStrategy();
-            }
-            else if( override.equalsIgnoreCase("arcgis")){
+            } else if (override.equalsIgnoreCase("arcgis")) {
                 strategy = new ArcGISServerStrategy();
-            }
-            else if( override.equalsIgnoreCase("cubewerx")){
+            } else if (override.equalsIgnoreCase("cubewerx")) {
                 strategy = new CubeWerxStrategy();
-            }
-            else if( override.equalsIgnoreCase("ionic")){
+            } else if (override.equalsIgnoreCase("ionic")) {
                 strategy = new IonicStrategy();
-            }
-            else {
-                logger.warning("Could not handle wfs strategy override "+override+" proceeding with autodetection");
+            } else {
+                logger.warning("Could not handle wfs strategy override " + override
+                        + " proceeding with autodetection");
             }
         }
         // auto detection
-        if( strategy == null ){
-            // look in comments for indication of CubeWerx server        
+        if (strategy == null) {
+            // look in comments for indication of CubeWerx server
             NodeList childNodes = capabilitiesDoc.getChildNodes();
             for (int i = 0; i < childNodes.getLength(); i++) {
                 Node child = childNodes.item(i);
@@ -543,9 +552,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
                 if (ionicNs.equals("http://www.ionicsoft.com/versions/4")) {
                     strategy = new IonicStrategy();
                 } else if (ionicNs.startsWith("http://www.ionicsoft.com/versions")) {
-                    logger
-                            .warning("Found a Ionic server but the version may not match the strategy "
-                                    + "we have (v.4). Ionic namespace url: " + ionicNs);
+                    logger.warning("Found a Ionic server but the version may not match the strategy "
+                            + "we have (v.4). Ionic namespace url: " + ionicNs);
                     strategy = new IonicStrategy();
                 }
             }
@@ -556,7 +564,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             String uri = getCapabilitiesRequest.toExternalForm();
             if (uri.contains("geoserver")) {
                 strategy = new GeoServerStrategy();
-            }else if (uri.contains("/ArcGIS/services/")){
+            } else if (uri.contains("/ArcGIS/services/")) {
                 strategy = new ArcGISServerStrategy();
             }
         }
@@ -629,8 +637,9 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         }
         try {
             URL url = (URL) URL.lookUp(params);
-            if( !"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())){
-                return false; // must be http or https since we use SimpleHttpProtocol class
+            if (!"http".equalsIgnoreCase(url.getProtocol())
+                    && !"https".equalsIgnoreCase(url.getProtocol())) {
+                return false; // must be http or https since we use SimpleHTTPClient class
             }
         } catch (Exception e) {
             return false;
@@ -684,20 +693,19 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         if (version == null) {
             throw new NullPointerException("version");
         }
-        HTTPProtocol httpUtils = new SimpleHttpProtocol();
+
         Map<String, String> getCapsKvp = new HashMap<String, String>();
         getCapsKvp.put("SERVICE", "WFS");
         getCapsKvp.put("REQUEST", "GetCapabilities");
         getCapsKvp.put("VERSION", version.toString());
-        URL getcapsUrl;
+        String getcapsUrl;
         try {
-            getcapsUrl = httpUtils.createUrl(host, getCapsKvp);
+            getcapsUrl = URIs.buildURL(host.toExternalForm(), getCapsKvp);
+            return new URL(getcapsUrl);
         } catch (MalformedURLException e) {
             logger.log(Level.WARNING, "Can't create GetCapabilities request from " + host, e);
             throw new RuntimeException(e);
         }
-
-        return getcapsUrl;
     }
 
     /**
@@ -722,12 +730,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             throw new NullPointerException("url");
         }
 
-        String queryString = host.getQuery();
-        queryString = queryString == null || "".equals(queryString.trim()) ? "" : queryString
-                .toUpperCase();
-
         // final Version defaultVersion = Version.highest();
-        
+
         // We cannot use the highest vesion as the default yet
         // since v1_1_0 does not implement a read/write datastore
         // and is still having trouble with requests from
@@ -738,28 +742,19 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         // which version to use
         Version requestVersion = defaultVersion;
 
-        if (queryString.length() > 0) {
+        final Map<String, String> params = URIs.parseQueryString(host.getQuery());
 
-            Map<String, String> params = new HashMap<String, String>();
-            String[] split = queryString.split("&");
-            for (String kvp : split) {
-                int index = kvp.indexOf('=');
-                String key = index > 0 ? kvp.substring(0, index) : kvp;
-                String value = index > 0 ? kvp.substring(index + 1) : null;
-                params.put(key, value);
-            }
-
-            String request = params.get("REQUEST");
-            if ("GETCAPABILITIES".equals(request)) {
-                String version = params.get("VERSION");
-                if (version != null) {
-                    requestVersion = Version.find(version);
-                    if (requestVersion == null) {
-                        requestVersion = defaultVersion;
-                    }
+        String request = params.get("REQUEST");
+        if ("GETCAPABILITIES".equals(request)) {
+            String version = params.get("VERSION");
+            if (version != null) {
+                requestVersion = Version.find(version);
+                if (requestVersion == null) {
+                    requestVersion = defaultVersion;
                 }
             }
         }
+
         return createGetCapabilitiesRequest(host, requestVersion);
     }
 
@@ -772,10 +767,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * @return
      * @throws IOException
      */
-    byte[] loadCapabilities(final URL capabilitiesUrl, HTTPProtocol http) throws IOException {
+    byte[] loadCapabilities(final URL capabilitiesUrl, HTTPClient http) throws IOException {
         byte[] wfsCapabilitiesRawData;
 
-        HTTPResponse httpResponse = http.issueGet(capabilitiesUrl, Collections.EMPTY_MAP);
+        HTTPResponse httpResponse = http.get(capabilitiesUrl);
         InputStream inputStream = httpResponse.getResponseStream();
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();

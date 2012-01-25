@@ -23,7 +23,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class CubeWerxOnlineTest extends AbstractWfsDataStoreOnlineTest {
@@ -31,15 +31,15 @@ public class CubeWerxOnlineTest extends AbstractWfsDataStoreOnlineTest {
     public static final String SERVER_URL = "http://frameworkwfs.usgs.gov/framework/wfs/wfs.cgi?request=GetCapabilities&version=1.1.0"; //$NON-NLS-1$
 
     /**
-     * A GetFeature request to the CubeWerx server does not return the
-     * {@code numberOfFeatures} attribute in the FeatureCollection root element,
-     * even if the request includes {@code restultType=hits}, so the WFS
-     * FeatureSource is expected to return -1 as the number of features is too
-     * expensive to calculate if we have to do a full scan
+     * A GetFeature request to the CubeWerx server does not return the {@code numberOfFeatures}
+     * attribute in the FeatureCollection root element, even if the request includes
+     * {@code restultType=hits}, so the WFS FeatureSource is expected to return -1 as the number of
+     * features is too expensive to calculate if we have to do a full scan
      */
     private static final int EXPECTED_FEATURE_COUNT = -1;
 
     public CubeWerxOnlineTest() {
-        super(SERVER_URL, CUBEWERX_GOVUNITCE, "geometry", Polygon.class, EXPECTED_FEATURE_COUNT, null);
+        super(SERVER_URL, CUBEWERX_GOVUNITCE, "geometry", Polygon.class, EXPECTED_FEATURE_COUNT,
+                null);
     }
 }

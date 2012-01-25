@@ -65,9 +65,9 @@ import com.vividsolutions.jts.geom.Polygon;
  * @author Gabriel Roldan (TOPP)
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/trunk/modules/plugin/wfs/src/main/java/org/geotools/wfs/v_1_1_0
  *         /data/XmlSimpleFeatureParser.java $ //@deprecated should be removed as long as
@@ -114,8 +114,8 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
             parser = factory.newPullParser();
             parser.setInput(inputStream, "UTF-8");
             parser.nextTag();
-            parser.require(XmlPullParser.START_TAG, WFS.NAMESPACE, WFS.FeatureCollection
-                    .getLocalPart());
+            parser.require(XmlPullParser.START_TAG, WFS.NAMESPACE,
+                    WFS.FeatureCollection.getLocalPart());
 
             String nof = parser.getAttributeValue(null, "numberOfFeatures");
             if (nof != null) {
@@ -321,9 +321,7 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 Point p = parsePoint(dimension, crs);
                 points.add(p);
                 parser.nextTag();
-                parser
-                        .require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.pointMember
-                                .getLocalPart());
+                parser.require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.pointMember.getLocalPart());
                 parser.nextTag();
                 if (XmlPullParser.END_TAG == parser.getEventType()
                         && GML.MultiPoint.getLocalPart().equals(parser.getName())) {
@@ -369,16 +367,16 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 // we're done
                 break;
             }
-            parser.require(XmlPullParser.START_TAG, GML.NAMESPACE, GML.lineStringMember
-                    .getLocalPart());
+            parser.require(XmlPullParser.START_TAG, GML.NAMESPACE,
+                    GML.lineStringMember.getLocalPart());
             parser.nextTag();
             parser.require(XmlPullParser.START_TAG, GML.NAMESPACE, GML.LineString.getLocalPart());
 
             LineString line = parseLineString(dimension, crs);
             lines.add(line);
             parser.nextTag();
-            parser.require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.lineStringMember
-                    .getLocalPart());
+            parser.require(XmlPullParser.END_TAG, GML.NAMESPACE,
+                    GML.lineStringMember.getLocalPart());
         }
 
         parser.require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.MultiLineString.getLocalPart());
@@ -423,8 +421,8 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 Polygon p = parsePolygon(dimension, crs);
                 polygons.add(p);
                 parser.nextTag();
-                parser.require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.surfaceMember
-                        .getLocalPart());
+                parser.require(XmlPullParser.END_TAG, GML.NAMESPACE,
+                        GML.surfaceMember.getLocalPart());
                 parser.nextTag();
                 if (XmlPullParser.END_TAG == parser.getEventType()
                         && GML.MultiSurface.getLocalPart().equals(parser.getName())) {
@@ -446,9 +444,7 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
         List<Polygon> polygons = new ArrayList<Polygon>(2);
         parser.nextTag();
         while (true) {
-            parser
-                    .require(XmlPullParser.START_TAG, GML.NAMESPACE, GML.polygonMember
-                            .getLocalPart());
+            parser.require(XmlPullParser.START_TAG, GML.NAMESPACE, GML.polygonMember.getLocalPart());
             parser.nextTag();
             parser.require(XmlPullParser.START_TAG, GML.NAMESPACE, GML.Polygon.getLocalPart());
             Polygon p = parsePolygon(dimension, crs);
@@ -514,9 +510,7 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 parser.nextTag();
                 if (XmlPullParser.END_TAG == parser.getEventType()) {
                     // we're done
-                    parser
-                            .require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.Polygon
-                                    .getLocalPart());
+                    parser.require(XmlPullParser.END_TAG, GML.NAMESPACE, GML.Polygon.getLocalPart());
                     break;
                 }
             }
@@ -677,8 +671,8 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 String namespace = parser.getNamespace();
                 String name = parser.getName();
                 if (featureNamespace.equals(namespace) && featureName.equals(name)) {
-                    String featureId = parser.getAttributeValue(GML.id.getNamespaceURI(), GML.id
-                            .getLocalPart());
+                    String featureId = parser.getAttributeValue(GML.id.getNamespaceURI(),
+                            GML.id.getLocalPart());
 
                     if (featureId == null) {
                         featureId = parser.getAttributeValue(null, "fid");

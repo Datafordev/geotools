@@ -23,44 +23,55 @@ import java.util.NoSuchElementException;
 import junit.framework.TestCase;
 
 /**
- *  summary sentence.
+ * summary sentence.
  * <p>
  * Paragraph ...
- * </p><p>
+ * </p>
+ * <p>
  * Responsibilities:
  * <ul>
  * <li>
  * <li>
  * </ul>
- * </p><p>
- * Example:<pre><code>
+ * </p>
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * <code>
  * GeoServer x = new GeoServer( ... );
  * TODO code example
- * </code></pre>
+ * </code>
+ * </pre>
+ * 
  * </p>
+ * 
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class ESRITest extends TestCase {
 
     private URL url = null;
-    
-    public ESRITest() throws MalformedURLException{
+
+    public ESRITest() throws MalformedURLException {
         // Too slow
-        url = new URL("http://dev.geographynetwork.ca/ogcwfs/servlet/com.esri.ogc.wfs.WFSServlet?Request=GetCapabilities");
+        url = new URL(
+                "http://dev.geographynetwork.ca/ogcwfs/servlet/com.esri.ogc.wfs.WFSServlet?Request=GetCapabilities");
     }
-    
-    public void testFeatureType() throws NoSuchElementException{
-//        WFSDataStoreReadTest.doFeatureType(url,true,false,2);
+
+    public void testFeatureType() throws NoSuchElementException {
+        // WFSDataStoreReadTest.doFeatureType(url,true,false,2);
     }
-    public void testFeatureReader() throws NoSuchElementException{
-//        WFSDataStoreReadTest.doFeatureReader(url,true,false,2);
+
+    public void testFeatureReader() throws NoSuchElementException {
+        // WFSDataStoreReadTest.doFeatureReader(url,true,false,2);
     }
-    public void testFeatureReaderWithFilter() throws NoSuchElementException{
-//        WFSDataStoreReadTest.doFeatureReaderWithFilter(url,true,false,2);
+
+    public void testFeatureReaderWithFilter() throws NoSuchElementException {
+        // WFSDataStoreReadTest.doFeatureReaderWithFilter(url,true,false,2);
     }
 }

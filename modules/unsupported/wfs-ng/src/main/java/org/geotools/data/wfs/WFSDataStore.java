@@ -33,9 +33,9 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
  *         /data/wfs/WFSDataStore.java $
@@ -90,6 +90,6 @@ public interface WFSDataStore extends DataStore {
     public void setPreferPostOverGet(Boolean booleanValue);
 
     public boolean isPreferPostOverGet();
-    
+
     public void setNamespaceOverride(String namespaceOverride);
 }

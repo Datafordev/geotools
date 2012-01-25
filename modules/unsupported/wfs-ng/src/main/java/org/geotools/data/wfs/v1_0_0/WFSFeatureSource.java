@@ -54,9 +54,9 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * {@link FeatureSource} extension interface to provide WFS specific extra information.
  * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
  *         /wfs/v_1_0_0/data/WFSFeatureSource.java $
@@ -70,7 +70,7 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
 
     private FeatureSetDescription featureSetDescription;
 
-    protected WFSFeatureSource( WFS_1_0_0_DataStore ds, String fname ) {
+    protected WFSFeatureSource(WFS_1_0_0_DataStore ds, String fname) {
         this.ds = ds;
         this.fname = fname;
         this.featureSetDescription = WFSCapabilities.getFeatureSetDescription(ds.getCapabilities(),
@@ -81,6 +81,7 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
     public Set getSupportedHints() {
         return super.getSupportedHints();
     }
+
     /**
      * @since 2.5
      * @see FeatureSource#getName()
@@ -99,7 +100,7 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
      * @see FeatureSource#getInfo()
      */
     public ResourceInfo getInfo() {
-        return new ResourceInfo(){
+        return new ResourceInfo() {
             public ReferencedEnvelope getBounds() {
                 try {
                     return ds.getBounds(new Query(fname));
@@ -163,14 +164,14 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
     /**
      * @see org.geotools.data.FeatureSource#addFeatureListener(org.geotools.data.FeatureListener)
      */
-    public void addFeatureListener( FeatureListener listener ) {
+    public void addFeatureListener(FeatureListener listener) {
         ds.listenerManager.addFeatureListener(this, listener);
     }
 
     /**
      * @see org.geotools.data.FeatureSource#removeFeatureListener(org.geotools.data.FeatureListener)
      */
-    public void removeFeatureListener( FeatureListener listener ) {
+    public void removeFeatureListener(FeatureListener listener) {
         ds.listenerManager.removeFeatureListener(this, listener);
     }
 
@@ -195,7 +196,7 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
     /**
      * @see org.geotools.data.FeatureSource#getBounds(org.geotools.data.Query)
      */
-    public ReferencedEnvelope getBounds( Query query ) throws IOException {
+    public ReferencedEnvelope getBounds(Query query) throws IOException {
         return ds.getBounds(namedQuery(query));
     }
 
@@ -209,16 +210,14 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
     /**
      * @see org.geotools.data.FeatureSource#getFeatures(org.geotools.filter.Filter)
      */
-    public SimpleFeatureCollection getFeatures( Filter filter )
-            throws IOException {
+    public SimpleFeatureCollection getFeatures(Filter filter) throws IOException {
         return getFeatures(new Query(getSchema().getTypeName(), filter));
     }
 
     /**
      * @see org.geotools.data.FeatureSource#getFeatures(org.geotools.data.Query)
      */
-    public SimpleFeatureCollection getFeatures( Query query )
-            throws IOException {
+    public SimpleFeatureCollection getFeatures(Query query) throws IOException {
         SimpleFeatureType schema = getSchema();
         String typeName = schema.getTypeName();
 
@@ -255,7 +254,7 @@ public class WFSFeatureSource extends AbstractFeatureSource implements SimpleFea
          * @param fs
          * @param query
          */
-        public WFSFeatureResults( WFSFeatureSource fs, Query query ) throws IOException {
+        public WFSFeatureResults(WFSFeatureSource fs, Query query) throws IOException {
             super(fs, query);
             this.query = query;
             this.fs = fs;

@@ -18,19 +18,20 @@ package org.geotools.data.wfs.v1_0_0;
 
 import org.opengis.filter.Id;
 
-
 /**
  * Result of locking features (listing both locked and unlocked features).
- *
+ * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class LockResult {
     protected String lockId;
+
     protected Id supported;
+
     protected Id notSupported;
 
     @SuppressWarnings("unused")
@@ -52,7 +53,7 @@ public class LockResult {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the lockId.
      */
     public String getLockId() {
@@ -61,7 +62,7 @@ public class LockResult {
 
     /**
      * Filter of all the features that could not be locked.
-     *
+     * 
      * @return Returns the notSupported.
      */
     public Id getNotSupported() {
@@ -70,7 +71,7 @@ public class LockResult {
 
     /**
      * Filter of all the features that were locked.
-     *
+     * 
      * @return Returns the supported.
      */
     public Id getSupported() {

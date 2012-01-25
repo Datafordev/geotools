@@ -31,58 +31,56 @@ import org.xml.sax.SAXException;
 /**
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class IonicOnlineTest extends TestCase {
 
-	private URL url = null;
+    private URL url = null;
 
-	public IonicOnlineTest() throws MalformedURLException {
-		url = new URL(
-				"http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA?version=1.0.0&request=getcapabilities&service=WFS");
-	}
+    public IonicOnlineTest() throws MalformedURLException {
+        url = new URL(
+                "http://webservices.ionicsoft.com/ionicweb/wfs/BOSTON_ORA?version=1.0.0&request=getcapabilities&service=WFS");
+    }
 
-	public void testFeatureType() throws NoSuchElementException, IOException,
-			SAXException {
-		try {
-			WFSDataStoreReadTest.doFeatureType(url, true, true, 0);
-		} catch (IOException e) {
-			skipHttpErrors(e);
-		}
-	}
+    public void testFeatureType() throws NoSuchElementException, IOException, SAXException {
+        try {
+            WFSDataStoreReadTest.doFeatureType(url, true, true, 0);
+        } catch (IOException e) {
+            skipHttpErrors(e);
+        }
+    }
 
-	public void testFeatureReader() throws NoSuchElementException, IOException,
-			IllegalAttributeException, SAXException {
-		// FAILS due to Choice !!!
-		try {
-			WFSDataStoreReadTest.doFeatureReader(url, true, true, 0);
-		} catch (IOException e) {
-			skipHttpErrors(e);
-		}
-	}
+    public void testFeatureReader() throws NoSuchElementException, IOException,
+            IllegalAttributeException, SAXException {
+        // FAILS due to Choice !!!
+        try {
+            WFSDataStoreReadTest.doFeatureReader(url, true, true, 0);
+        } catch (IOException e) {
+            skipHttpErrors(e);
+        }
+    }
 
-	public void testFeatureReaderWithQuery() throws NoSuchElementException,
-			OperationNotSupportedException, IllegalAttributeException,
-			IOException, SAXException {
-		try {
-			WFSDataStoreReadTest.doFeatureReaderWithQuery(url, true, true, 0);
-		} catch (IOException e) {
-			skipHttpErrors(e);
-		}
-	}
+    public void testFeatureReaderWithQuery() throws NoSuchElementException,
+            OperationNotSupportedException, IllegalAttributeException, IOException, SAXException {
+        try {
+            WFSDataStoreReadTest.doFeatureReaderWithQuery(url, true, true, 0);
+        } catch (IOException e) {
+            skipHttpErrors(e);
+        }
+    }
 
-	/**
-	 * I the exception is a HTTP failure, skip the test to avoid breaking the build
-	 * @param e
-	 * @throws IOException
-	 */
-	private void skipHttpErrors(IOException e) throws IOException {
-		if (e.getMessage().indexOf("Server returned HTTP response code:") == -1)
-			throw e;
-		System.out.println("WARNING, skipping test due to HTTP error: "
-				+ e.getMessage());
-	}
+    /**
+     * I the exception is a HTTP failure, skip the test to avoid breaking the build
+     * 
+     * @param e
+     * @throws IOException
+     */
+    private void skipHttpErrors(IOException e) throws IOException {
+        if (e.getMessage().indexOf("Server returned HTTP response code:") == -1)
+            throw e;
+        System.out.println("WARNING, skipping test due to HTTP error: " + e.getMessage());
+    }
 }

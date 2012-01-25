@@ -27,44 +27,57 @@ import org.geotools.feature.IllegalAttributeException;
 import org.xml.sax.SAXException;
 
 /**
- *  summary sentence.
+ * summary sentence.
  * <p>
  * Paragraph ...
- * </p><p>
+ * </p>
+ * <p>
  * Responsibilities:
  * <ul>
  * <li>
  * <li>
  * </ul>
- * </p><p>
- * Example:<pre><code>
+ * </p>
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * <code>
  * GeoServer x = new GeoServer( ... );
  * TODO code example
- * </code></pre>
+ * </code>
+ * </pre>
+ * 
  * </p>
+ * 
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class CarisTest extends TestCase {
 
     private URL url = null;
-    
-    public CarisTest() throws MalformedURLException{
-        url = new URL("http://gp.holonics.ca/wfs/chartswfs?REQUEST=GetCapabilities&VERSION=1.0.0&SERVICE=WFS");
+
+    public CarisTest() throws MalformedURLException {
+        url = new URL(
+                "http://gp.holonics.ca/wfs/chartswfs?REQUEST=GetCapabilities&VERSION=1.0.0&SERVICE=WFS");
     }
-    
-    public void testFeatureType() throws NoSuchElementException, IOException, SAXException{
-//        WFSDataStoreReadTest.doFeatureType(url,false,true,0);
+
+    public void testFeatureType() throws NoSuchElementException, IOException, SAXException {
+        // WFSDataStoreReadTest.doFeatureType(url,false,true,0);
     }
-    public void testFeatureReader() throws NoSuchElementException, IOException, IllegalAttributeException, SAXException{
+
+    public void testFeatureReader() throws NoSuchElementException, IOException,
+            IllegalAttributeException, SAXException {
         // epsg code unknown
-//        WFSDataStoreReadTest.doFeatureReader(url,false,false,0);
+        // WFSDataStoreReadTest.doFeatureReader(url,false,false,0);
     }
-    public void testFeatureReaderWithFilter() throws NoSuchElementException, IllegalAttributeException, IOException, SAXException{
-//        WFSDataStoreReadTest.doFeatureReaderWithFilter(url,false,true,0);
+
+    public void testFeatureReaderWithFilter() throws NoSuchElementException,
+            IllegalAttributeException, IOException, SAXException {
+        // WFSDataStoreReadTest.doFeatureReaderWithFilter(url,false,true,0);
     }
 }

@@ -22,19 +22,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import org.geotools.data.wfs.protocol.http.HTTPProtocol;
-import org.geotools.data.wfs.protocol.http.HttpMethod;
+import org.geotools.data.wfs.protocol.HttpMethod;
 
 /**
- * Interface to abstract out the plain connection and stream set up against the
- * target WFS
+ * Interface to abstract out the plain connection and stream set up against the target WFS
  * 
  * @author Gabriel Roldan (TOPP)
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  * @deprecated in favour of {@link HTTPProtocol}
  */
@@ -54,9 +52,8 @@ public interface ConnectionFactory {
     Charset getEncoding();
 
     /**
-     * Creates and returns a connection object for the supplied URL, settled up
-     * for the given HTTP method (GET or POST) and this connection factory
-     * tryGzip and authentication settings.
+     * Creates and returns a connection object for the supplied URL, settled up for the given HTTP
+     * method (GET or POST) and this connection factory tryGzip and authentication settings.
      * 
      * @param query
      * @param method
@@ -68,8 +65,7 @@ public interface ConnectionFactory {
     InputStream getInputStream(HttpURLConnection hc) throws IOException;
 
     /**
-     * Shortcut for
-     * {@code conn = getConnection(url, method); getInputStream(conn);}
+     * Shortcut for {@code conn = getConnection(url, method); getInputStream(conn);}
      * 
      * @param query
      * @param method

@@ -60,10 +60,10 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
-public abstract class AbstractWfsDataStoreOnlineTest  {
+public abstract class AbstractWfsDataStoreOnlineTest {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.wfs.v_1_1_0.data.test");
 
@@ -71,7 +71,7 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
 
     private final String SERVER_URL;
 
-    protected static Boolean serviceAvailable = null;
+    protected Boolean serviceAvailable = null;
 
     /**
      * The DataStore under test, static so we create it only once
@@ -85,8 +85,8 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
     private final int featureCount;
 
     /**
-     * The filter used for the count test, may be null if
-     * {@link #testFeatureSourceGetCountFilter()} is not expected to be run
+     * The filter used for the count test, may be null if {@link #testFeatureSourceGetCountFilter()}
+     * is not expected to be run
      */
     private final Id fidFilter;
 
@@ -204,8 +204,8 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
 
         bounds = featureSource.getBounds(query);
         assertNotNull(bounds);
-        assertSame("the bounds were not reprojected", queryCrs, bounds
-                .getCoordinateReferenceSystem());
+        assertSame("the bounds were not reprojected", queryCrs,
+                bounds.getCoordinateReferenceSystem());
 
         final String geometryName = featureSource.getSchema().getGeometryDescriptor()
                 .getLocalName();
@@ -229,8 +229,8 @@ public abstract class AbstractWfsDataStoreOnlineTest  {
     }
 
     /**
-     * Performs a FeatureSource.getCount(Query) with the constructor provided
-     * fid filter if the filter is not null.
+     * Performs a FeatureSource.getCount(Query) with the constructor provided fid filter if the
+     * filter is not null.
      * 
      * @throws IOException
      */

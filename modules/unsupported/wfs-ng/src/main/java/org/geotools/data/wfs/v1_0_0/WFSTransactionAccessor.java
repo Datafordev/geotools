@@ -27,64 +27,65 @@ import org.opengis.filter.FilterFactory;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class WFSTransactionAccessor implements ClientTransactionAccessor {
 
     private List<Action> actions;
-    private static FilterFactory ff = CommonFactoryFinder.getFilterFactory( null );
-    
-	WFSTransactionAccessor(List<Action> actions){
-        this.actions=actions;
-	}
-	
-    /**
-     * Returns all the filters indicating deleted feature anded together.  This is used to tell the server what features
-     * to NOT return.
-     * 
-     * @return all the filters indicating deleted feature anded together. 
-     */
-	public Filter getDeleteFilter() {
-		List<Action> l = actions;
-		Iterator<Action> i = l.iterator();
-		Filter deleteFilter=null;
-		while(i.hasNext()){
-			Action a = (Action)i.next();
-			if(a.getType() == Action.DELETE){
-				
-				if( deleteFilter==null )
-					deleteFilter=a.getFilter();
-				else
-					deleteFilter=  ff.and( deleteFilter, a.getFilter());
-			}
-		}
-		return deleteFilter;
-	}
 
-	
+    private static FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+
+    WFSTransactionAccessor(List<Action> actions) {
+        this.actions = actions;
+    }
+
+    /**
+     * Returns all the filters indicating deleted feature anded together. This is used to tell the
+     * server what features to NOT return.
+     * 
+     * @return all the filters indicating deleted feature anded together.
+     */
+    public Filter getDeleteFilter() {
+        List<Action> l = actions;
+        Iterator<Action> i = l.iterator();
+        Filter deleteFilter = null;
+        while (i.hasNext()) {
+            Action a = (Action) i.next();
+            if (a.getType() == Action.DELETE) {
+
+                if (deleteFilter == null)
+                    deleteFilter = a.getFilter();
+                else
+                    deleteFilter = ff.and(deleteFilter, a.getFilter());
+            }
+        }
+        return deleteFilter;
+    }
+
     /**
      * Returns all the filters of updates that affect the attribute in the expression ored together.
      * 
-     * @param attributePath the xpath identifier of the attribute.
+     * @param attributePath
+     *            the xpath identifier of the attribute.
      * @return all the filters of updates that affect the attribute in the expression ORed together.
      */
     public Filter getUpdateFilter(String attributePath) {
         Iterator<Action> i = actions.iterator();
-        Filter updateFilter=null;
-        while(i.hasNext()){
-        	Action a = (Action)i.next();
-        	if(a.getType() == Action.UPDATE){
-        		UpdateAction ua = (UpdateAction)a;
-        		if(ua.getProperty(attributePath)!=null){
-        			if( updateFilter==null )
-        				updateFilter=a.getFilter();
-        			else
-        				updateFilter=ff.and( updateFilter, a.getFilter());
-        		}
-        	}
+        Filter updateFilter = null;
+        while (i.hasNext()) {
+            Action a = (Action) i.next();
+            if (a.getType() == Action.UPDATE) {
+                UpdateAction ua = (UpdateAction) a;
+                if (ua.getProperty(attributePath) != null) {
+                    if (updateFilter == null)
+                        updateFilter = a.getFilter();
+                    else
+                        updateFilter = ff.and(updateFilter, a.getFilter());
+                }
+            }
         }
-		return updateFilter;
-	}
-	
+        return updateFilter;
+    }
+
 }

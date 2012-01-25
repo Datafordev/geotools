@@ -23,7 +23,7 @@ import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
 import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.xml.Configuration;
 
-@SuppressWarnings( { "nls" })
+@SuppressWarnings({ "nls" })
 /**
  * 
  *
@@ -36,8 +36,8 @@ public class GeoServerStrategy extends DefaultWFSStrategy {
     private static final String GEOSERVER_WRONG_FORMAT_NAME = "text/gml; subtype=gml/3.1.1";
 
     /**
-     * GeoServer versions prior to 2.0 state {@code text/gml; subtype=gml/3.1.1} instead of {@code
-     * text/xml; subtype=gml/3.1.1}
+     * GeoServer versions prior to 2.0 state {@code text/gml; subtype=gml/3.1.1} instead of
+     * {@code text/xml; subtype=gml/3.1.1}
      */
     @Override
     public String getDefaultOutputFormat(WFSProtocol wfs, WFSOperationType op) {

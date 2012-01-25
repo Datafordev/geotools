@@ -24,14 +24,14 @@ import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
 
 /**
  * B3partners B.V. http://www.b3partners.nl
- * @author Roy Braam
- * Created on 25-mei-2010, 12:12:31
- *
- *
- *
+ * 
+ * @author Roy Braam Created on 25-mei-2010, 12:12:31
+ * 
+ * 
+ * 
  * @source $URL$
  */
-public class ArcGISServerStrategy extends DefaultWFSStrategy{
+public class ArcGISServerStrategy extends DefaultWFSStrategy {
     /**
      * ArcGIS server configuration without @DefaultWFSStrategy#DEFAULT_OUTPUT_FORMAT but with some
      * subtype profile
@@ -42,10 +42,12 @@ public class ArcGISServerStrategy extends DefaultWFSStrategy{
             return super.getDefaultOutputFormat(wfs, op);
         } catch (IllegalArgumentException e) {
             Set<String> supportedOutputFormats = wfs.getSupportedGetFeatureOutputFormats();
-            Iterator<String> it= supportedOutputFormats.iterator();
-            while (it.hasNext()){
-                String outputFormat=it.next();
-                if (outputFormat!=null && outputFormat.toLowerCase().startsWith(DEFAULT_OUTPUT_FORMAT.toLowerCase())){
+            Iterator<String> it = supportedOutputFormats.iterator();
+            while (it.hasNext()) {
+                String outputFormat = it.next();
+                if (outputFormat != null
+                        && outputFormat.toLowerCase().startsWith(
+                                DEFAULT_OUTPUT_FORMAT.toLowerCase())) {
                     return outputFormat;
                 }
             }

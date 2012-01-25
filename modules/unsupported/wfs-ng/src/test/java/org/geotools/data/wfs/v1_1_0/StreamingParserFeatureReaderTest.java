@@ -35,9 +35,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/test/java/org/geotools
  *         /wfs/v_1_1_0/data/StreamingParserFeatureReaderTest.java $
@@ -45,8 +45,8 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class StreamingParserFeatureReaderTest extends AbstractGetFeatureParserTest {
 
     @Override
-    protected GetFeatureParser getParser( QName featureName, String schemaLocation,
-            SimpleFeatureType featureType, URL getFeaturesRequest ) throws IOException {
+    protected GetFeatureParser getParser(QName featureName, String schemaLocation,
+            SimpleFeatureType featureType, URL getFeaturesRequest) throws IOException {
         URL schemaLocationUrl = TestData.getResource(this, schemaLocation);
 
         Configuration configuration = new WFSConfiguration();
@@ -64,7 +64,7 @@ public class StreamingParserFeatureReaderTest extends AbstractGetFeatureParserTe
      * 
      * @param argv
      */
-    public static void main( String argv[] ) {
+    public static void main(String argv[]) {
         StreamingParserFeatureReaderTest test;
         test = new StreamingParserFeatureReaderTest();
         try {

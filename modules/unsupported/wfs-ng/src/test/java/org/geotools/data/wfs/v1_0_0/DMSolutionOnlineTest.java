@@ -27,43 +27,56 @@ import org.geotools.feature.IllegalAttributeException;
 import org.xml.sax.SAXException;
 
 /**
- *  summary sentence.
+ * summary sentence.
  * <p>
  * Paragraph ...
- * </p><p>
+ * </p>
+ * <p>
  * Responsibilities:
  * <ul>
  * <li>
  * <li>
  * </ul>
- * </p><p>
- * Example:<pre><code>
+ * </p>
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * <code>
  * GeoServer x = new GeoServer( ... );
  * TODO code example
- * </code></pre>
+ * </code>
+ * </pre>
+ * 
  * </p>
+ * 
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class DMSolutionOnlineTest extends TestCase {
 
     private URL url = null;
-    
-    public DMSolutionOnlineTest() throws MalformedURLException{
-        url = new URL("http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap?version=1.0.0&request=getcapabilities&service=wfs");
+
+    public DMSolutionOnlineTest() throws MalformedURLException {
+        url = new URL(
+                "http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap?version=1.0.0&request=getcapabilities&service=wfs");
     }
-    
-    public void testFeatureType() throws NoSuchElementException, IOException, SAXException{
-        WFSDataStoreReadTest.doFeatureType(url,true,true,0);
+
+    public void testFeatureType() throws NoSuchElementException, IOException, SAXException {
+        WFSDataStoreReadTest.doFeatureType(url, true, true, 0);
     }
-    public void testFeatureReader() throws NoSuchElementException, IOException, IllegalAttributeException, SAXException{
-        WFSDataStoreReadTest.doFeatureReader(url,true,true,0);
+
+    public void testFeatureReader() throws NoSuchElementException, IOException,
+            IllegalAttributeException, SAXException {
+        WFSDataStoreReadTest.doFeatureReader(url, true, true, 0);
     }
-    public void testFeatureReaderWithFilter() throws NoSuchElementException, IllegalAttributeException, IOException, SAXException{
-        WFSDataStoreReadTest.doFeatureReaderWithQuery(url,true,true,0);
+
+    public void testFeatureReaderWithFilter() throws NoSuchElementException,
+            IllegalAttributeException, IOException, SAXException {
+        WFSDataStoreReadTest.doFeatureReaderWithQuery(url, true, true, 0);
     }
 }

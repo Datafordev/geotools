@@ -38,7 +38,6 @@ import org.geotools.gml3.ApplicationSchemaConfiguration;
 import org.geotools.gml3.GML;
 import org.geotools.gml3.bindings.GML3ParsingUtils;
 import org.geotools.util.logging.Logging;
-import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Binding;
 import org.geotools.xml.BindingFactory;
 import org.geotools.xml.Configuration;
@@ -66,7 +65,8 @@ import org.xml.sax.helpers.NamespaceSupport;
  * <b>Element</b> whose type is the one needed.
  * <p>
  * Currently only <b>simple</b> FeatureTypes are supported. In the feature, complex schemas may be
- * supported by porting the <a href="http://svn.geotools.org/geotools/branches/2.4.x/modules/unsupported/community-schemas/community-schema-ds/src/main/java/org/geotools/data/complex/config/EmfAppSchemaReader.java"
+ * supported by porting the <a href=
+ * "http://svn.geotools.org/geotools/branches/2.4.x/modules/unsupported/community-schemas/community-schema-ds/src/main/java/org/geotools/data/complex/config/EmfAppSchemaReader.java"
  * >EmfAppSchemaParser</a> class in the community schema datastore module, depending on the
  * availability of complex {@link Feature} support on the mainstream GeoTools distribution.
  * </p>
@@ -74,9 +74,9 @@ import org.xml.sax.helpers.NamespaceSupport;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
  *         /wfs/v_1_1_0/data/EmfAppSchemaParser.java $
@@ -84,7 +84,6 @@ import org.xml.sax.helpers.NamespaceSupport;
 public class EmfAppSchemaParser {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
-
 
     public static SimpleFeatureType parseSimpleFeatureType(final QName featureName,
             final URL schemaLocation, final CoordinateReferenceSystem crs,
@@ -105,34 +104,38 @@ public class EmfAppSchemaParser {
      * </p>
      * Note: this code is borrowed and adapted from {@link ParserHandler#startDocument()}
      * 
-     * @param wfsConfiguration the WFS configuration for the parser to grab {@link Binding}s from.
-     * @param featureName the qualified name of the Feature element in the schema, for which the
-     *        feature type is to be parsed.
-     * @param schemaLocation the location of the root schema file from where to parse the feature
-     *        type.
-     * @param crs the CRS to be assigned to the geometric attributes in the parsed feature type.
-     *        This information shall be provided here as the schema itself has no knowledge of the
-     *        CRS used.
+     * @param wfsConfiguration
+     *            the WFS configuration for the parser to grab {@link Binding}s from.
+     * @param featureName
+     *            the qualified name of the Feature element in the schema, for which the feature
+     *            type is to be parsed.
+     * @param schemaLocation
+     *            the location of the root schema file from where to parse the feature type.
+     * @param crs
+     *            the CRS to be assigned to the geometric attributes in the parsed feature type.
+     *            This information shall be provided here as the schema itself has no knowledge of
+     *            the CRS used.
      * @return
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    public static SimpleFeatureType parseSimpleFeatureType( final Configuration wfsConfiguration,
-            final QName featureName, final URL schemaLocation, final CoordinateReferenceSystem crs )
+    public static SimpleFeatureType parseSimpleFeatureType(final Configuration wfsConfiguration,
+            final QName featureName, final URL schemaLocation, final CoordinateReferenceSystem crs)
             throws IOException {
         final SimpleFeatureType realType = parse(wfsConfiguration, featureName, schemaLocation, crs);
         SimpleFeatureType subsetType = toSimpleFeatureType(realType);
         return subsetType;
     }
+
     /**
-     * Go through FeatureType description and convert to a SimpleFeatureType.
-     * Also ignores AbstractFeatureType contributions such as name etc...
+     * Go through FeatureType description and convert to a SimpleFeatureType. Also ignores
+     * AbstractFeatureType contributions such as name etc...
      * 
      * @param realType
      * @return
      * @throws DataSourceException
      */
-    public static SimpleFeatureType toSimpleFeatureType( final FeatureType realType )
+    public static SimpleFeatureType toSimpleFeatureType(final FeatureType realType)
             throws DataSourceException {
         List<PropertyDescriptor> attributes;
         Collection<PropertyDescriptor> descriptors = realType.getDescriptors();
@@ -145,20 +148,20 @@ public class EmfAppSchemaParser {
                 GML.location.getLocalPart(), GML.metaDataProperty.getLocalPart(),
                 GML.description.getLocalPart(), GML.name.getLocalPart(),
                 GML.boundedBy.getLocalPart() }));
-        
-        if(attributes.size() > ignoreList.size()){
+
+        if (attributes.size() > ignoreList.size()) {
             Set<String> firstAtts = new HashSet<String>();
-            for(int i = 0; i < ignoreList.size();i++){
+            for (int i = 0; i < ignoreList.size(); i++) {
                 firstAtts.add(attributes.get(i).getName().getLocalPart());
             }
-            if(ignoreList.equals(firstAtts)){
+            if (ignoreList.equals(firstAtts)) {
                 attributes = attributes.subList(ignoreList.size(), attributes.size());
             }
         }
         // / HACK END
 
-        for( PropertyDescriptor descriptor : attributes ) {
-            Class< ? > binding = descriptor.getType().getBinding();
+        for (PropertyDescriptor descriptor : attributes) {
+            Class<?> binding = descriptor.getType().getBinding();
             int maxOccurs = descriptor.getMaxOccurs();
             Name name = descriptor.getName();
             if (GML.NAMESPACE.equals(name.getNamespaceURI()) || maxOccurs > 1
@@ -193,19 +196,22 @@ public class EmfAppSchemaParser {
      * </p>
      * Note: this code is borrowed and adapted from {@link ParserHandler#startDocument()}
      * 
-     * @param wfsConfiguration the WFS configuration for the parser to grab {@link Binding}s from.
-     * @param featureName the qualified name of the Feature element in the schema, for which the
-     *        feature type is to be parsed.
-     * @param schemaLocation the location of the root schema file from where to parse the feature
-     *        type.
-     * @param crs the CRS to be assigned to the geometric attributes in the parsed feature type.
-     *        This information shall be provided here as the schema itself has no knowledge of the
-     *        CRS used.
+     * @param wfsConfiguration
+     *            the WFS configuration for the parser to grab {@link Binding}s from.
+     * @param featureName
+     *            the qualified name of the Feature element in the schema, for which the feature
+     *            type is to be parsed.
+     * @param schemaLocation
+     *            the location of the root schema file from where to parse the feature type.
+     * @param crs
+     *            the CRS to be assigned to the geometric attributes in the parsed feature type.
+     *            This information shall be provided here as the schema itself has no knowledge of
+     *            the CRS used.
      * @return
      * @throws IOException
      */
-    public static SimpleFeatureType parse( final Configuration wfsConfiguration,
-            final QName featureName, final URL schemaLocation, final CoordinateReferenceSystem crs )
+    public static SimpleFeatureType parse(final Configuration wfsConfiguration,
+            final QName featureName, final URL schemaLocation, final CoordinateReferenceSystem crs)
             throws IOException {
         XSDElementDeclaration elementDecl = parseFeatureType(featureName, schemaLocation);
 
@@ -242,7 +248,7 @@ public class EmfAppSchemaParser {
                 }
                 List<AttributeDescriptor> attributes = featureType.getAttributeDescriptors();
                 final GeometryDescriptor defaultGeometry = featureType.getGeometryDescriptor();
-                for( AttributeDescriptor descriptor : attributes ) {
+                for (AttributeDescriptor descriptor : attributes) {
                     if (descriptor instanceof GeometryDescriptor) {
                         String name = descriptor.getLocalName();
                         Class binding = descriptor.getType().getBinding();
@@ -275,7 +281,7 @@ public class EmfAppSchemaParser {
      * @return
      */
     private static XSDElementDeclaration parseFeatureType(final QName featureTypeName,
-            final URL schemaLocation ) throws DataSourceException {
+            final URL schemaLocation) throws DataSourceException {
         ApplicationSchemaConfiguration configuration;
         {
             String namespaceURI = featureTypeName.getNamespaceURI();

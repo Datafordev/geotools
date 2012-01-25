@@ -16,7 +16,7 @@
  */
 package org.geotools.wfs.protocol;
 
-import static org.geotools.data.wfs.protocol.http.HttpMethod.GET;
+import static org.geotools.data.wfs.protocol.HttpMethod.GET;
 import static org.geotools.data.wfs.protocol.wfs.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.IOException;
@@ -25,22 +25,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
 
-import org.geotools.data.wfs.protocol.http.HttpMethod;
+import org.geotools.data.wfs.protocol.HttpMethod;
 import org.geotools.data.wfs.protocol.wfs.Version;
 import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
 import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
 import org.geotools.util.logging.Logging;
 
 /**
- * Handles setting up connections to a WFS based on a WFS capabilities document,
- * taking care of GZIP and authentication.
+ * Handles setting up connections to a WFS based on a WFS capabilities document, taking care of GZIP
+ * and authentication.
  * 
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  * @deprecated use {@link WFSProtocol}
  */
@@ -62,8 +62,7 @@ public abstract class WFSProtocolHandler {
     }
 
     /**
-     * Returns whether the service supports the given operation for the given
-     * HTTP method.
+     * Returns whether the service supports the given operation for the given HTTP method.
      * 
      * @param operation
      * @param method
@@ -77,8 +76,7 @@ public abstract class WFSProtocolHandler {
      * @param method
      * @return The URL access point for the given operation and method
      * @throws UnsupportedOperationException
-     *             if the combination operation/method is not supported by the
-     *             service
+     *             if the combination operation/method is not supported by the service
      * @see #supports(WFSOperationType, HttpMethod)
      */
     public abstract URL getOperationURL(WFSOperationType operation, HttpMethod method)

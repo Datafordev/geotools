@@ -37,11 +37,11 @@ import org.xml.sax.SAXException;
  * {@link StreamingParser} to fetch Features out of a WFS GetFeature response.
  * 
  * @author Gabriel Roldan
- * @version $Id: StreamingParserFeatureReader.java 28937 2008-01-25 10:52:22Z
- *          desruisseaux $
+ * @version $Id: StreamingParserFeatureReader.java 28937 2008-01-25 10:52:22Z desruisseaux $
  * @since 2.5.x
  * @source $URL:
- *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools/wfs/v_1_1_0/data/StreamingParserFeatureReader.java $
+ *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
+ *         /wfs/v_1_1_0/data/StreamingParserFeatureReader.java $
  */
 class StreamingParserFeatureReader implements GetFeatureParser {
 
@@ -50,15 +50,14 @@ class StreamingParserFeatureReader implements GetFeatureParser {
     private InputStream inputStream;
 
     /**
-     * A WFS configuration for unit test support, that resolves schemas to the
-     * test data dir.
+     * A WFS configuration for unit test support, that resolves schemas to the test data dir.
      * 
      * @author Gabriel Roldan
-     * @version $Id: TestWFSConfiguration.java 28989 2008-01-28 21:22:31Z
-     *          groldan $
+     * @version $Id: TestWFSConfiguration.java 28989 2008-01-28 21:22:31Z groldan $
      * @since 2.5.x
      * @source $URL:
-     *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/test/java/org/geotools/wfs/v_1_1_0/data/TestWFSConfiguration.java $
+     *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/test/java/org/geotools
+     *         /wfs/v_1_1_0/data/TestWFSConfiguration.java $
      */
     private static class WFSAppSchemaConfiguration extends ApplicationSchemaConfiguration {
 
@@ -82,17 +81,15 @@ class StreamingParserFeatureReader implements GetFeatureParser {
     /**
      * 
      * @param wfsConfiguration
-     *            the configuration where to grab (wfs and gml) bindings from.
-     *            Should be an instance of {@link WFSConfiguration}.
+     *            the configuration where to grab (wfs and gml) bindings from. Should be an instance
+     *            of {@link WFSConfiguration}.
      * @param getFeatureResponseStream
      *            the response stream from a GetFeature operation.
      * @param featureName
-     *            the name of the Feature (ie, the top level xml element
-     *            declaration)
+     *            the name of the Feature (ie, the top level xml element declaration)
      * @param describeFeatureTypeRequest
-     *            provides the location of the GetFeature response schema to be
-     *            used by an {@link ApplicationSchemaConfiguration} in order to
-     *            resolve imports and includes.
+     *            provides the location of the GetFeature response schema to be used by an
+     *            {@link ApplicationSchemaConfiguration} in order to resolve imports and includes.
      * @throws DataSourceException
      */
     public StreamingParserFeatureReader(final Configuration wfsConfiguration,

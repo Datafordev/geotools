@@ -30,47 +30,49 @@ import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * @author Jesse
- *
- *
- *
- *
- *
+ * 
+ * 
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class CreateFeatureTypeTest extends TestCase {
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+    protected void setUp() throws Exception {
+        super.setUp();
+    }
 
-	public void testSimple() throws Exception {
-		InputStream in = TestData.openStream("xml/feature-type-simple.xsd");
-		try{
-	        Schema schema = SchemaFactory.getInstance(null, in);
-	        SimpleFeatureType ft = WFS_1_0_0_DataStore.parseDescribeFeatureTypeResponse("WATER", schema);
-	        assertNotNull(ft);
-	        assertEquals(Integer.class, ft.getDescriptor("ID").getType().getBinding());
-	        assertEquals(String.class, ft.getDescriptor("CODE").getType().getBinding());
-	        assertEquals(Float.class, ft.getDescriptor("KM").getType().getBinding());
-	        assertEquals(Polygon.class, ft.getDescriptor("GEOM").getType().getBinding());
-		}finally{
-			in.close();
-		}
-	}
+    public void testSimple() throws Exception {
+        InputStream in = TestData.openStream("xml/feature-type-simple.xsd");
+        try {
+            Schema schema = SchemaFactory.getInstance(null, in);
+            SimpleFeatureType ft = WFS_1_0_0_DataStore.parseDescribeFeatureTypeResponse("WATER",
+                    schema);
+            assertNotNull(ft);
+            assertEquals(Integer.class, ft.getDescriptor("ID").getType().getBinding());
+            assertEquals(String.class, ft.getDescriptor("CODE").getType().getBinding());
+            assertEquals(Float.class, ft.getDescriptor("KM").getType().getBinding());
+            assertEquals(Polygon.class, ft.getDescriptor("GEOM").getType().getBinding());
+        } finally {
+            in.close();
+        }
+    }
 
-	public void testChoiceGeom() throws Exception {
-		InputStream in = TestData.openStream("xml/feature-type-choice.xsd");
-		try{
-	        Schema schema = SchemaFactory.getInstance(null, in);
-	        SimpleFeatureType ft = WFS_1_0_0_DataStore.parseDescribeFeatureTypeResponse("WATER", schema);
-	        assertNotNull(ft);
-	        assertEquals(Integer.class, ft.getDescriptor("ID").getType().getBinding());
-	        assertEquals(String.class, ft.getDescriptor("CODE").getType().getBinding());
-	        assertEquals(Float.class, ft.getDescriptor("KM").getType().getBinding());
-	        assertEquals(MultiPolygon.class, ft.getDescriptor("GEOM").getType().getBinding());
-		}finally{
-			in.close();
-		}
-	}
-	
+    public void testChoiceGeom() throws Exception {
+        InputStream in = TestData.openStream("xml/feature-type-choice.xsd");
+        try {
+            Schema schema = SchemaFactory.getInstance(null, in);
+            SimpleFeatureType ft = WFS_1_0_0_DataStore.parseDescribeFeatureTypeResponse("WATER",
+                    schema);
+            assertNotNull(ft);
+            assertEquals(Integer.class, ft.getDescriptor("ID").getType().getBinding());
+            assertEquals(String.class, ft.getDescriptor("CODE").getType().getBinding());
+            assertEquals(Float.class, ft.getDescriptor("KM").getType().getBinding());
+            assertEquals(MultiPolygon.class, ft.getDescriptor("GEOM").getType().getBinding());
+        } finally {
+            in.close();
+        }
+    }
+
 }

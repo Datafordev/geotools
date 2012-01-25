@@ -26,25 +26,26 @@ import org.opengis.feature.type.AttributeDescriptor;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class LenientFeatureFactory extends AbstractFeatureFactoryImpl {
 
     @Override
-    public Attribute createAttribute(Object value,
-            AttributeDescriptor descriptor, String id) {
-        return new LenientAttribute( value, descriptor, id );
+    public Attribute createAttribute(Object value, AttributeDescriptor descriptor, String id) {
+        return new LenientAttribute(value, descriptor, id);
     }
-    public SimpleFeature createSimpleFeature(List<Attribute> properties, SimpleFeatureType type, String id) {
-        LenientFeature newFeature = new LenientFeature( properties, type, id );
-        
-//        List<Object> values = new ArrayList<Object>();
-//        for( Attribute attribute : properties ){
-//            values.add( attribute.getValue() );
-//        }
-//        newFeature.setAttributes(values);
-//        
+
+    public SimpleFeature createSimpleFeature(List<Attribute> properties, SimpleFeatureType type,
+            String id) {
+        LenientFeature newFeature = new LenientFeature(properties, type, id);
+
+        // List<Object> values = new ArrayList<Object>();
+        // for( Attribute attribute : properties ){
+        // values.add( attribute.getValue() );
+        // }
+        // newFeature.setAttributes(values);
+        //
         return newFeature;
     }
 }

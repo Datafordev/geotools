@@ -24,15 +24,15 @@ import org.geotools.data.Transaction;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-
 /**
  * Provides an interface for certain methods that need to be handled on a server by server basis.
  * <p>
  * Allows for a bit more configurability than just the WFS params.
  * </p>
+ * 
  * @author Jesse
  */
 interface WFSStrategy {
-     FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query,
+    FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query,
             Transaction transaction) throws IOException;
 }

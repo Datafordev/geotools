@@ -17,7 +17,7 @@
  */
 package org.geotools.data.wfs.v1_0_0;
 
-import static org.geotools.data.wfs.protocol.http.HttpMethod.POST;
+import static org.geotools.data.wfs.protocol.HttpMethod.POST;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,26 +61,25 @@ import org.xml.sax.SAXException;
  * Hold the list of actions to perform in the Transaction.
  * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class WFSTransactionState implements State {
     private WFS_1_0_0_DataStore ds = null;
 
     /**
-     * A map of <String, String[]>. String is the typename and String[] are the
-     * fids returned by Transaction Results during the last commit.
+     * A map of <String, String[]>. String is the typename and String[] are the fids returned by
+     * Transaction Results during the last commit.
      * <p>
      * They are the fids of the inserted elements.
      */
     private Map<String, String[]> fids = new HashMap<String, String[]>();
 
     /**
-     * A Map of <String, List<Action>> where string is the typeName of the
-     * feature type and the list is the list of actions that have modified the
-     * feature type
+     * A Map of <String, List<Action>> where string is the typeName of the feature type and the list
+     * is the list of actions that have modified the feature type
      */
     Map<String, List<Action>> actionMap = new HashMap<String, List<Action>>();
 
@@ -151,7 +150,7 @@ public class WFSTransactionState implements State {
             List<Action> actions = entry.getValue();
             String typeName = (String) entry.getKey();
 
-            if (actions.isEmpty()){
+            if (actions.isEmpty()) {
                 continue;
             }
 
@@ -188,7 +187,7 @@ public class WFSTransactionState implements State {
                     }
                     String tempFid = insertAction.getFeature().getID();
                     String finalFid = newFids.get(currentInsertIndex);
-                    
+
                     ds.addFidMapping(tempFid, finalFid);
                     currentInsertIndex++;
                 }
@@ -213,29 +212,30 @@ public class WFSTransactionState implements State {
         Iterator<Entry<String, List<Action>>> entries = actionMap2.entrySet().iterator();
         while (entries.hasNext()) {
             Entry<String, List<Action>> entry = entries.next();
-            List<Action> list =  entry.getValue();
+            List<Action> list = entry.getValue();
             newMap.put(entry.getKey(), new ArrayList<Action>(list));
         }
         return newMap;
     }
 
-    private TransactionResult commitPost(List<Action> toCommit) throws OperationNotSupportedException,
-            IOException, SAXException {
-        
+    private TransactionResult commitPost(List<Action> toCommit)
+            throws OperationNotSupportedException, IOException, SAXException {
+
         URL postUrl = ds.capabilities.getTransaction().getPost();
         // System.out.println("POST Commit URL = "+postUrl);
         if (postUrl == null) {
-            throw new UnsupportedOperationException("Capabilities document does not describe a valid POST url for Transaction");
-            //return null;
+            throw new UnsupportedOperationException(
+                    "Capabilities document does not describe a valid POST url for Transaction");
+            // return null;
         }
 
         HttpURLConnection hc = ds.protocolHandler.getConnectionFactory().getConnection(postUrl,
                 POST);
         // System.out.println("connection to commit");
-        Map<String,Object> hints = new HashMap<String,Object>();
+        Map<String, Object> hints = new HashMap<String, Object>();
         hints.put(DocumentWriter.BASE_ELEMENT, WFSSchema.getInstance().getElements()[24]); // Transaction
         hints.put(DocumentWriter.ENCODING, ds.getDefaultEncoding());
-        
+
         Set<String> fts = new HashSet<String>();
         Iterator<Action> i = toCommit.iterator();
         while (i.hasNext()) {
@@ -248,13 +248,14 @@ public class WFSTransactionState implements State {
         while (i2.hasNext()) {
             String target = (String) i2.next();
             SimpleFeatureType schema = ds.getSchema(target);
-            
+
             try {
                 String namespaceURI = schema.getName().getNamespaceURI();
                 ns.add(namespaceURI);
                 URI namespaceLocation = ds.getDescribeFeatureTypeURL(target).toURI();
-                // if this is not added then sometimes the schema for the describe feature type cannot be loaded and
-                // an exception will be thrown during the commit 
+                // if this is not added then sometimes the schema for the describe feature type
+                // cannot be loaded and
+                // an exception will be thrown during the commit
                 SchemaFactory.getInstance(new URI(namespaceURI), namespaceLocation);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
@@ -286,20 +287,20 @@ public class WFSTransactionState implements State {
             w = new LogWriterDecorator(w, logger, Level.FINE);
         }
 
-        if(transaction != null && transaction.getProperty("handle") instanceof String){
+        if (transaction != null && transaction.getProperty("handle") instanceof String) {
             String commitMessageHandle = (String) transaction.getProperty("handle");
-            if(commitMessageHandle != null){
+            if (commitMessageHandle != null) {
                 hints.put("handle", commitMessageHandle);
             }
         }
-        
+
         DocumentWriter.writeDocument(this, WFSSchema.getInstance(), w, hints);
         w.flush();
         w.close();
 
         InputStream is = this.ds.protocolHandler.getConnectionFactory().getInputStream(hc);
 
-        hints = new HashMap<String,Object>();
+        hints = new HashMap<String, Object>();
 
         TransactionResult ft = (TransactionResult) DocumentFactory.getInstance(is, hints,
                 Level.WARNING);
@@ -329,7 +330,7 @@ public class WFSTransactionState implements State {
      */
     public void addAction(String typeName, Action a) {
         synchronized (actionMap) {
-            List<Action> list =  actionMap.get(typeName);
+            List<Action> list = actionMap.get(typeName);
             if (list == null) {
                 list = new ArrayList<Action>();
                 actionMap.put(typeName, list);
@@ -367,14 +368,12 @@ public class WFSTransactionState implements State {
     }
 
     /**
-     * Combines updates and inserts reducing the number of actions in the
-     * commit.
+     * Combines updates and inserts reducing the number of actions in the commit.
      * <p>
-     * This is in response to an issue where the FID is not known until after
-     * the commit so if a Feature is inserted then later updated(using a FID
-     * filter to identify the feature to update) within a single transactin then
-     * the commit will fail because the fid filter will be not apply once the
-     * insert action is processed.
+     * This is in response to an issue where the FID is not known until after the commit so if a
+     * Feature is inserted then later updated(using a FID filter to identify the feature to update)
+     * within a single transactin then the commit will fail because the fid filter will be not apply
+     * once the insert action is processed.
      * </p>
      * <p>
      * For Example:
@@ -391,30 +390,28 @@ public class WFSTransactionState implements State {
      * </li>
      * <li>Commit.
      * <p>
-     * Update will fail because when the Insert action is processed NewFeature
-     * will not refer to any feature.
+     * Update will fail because when the Insert action is processed NewFeature will not refer to any
+     * feature.
      * </p>
      * </li>
      * </ol>
      * </p>
      * <p>
-     * The algorithm is essentially foreach( insertAction ){ Apply each update
-     * and Delete action that applies to the inserted feature move insertAction
-     * to end of list }
+     * The algorithm is essentially foreach( insertAction ){ Apply each update and Delete action
+     * that applies to the inserted feature move insertAction to end of list }
      * </p>
      * <p>
-     * Mind you this only works assuming there aren't any direct dependencies
-     * between the actions beyond the ones specified by the API. For example if
-     * the value of an update depends directly on an earlier feature object
-     * (which is bad practice and should never be done). Then we may have
-     * problems with this solution. But I think that this solution is better
-     * than doing nothing because at least in the proper use of the API the
-     * correct result will be obtained. Whereas before the correct use of the
-     * API could obtain incorrect results.
+     * Mind you this only works assuming there aren't any direct dependencies between the actions
+     * beyond the ones specified by the API. For example if the value of an update depends directly
+     * on an earlier feature object (which is bad practice and should never be done). Then we may
+     * have problems with this solution. But I think that this solution is better than doing nothing
+     * because at least in the proper use of the API the correct result will be obtained. Whereas
+     * before the correct use of the API could obtain incorrect results.
      * </p>
      */
     protected void combineActions() {
-        EACH_FEATURE_TYPE: for (Iterator<List<Action>> iter = actionMap.values().iterator(); iter.hasNext();) {
+        EACH_FEATURE_TYPE: for (Iterator<List<Action>> iter = actionMap.values().iterator(); iter
+                .hasNext();) {
             List<Action> actions = iter.next();
 
             removeFilterAllActions(actions);

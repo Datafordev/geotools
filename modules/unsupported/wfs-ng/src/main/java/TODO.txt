@@ -1,0 +1,1 @@
+- Restore the tryGzip flag in WFSDataStoreFactory by making geotools HTTPClient gzip encoding optional

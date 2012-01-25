@@ -25,82 +25,90 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- *  summary sentence.
+ * summary sentence.
  * <p>
  * Paragraph ...
- * </p><p>
+ * </p>
+ * <p>
  * Responsibilities:
  * <ul>
  * <li>
  * <li>
  * </ul>
- * </p><p>
- * Example:<pre><code>
+ * </p>
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * <code>
  * PostDemo x = new PostDemo( ... );
  * TODO code example
- * </code></pre>
+ * </code>
+ * </pre>
+ * 
  * </p>
+ * 
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class PostDemo {
-    public static void main(String[] args) throws IOException{
-        String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-             "<DescribeFeatureType xmlns=\"http://www.opengis.net/wfs\" " +
-             "xmlns:gml=\"http://www.opengis.net/gml\" " +
-             "xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" " +
-             "service=\"WFS\" outputFormat=\"XMLSCHEMA\">" +
-             "<TypeName>envirodat</TypeName></DescribeFeatureType>";
-        
-        System.out.println(s+"\n\n\n");
+    public static void main(String[] args) throws IOException {
+        String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<DescribeFeatureType xmlns=\"http://www.opengis.net/wfs\" "
+                + "xmlns:gml=\"http://www.opengis.net/gml\" "
+                + "xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" "
+                + "service=\"WFS\" outputFormat=\"XMLSCHEMA\">"
+                + "<TypeName>envirodat</TypeName></DescribeFeatureType>";
+
+        System.out.println(s + "\n\n\n");
         URL url = new URL("http://map.ns.ec.gc.ca/envdat/map.aspx?");
 
-        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
         connection.setDoOutput(true);
         connection.setDoInput(true);
         connection.setRequestProperty("Content-type", "application/xml");
-        
+
         url.openConnection().connect();
         Writer w = new OutputStreamWriter(connection.getOutputStream());
         w.write(s);
         w.flush();
         w.close();
         BufferedReader r = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        while(r.ready()){
-            System.out.print((String)r.readLine());
+        while (r.ready()) {
+            System.out.print((String) r.readLine());
         }
     }
 
-//    public static void main(String[] args) throws IOException{
-//        String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-//             "<DescribeFeatureType xmlns=\"http://www.opengis.net/wfs\" " +
-//             "xmlns:gml=\"http://www.opengis.net/gml\" " +
-//             "xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" " +
-//             "service=\"WFS\" outputFormat=\"XMLSCHEMA\">" +
-//             "</DescribeFeatureType>";
-//        
-//        System.out.println(s+"\n\n\n");
-//        URL url = new URL("http://www.refractions.net:8080/geoserver/wfs?");
-//
-//        HttpURLConnection connection = (HttpURLConnection)url.openConnection();
-//        connection.setRequestMethod("POST");
-//        connection.setDoOutput(true);
-//        connection.setDoInput(true);
-//        connection.setRequestProperty("Content-type", "application/xml");
-//        
-//        url.openConnection().connect();
-//        Writer w = new OutputStreamWriter(connection.getOutputStream());
-//        w.write(s);
-//        w.flush();
-//        w.close();
-//        BufferedReader r = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//        while(r.ready()){
-//            System.out.print((String)r.readLine());
-//        }
-//    }
+    // public static void main(String[] args) throws IOException{
+    // String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+    // "<DescribeFeatureType xmlns=\"http://www.opengis.net/wfs\" " +
+    // "xmlns:gml=\"http://www.opengis.net/gml\" " +
+    // "xmlns:ogc=\"http://www.opengis.net/ogc\" version=\"1.0.0\" " +
+    // "service=\"WFS\" outputFormat=\"XMLSCHEMA\">" +
+    // "</DescribeFeatureType>";
+    //
+    // System.out.println(s+"\n\n\n");
+    // URL url = new URL("http://www.refractions.net:8080/geoserver/wfs?");
+    //
+    // HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+    // connection.setRequestMethod("POST");
+    // connection.setDoOutput(true);
+    // connection.setDoInput(true);
+    // connection.setRequestProperty("Content-type", "application/xml");
+    //
+    // url.openConnection().connect();
+    // Writer w = new OutputStreamWriter(connection.getOutputStream());
+    // w.write(s);
+    // w.flush();
+    // w.close();
+    // BufferedReader r = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+    // while(r.ready()){
+    // System.out.print((String)r.readLine());
+    // }
+    // }
 }

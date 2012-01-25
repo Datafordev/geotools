@@ -29,46 +29,58 @@ import org.geotools.feature.IllegalAttributeException;
 import org.xml.sax.SAXException;
 
 /**
- *  summary sentence.
+ * summary sentence.
  * <p>
  * Paragraph ...
- * </p><p>
+ * </p>
+ * <p>
  * Responsibilities:
  * <ul>
  * <li>
  * <li>
  * </ul>
- * </p><p>
- * Example:<pre><code>
+ * </p>
+ * <p>
+ * Example:
+ * 
+ * <pre>
+ * <code>
  * GeoServer x = new GeoServer( ... );
  * TODO code example
- * </code></pre>
+ * </code>
+ * </pre>
+ * 
  * </p>
+ * 
  * @author dzwiers
  * @since 0.6.0
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class InterGraphTest extends TestCase {
 
     private URL url = null;
-    
-    public InterGraphTest() throws MalformedURLException{
-        url = new URL("http://ogc.intergraph.com/OregonDOT_wfs/request.asp?VERSION=VERSION=1.0.0&request=GetCapabilities");
+
+    public InterGraphTest() throws MalformedURLException {
+        url = new URL(
+                "http://ogc.intergraph.com/OregonDOT_wfs/request.asp?VERSION=VERSION=1.0.0&request=GetCapabilities");
     }
-    
+
     // Support GET only -- capabilities file
-    public void testFeatureType() throws NoSuchElementException, IOException, SAXException{
-//        WFSDataStoreReadTest.doFeatureType(url,true,false,0);
+    public void testFeatureType() throws NoSuchElementException, IOException, SAXException {
+        // WFSDataStoreReadTest.doFeatureType(url,true,false,0);
     }
-    
+
     // GET Feature operations timed out
-    public void testFeatureReader() throws NoSuchElementException, IOException, IllegalAttributeException, SAXException{
-//        WFSDataStoreReadTest.doFeatureReader(url,true,false,0);
+    public void testFeatureReader() throws NoSuchElementException, IOException,
+            IllegalAttributeException, SAXException {
+        // WFSDataStoreReadTest.doFeatureReader(url,true,false,0);
     }
-    public void testFeatureReaderWithFilter() throws NoSuchElementException, OperationNotSupportedException, IllegalAttributeException, IOException, SAXException{
-//        WFSDataStoreReadTest.doFeatureReaderWithFilter(url,true,false,0);
+
+    public void testFeatureReaderWithFilter() throws NoSuchElementException,
+            OperationNotSupportedException, IllegalAttributeException, IOException, SAXException {
+        // WFSDataStoreReadTest.doFeatureReaderWithFilter(url,true,false,0);
     }
 }

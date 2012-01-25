@@ -17,20 +17,20 @@
 package org.geotools.data.wfs.v1_1_0;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringBufferInputStream;
 import java.net.URL;
-import java.util.Map;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.wfs.protocol.http.DefaultHTTPProtocol;
-import org.geotools.data.wfs.protocol.http.HTTPProtocol;
-import org.geotools.data.wfs.protocol.http.HTTPResponse;
+import org.apache.commons.io.IOUtils;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.test.TestData;
 
 @SuppressWarnings("nls")
@@ -156,7 +156,7 @@ public final class DataTestSupport {
      * @throws IOException
      */
     public static void createTestProtocol(String capabilitiesFileName) throws IOException {
-        HTTPProtocol http = new DefaultHTTPProtocol();
+        HTTPClient http = new SimpleHttpClient();
         createTestProtocol(capabilitiesFileName, http);
     }
 
@@ -172,7 +172,7 @@ public final class DataTestSupport {
      *            WFS_Capabilities document.
      * @throws IOException
      */
-    public static void createTestProtocol(String capabilitiesFileName, HTTPProtocol http)
+    public static void createTestProtocol(String capabilitiesFileName, HTTPClient http)
             throws IOException {
         InputStream stream = TestData.openStream(DataTestSupport.class, capabilitiesFileName);
         wfs = new TestWFS_1_1_0_Protocol(stream, http);
@@ -182,7 +182,7 @@ public final class DataTestSupport {
 
         private URL describeFeatureTypeUrlOverride;
 
-        public TestWFS_1_1_0_Protocol(InputStream capabilitiesReader, HTTPProtocol http)
+        public TestWFS_1_1_0_Protocol(InputStream capabilitiesReader, HTTPClient http)
                 throws IOException {
             super(capabilitiesReader, http, null);
         }
@@ -207,41 +207,37 @@ public final class DataTestSupport {
         }
     }
 
-    public static class TestHttpProtocol extends DefaultHTTPProtocol {
+    public static class TestHTTPClient extends SimpleHttpClient {
 
         private HTTPResponse mockResponse;
 
         public URL targetUrl;
 
-        public Map<String, String> issueGetKvp;
-
         public String postCallbackContentType;
 
-        public long postCallbackContentLength;
+        public long postCallbackContentLength = -1;
 
         public ByteArrayOutputStream postCallbackEncodedRequestBody;
 
-        public TestHttpProtocol(HTTPResponse mockResponse) {
+        public TestHTTPClient(HTTPResponse mockResponse) {
             this.mockResponse = mockResponse;
         }
 
         @Override
-        public HTTPResponse issueGet(final URL baseUrl, final Map<String, String> kvp)
-                throws IOException {
+        public HTTPResponse get(final URL baseUrl) throws IOException {
             this.targetUrl = baseUrl;
-            this.issueGetKvp = kvp;
             return mockResponse;
         }
 
         @Override
-        public HTTPResponse issuePost(final URL targetUrl, final POSTCallBack callback)
-                throws IOException {
-            this.targetUrl = targetUrl;
-            this.postCallbackContentType = callback.getContentType();
-            this.postCallbackContentLength = callback.getContentLength();
+        public HTTPResponse post(final URL url, final InputStream postContent,
+                final String postContentType) throws IOException {
+            this.targetUrl = url;
+            this.postCallbackContentType = postContentType;
             ByteArrayOutputStream out = new ByteArrayOutputStream();
+            IOUtils.copy(postContent, out);
             this.postCallbackEncodedRequestBody = out;
-            callback.writeBody(out);
+            this.postCallbackContentLength = out.size();
             return mockResponse;
         }
     }
@@ -277,24 +273,26 @@ public final class DataTestSupport {
             this.bodyContent = sb.toString();
         }
 
+        @Override
+        public void dispose() {
+        }
+
+        @Override
         public String getContentType() {
             return contentType;
         }
 
-        public String getResponseCharset() {
-            return charset;
-        }
-
-        public InputStream getResponseStream() throws IOException {
-            return bodyContent == null ? null : new StringBufferInputStream(bodyContent);
-        }
-
+        @Override
         public String getResponseHeader(String headerName) {
+            if ("charset".equalsIgnoreCase(headerName)) {
+                return charset;
+            }
             return null;
         }
 
-        public String getTargetUrl() {
-            return null;
+        @Override
+        public InputStream getResponseStream() throws IOException {
+            return new ByteArrayInputStream(this.bodyContent.getBytes());
         }
     }
 

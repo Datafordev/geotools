@@ -21,7 +21,7 @@ import org.opengis.filter.sort.SortBy;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public interface GetFeature {

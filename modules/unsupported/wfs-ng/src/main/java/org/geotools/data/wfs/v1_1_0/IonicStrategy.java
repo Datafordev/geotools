@@ -130,9 +130,9 @@ public class IonicStrategy extends DefaultWFSStrategy {
     }
 
     /**
-     * Ionic's capabilities may state the spatial operator {@code Intersect} instead of {@code
-     * Intersects}. If so, we fix that here so intersects is actually recognized as a supported
-     * filter.
+     * Ionic's capabilities may state the spatial operator {@code Intersect} instead of
+     * {@code Intersects}. If so, we fix that here so intersects is actually recognized as a
+     * supported filter.
      */
     @Override
     public Filter[] splitFilters(Capabilities caps, Filter queryFilter) {

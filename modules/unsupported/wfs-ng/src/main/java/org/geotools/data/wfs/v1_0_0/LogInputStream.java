@@ -30,28 +30,29 @@ import java.util.logging.Logger;
  */
 class LogInputStream extends InputStream {
     private InputStream delegate;
+
     private Level level;
 
-    StringBuffer buffer=new StringBuffer("Input: ");
-    private Logger logger; 
-    
-    public LogInputStream( InputStream in, Logger logger, Level logLevel ) {
-        this.delegate=in;
-        this.logger=logger;
-        this.level=logLevel;
+    StringBuffer buffer = new StringBuffer("Input: ");
+
+    private Logger logger;
+
+    public LogInputStream(InputStream in, Logger logger, Level logLevel) {
+        this.delegate = in;
+        this.logger = logger;
+        this.level = logLevel;
     }
 
     public void close() throws IOException {
         delegate.close();
         logger.log(level, buffer.toString());
-        buffer=new StringBuffer("Input: ");
+        buffer = new StringBuffer("Input: ");
     }
 
     public int read() throws IOException {
-        int result=delegate.read();
-        buffer.append((char) result); 
+        int result = delegate.read();
+        buffer.append((char) result);
         return result;
     }
-
 
 }

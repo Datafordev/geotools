@@ -15,6 +15,7 @@
  *    Lesser General Public License for more details.
  */
 package org.geotools.data.wfs.v1_1_0;
+
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.CUBEWERX_GOVUNITCE;
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.createTestProtocol;
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.wfs;
@@ -34,7 +35,7 @@ import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.SchemaNotFoundException;
 import org.geotools.data.Transaction;
-import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHttpProtocol;
+import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHTTPClient;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHttpResponse;
 import org.geotools.test.TestData;
 import org.junit.Test;
@@ -47,9 +48,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/test/java/org/geotools/data
  *         /wfs/v1_1_0/WFSDataStoreTest.java $
@@ -64,11 +65,11 @@ public class WFS_1_1_0_DataStoreTest {
      */
     @Test
     public void testGetTypeNames() throws IOException {
-        String[] expected = {"gubs:GovernmentalUnitCE", "gubs:GovernmentalUnitMCD",
+        String[] expected = { "gubs:GovernmentalUnitCE", "gubs:GovernmentalUnitMCD",
                 "gubs:GovernmentalUnitST", "hyd:HydroElementARHI", "hyd:HydroElementARMD",
                 "hyd:HydroElementFLHI", "hyd:HydroElementFLMD", "hyd:HydroElementLIHI",
                 "hyd:HydroElementLIMD", "hyd:HydroElementPTHI", "hyd:HydroElementPTMD",
-                "hyd:HydroElementWBHI", "hyd:HydroElementWBMD", "trans:RoadSeg"};
+                "hyd:HydroElementWBHI", "hyd:HydroElementWBMD", "trans:RoadSeg" };
         List<String> expectedTypeNames = Arrays.asList(expected);
 
         createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES);
@@ -92,7 +93,7 @@ public class WFS_1_1_0_DataStoreTest {
     public void testGetSchema() throws IOException {
         final InputStream schemaStream = TestData.openStream(this, CUBEWERX_GOVUNITCE.SCHEMA);
         TestHttpResponse httpResponse = new TestHttpResponse("", "UTF-8", schemaStream);
-        TestHttpProtocol mockHttp = new TestHttpProtocol(httpResponse);
+        TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
         createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, mockHttp);
 
         // override the describe feature type url so it loads from the test resource
@@ -117,7 +118,7 @@ public class WFS_1_1_0_DataStoreTest {
         final InputStream dataStream = TestData.openStream(this, CUBEWERX_GOVUNITCE.DATA);
         TestHttpResponse httpResponse = new TestHttpResponse("text/xml; subtype=gml/3.1.1",
                 "UTF-8", dataStream);
-        TestHttpProtocol mockHttp = new TestHttpProtocol(httpResponse);
+        TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
         createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, mockHttp);
 
         // override the describe feature type url so it loads from the test resource

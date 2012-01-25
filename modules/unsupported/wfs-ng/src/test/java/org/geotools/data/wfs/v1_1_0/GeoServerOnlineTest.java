@@ -44,7 +44,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class GeoServerOnlineTest extends AbstractWfsDataStoreOnlineTest {
@@ -69,7 +69,7 @@ public class GeoServerOnlineTest extends AbstractWfsDataStoreOnlineTest {
         Query query = new Query(testType.FEATURETYPENAME);
 
         GeometryFactory gf = new GeometryFactory();
-        //GEOT-2283: use lat/lon coordinate order, this is a wfs 1.1 instance
+        // GEOT-2283: use lat/lon coordinate order, this is a wfs 1.1 instance
         Coordinate[] coordinates = { new Coordinate(39, -107), new Coordinate(38, -107),
                 new Coordinate(38, -104), new Coordinate(39, -104), new Coordinate(39, -107) };
         LinearRing shell = gf.createLinearRing(coordinates);

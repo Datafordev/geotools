@@ -24,18 +24,19 @@ import org.geotools.xml.filter.FilterSchema;
 import org.geotools.xml.gml.GMLSchema;
 
 /**
- * <p> 
+ * <p>
  * DOCUMENT ME!
  * </p>
+ * 
  * @author dzwiers
- *
- *
- *
- *
+ * 
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class SchemaFinderTest extends TestCase {
-    public void testFinder(){
+    public void testFinder() {
         assertNotNull(SchemaFactory.getInstance(GMLSchema.NAMESPACE));
         assertNotNull(SchemaFactory.getInstance(WFSSchema.NAMESPACE));
         assertNotNull(SchemaFactory.getInstance(FilterSchema.NAMESPACE));

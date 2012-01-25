@@ -43,20 +43,19 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class EmfAppSchemaParserTest {
 
     /**
-     * Test method for
-     * {@link EmfAppSchemaParser#parse(javax.xml.namespace.QName, java.net.URL)}.
+     * Test method for {@link EmfAppSchemaParser#parse(javax.xml.namespace.QName, java.net.URL)}.
      * 
      * @throws IOException
      */
-	@Test
+    @Test
     public void testParseGeoServerSimpleFeatureType() throws IOException {
         final QName featureTypeName = DataTestSupport.GEOS_STATES.TYPENAME;
         final String schemaFileName = DataTestSupport.GEOS_STATES.SCHEMA;
@@ -70,7 +69,7 @@ public class EmfAppSchemaParserTest {
         assertEquals("the_geom", ftype.getGeometryDescriptor().getLocalName());
     }
 
-	@Test
+    @Test
     public void testParseCubeWerx_GML_Level1_FeatureType() throws IOException {
         final QName featureTypeName = DataTestSupport.CUBEWERX_GOVUNITCE.TYPENAME;
         final String schemaFileName = DataTestSupport.CUBEWERX_GOVUNITCE.SCHEMA;
@@ -85,7 +84,7 @@ public class EmfAppSchemaParserTest {
         // And the last one: governmentalUnitType has a complex type, yet it
         // gets parsed as String
         // and I can't find out why (would be happier if it were bound to Object.class)
-        // 2008-06-05 update: governmentalUnitType no longer gets parsed by the gtxml parser 
+        // 2008-06-05 update: governmentalUnitType no longer gets parsed by the gtxml parser
         // at all, so reducing expectedAttributeCount from 10 to 9
         // 2011-08-21 update: governmentalUnitType gets parsed again by the gtxml parser, so
         // setting expectedAttributeCount back to 10

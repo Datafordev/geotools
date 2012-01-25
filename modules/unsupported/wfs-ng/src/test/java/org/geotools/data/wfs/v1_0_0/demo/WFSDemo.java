@@ -32,37 +32,41 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * <p> 
+ * <p>
  * An example use of the WFS data store
  * </p>
+ * 
  * @author dzwiers Refractions Research
- *
- *
- *
- *
+ * 
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class WFSDemo {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         System.out.println("WFS Demo");
-        try{
-//            URL url = new URL("http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap?version=1.0.0&request=getcapabilities&service=wfs");
-        	URL url = new URL("http://www.refractions.net:8080/geoserver/wfs?REQUEST=GetCapabilities");
-        
+        try {
+            // URL url = new
+            // URL("http://www2.dmsolutions.ca/cgi-bin/mswfs_gmap?version=1.0.0&request=getcapabilities&service=wfs");
+            URL url = new URL(
+                    "http://www.refractions.net:8080/geoserver/wfs?REQUEST=GetCapabilities");
+
             Map m = new HashMap();
-            m.put(WFSDataStoreFactory.URL.key,url);
-            m.put(WFSDataStoreFactory.TIMEOUT.key,new Integer(10000));
-            m.put(WFSDataStoreFactory.PROTOCOL.key,Boolean.FALSE);
+            m.put(WFSDataStoreFactory.URL.key, url);
+            m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(10000));
+            m.put(WFSDataStoreFactory.PROTOCOL.key, Boolean.FALSE);
 
             DataStore wfs = (new WFSDataStoreFactory()).createNewDataStore(m);
             Query query = new Query(wfs.getTypeNames()[1]);
-             FeatureReader<SimpleFeatureType, SimpleFeature> ft = wfs.getFeatureReader(query,Transaction.AUTO_COMMIT);
+            FeatureReader<SimpleFeatureType, SimpleFeature> ft = wfs.getFeatureReader(query,
+                    Transaction.AUTO_COMMIT);
             int count = 0;
-            while(ft.hasNext())
-                if(ft.next()!=null)
+            while (ft.hasNext())
+                if (ft.next() != null)
                     count++;
-            System.out.println("Found "+count+" features");
-        }catch(IOException e){
+            System.out.println("Found " + count + " features");
+        } catch (IOException e) {
             e.printStackTrace();
         } catch (NoSuchElementException e) {
             e.printStackTrace();

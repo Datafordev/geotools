@@ -49,19 +49,20 @@ import org.opengis.referencing.operation.TransformException;
 
 import com.vividsolutions.jts.geom.Envelope;
 
-
 /**
  * A version that is very strict about its filter compliance.
+ * 
  * @author Jesse
- *
+ * 
  */
 class StrictWFSStrategy extends NonStrictWFSStrategy {
 
     /**
-     * This just splits fid filters from non-fid filters.  The {@link StrictFeatureReader} is what does the rest of the 
-     * compliance to high compliance.
+     * This just splits fid filters from non-fid filters. The {@link StrictFeatureReader} is what
+     * does the rest of the compliance to high compliance.
      */
     protected static final Integer COMPLIANCE_LEVEL = XMLHandlerHints.VALUE_FILTER_COMPLIANCE_MEDIUM;
+
     private Integer compliance;
 
     public StrictWFSStrategy(WFS_1_0_0_DataStore store) {
@@ -73,34 +74,40 @@ class StrictWFSStrategy extends NonStrictWFSStrategy {
         compliance = filterCompliance;
     }
 
-    protected  FeatureReader<SimpleFeatureType, SimpleFeature> wrapWithFilteringFeatureReader(Filter postFilter,  FeatureReader<SimpleFeatureType, SimpleFeature> reader, Filter processedFilter) {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> wrapWithFilteringFeatureReader(
+            Filter postFilter, FeatureReader<SimpleFeatureType, SimpleFeature> reader,
+            Filter processedFilter) {
         FilterEncodingPreProcessor visitor = new FilterEncodingPreProcessor(COMPLIANCE_LEVEL);
-        Filters.accept( processedFilter, visitor);
-        
-        if( visitor.requiresPostProcessing() )
-            return new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(reader, processedFilter);
+        Filters.accept(processedFilter, visitor);
+
+        if (visitor.requiresPostProcessing())
+            return new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(reader,
+                    processedFilter);
         else
             return new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(reader, postFilter);
-            
+
     }
 
-    protected  FeatureReader<SimpleFeatureType, SimpleFeature> createFeatureReader(Transaction transaction, Query query) throws IOException {
-        return new StrictFeatureReader(transaction, query, compliance == null ? COMPLIANCE_LEVEL : compliance);
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> createFeatureReader(
+            Transaction transaction, Query query) throws IOException {
+        return new StrictFeatureReader(transaction, query, compliance == null ? COMPLIANCE_LEVEL
+                : compliance);
     }
 
-    protected CoordinateReferenceSystem correctFilterForServer( String typeName, Filter serverFilter) {
+    protected CoordinateReferenceSystem correctFilterForServer(String typeName, Filter serverFilter) {
         // TODO modify bbox requests here
         FeatureSetDescription fsd = WFSCapabilities.getFeatureSetDescription(store.capabilities,
                 typeName);
 
         Envelope maxbbox = null;
         CoordinateReferenceSystem dataCRS = null;
-        
+
         if (fsd.getSRS() != null) {
             // reproject this filter!
             try {
-                dataCRS = CRS.decode( fsd.getSRS() );
-                MathTransform toDataCRS = CRS.findMathTransform(DefaultGeographicCRS.WGS84, dataCRS);
+                dataCRS = CRS.decode(fsd.getSRS());
+                MathTransform toDataCRS = CRS
+                        .findMathTransform(DefaultGeographicCRS.WGS84, dataCRS);
                 maxbbox = JTS.transform(fsd.getLatLongBoundingBox(), null, toDataCRS, 10);
             } catch (FactoryException e) {
                 WFS_1_0_0_DataStore.LOGGER.warning(e.getMessage());
@@ -115,13 +122,14 @@ class StrictWFSStrategy extends NonStrictWFSStrategy {
         } else {
             maxbbox = fsd.getLatLongBoundingBox();
         }
-        
+
         // Rewrite request if we have a maxbox
         if (maxbbox != null) {
-            FixBBOXFilterVisitor clipVisitor = new FixBBOXFilterVisitor(ReferencedEnvelope.reference(maxbbox));
-            serverFilter = (Filter) serverFilter.accept(clipVisitor, null );
-//            WFSBBoxFilterVisitor clipVisitor = new WFSBBoxFilterVisitor(maxbbox);
-//            Filters.accept(serverFilter, clipVisitor);
+            FixBBOXFilterVisitor clipVisitor = new FixBBOXFilterVisitor(
+                    ReferencedEnvelope.reference(maxbbox));
+            serverFilter = (Filter) serverFilter.accept(clipVisitor, null);
+            // WFSBBoxFilterVisitor clipVisitor = new WFSBBoxFilterVisitor(maxbbox);
+            // Filters.accept(serverFilter, clipVisitor);
         } else { // give up an request everything
             WFS_1_0_0_DataStore.LOGGER.log(Level.FINE,
                     "Unable to clip your query against the latlongboundingbox element");
@@ -130,55 +138,63 @@ class StrictWFSStrategy extends NonStrictWFSStrategy {
         }
         return dataCRS;
     }
-    
+
     /**
-     * Makes seperate requests between fetching the features using a normal filter and a seperate request for fetching features using
-     * the FID filter.
-     *  
+     * Makes seperate requests between fetching the features using a normal filter and a seperate
+     * request for fetching features using the FID filter.
+     * 
      * @author Jesse
      */
-    protected class StrictFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature>{
+    protected class StrictFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
         private FeatureReader<SimpleFeatureType, SimpleFeature> delegate;
+
         protected Filter filter;
+
         private Query query;
+
         private Transaction transaction;
-        private Set<String> foundFids=new HashSet<String>();
+
+        private Set<String> foundFids = new HashSet<String>();
+
         private SimpleFeature next;
 
-        public StrictFeatureReader(Transaction transaction, Query query, Integer level) throws IOException {
+        public StrictFeatureReader(Transaction transaction, Query query, Integer level)
+                throws IOException {
             init(transaction, query, level);
         }
 
-        protected void init( Transaction transaction, Query query, Integer level ) throws IOException {
+        protected void init(Transaction transaction, Query query, Integer level) throws IOException {
             FilterEncodingPreProcessor visitor = new FilterEncodingPreProcessor(level);
-            Filters.accept( query.getFilter(), visitor );
-            
-            this.transaction=transaction;
-            if( visitor.requiresPostProcessing() && query.getPropertyNames()!=Query.ALL_NAMES){
-                FilterAttributeExtractor attributeExtractor=new FilterAttributeExtractor();
-                query.getFilter().accept( attributeExtractor, null );
-                Set<String> properties=new HashSet<String>(attributeExtractor.getAttributeNameSet());
-                properties.addAll(Arrays.asList(query.getPropertyNames()));
-                this.query=new Query(query.getTypeName(), query.getFilter(), query.getMaxFeatures(),
-                        (String[]) properties.toArray(new String[0]), query.getHandle());
-            }else
-                this.query=query;
-            
-            this.filter=visitor.getFilter();
+            Filters.accept(query.getFilter(), visitor);
 
-            Query nonFidQuery=new Query(query);
+            this.transaction = transaction;
+            if (visitor.requiresPostProcessing() && query.getPropertyNames() != Query.ALL_NAMES) {
+                FilterAttributeExtractor attributeExtractor = new FilterAttributeExtractor();
+                query.getFilter().accept(attributeExtractor, null);
+                Set<String> properties = new HashSet<String>(
+                        attributeExtractor.getAttributeNameSet());
+                properties.addAll(Arrays.asList(query.getPropertyNames()));
+                this.query = new Query(query.getTypeName(), query.getFilter(),
+                        query.getMaxFeatures(), (String[]) properties.toArray(new String[0]),
+                        query.getHandle());
+            } else
+                this.query = query;
+
+            this.filter = visitor.getFilter();
+
+            Query nonFidQuery = new Query(query);
             Id fidFilter = visitor.getFidFilter();
             nonFidQuery.setFilter(fidFilter);
-            if( fidFilter.getIDs().size()>0 ){
+            if (fidFilter.getIDs().size() > 0) {
                 delegate = StrictWFSStrategy.super.createFeatureReader(transaction, nonFidQuery);
-            }else{
-                delegate=nextReader();
+            } else {
+                delegate = nextReader();
             }
         }
 
         public void close() throws IOException {
-            if( delegate!=null )
+            if (delegate != null)
                 delegate.close();
         }
 
@@ -187,60 +203,61 @@ class StrictWFSStrategy extends NonStrictWFSStrategy {
         }
 
         public boolean hasNext() throws IOException {
-            if( next!=null )
+            if (next != null)
                 return true;
-            
-            if( delegate==null )
+
+            if (delegate == null)
                 return false;
-            
-            if ( !delegate.hasNext() ){
+
+            if (!delegate.hasNext()) {
                 delegate.close();
-                delegate=null;
-                delegate=nextReader();
-                if( delegate==null )
+                delegate = null;
+                delegate = nextReader();
+                if (delegate == null)
                     return false;
             }
-            
-            try{
-                while( next==null ){
-                    if( !delegate.hasNext() )
+
+            try {
+                while (next == null) {
+                    if (!delegate.hasNext())
                         return false;
-                
-                    next=delegate.next();
-                    if( this.foundFids.contains(next.getID()) )
-                        next=null;
+
+                    next = delegate.next();
+                    if (this.foundFids.contains(next.getID()))
+                        next = null;
                 }
-            }catch( IllegalAttributeException e){
+            } catch (IllegalAttributeException e) {
                 throw new IOException(e.getLocalizedMessage());
-            } 
-            
-            return next!=null;
+            }
+
+            return next != null;
         }
 
-        private  FeatureReader<SimpleFeatureType, SimpleFeature> nextReader() throws IOException {
-            if( filter==null || filter==Filter.EXCLUDE )
+        private FeatureReader<SimpleFeatureType, SimpleFeature> nextReader() throws IOException {
+            if (filter == null || filter == Filter.EXCLUDE)
                 return null;
 
-            Query query2=new Query(query);
+            Query query2 = new Query(query);
             query2.setFilter(filter);
-            
-             FeatureReader<SimpleFeatureType, SimpleFeature> nextReader = StrictWFSStrategy.super.createFeatureReader(transaction, query2);
 
-            filter=null;
+            FeatureReader<SimpleFeatureType, SimpleFeature> nextReader = StrictWFSStrategy.super
+                    .createFeatureReader(transaction, query2);
+
+            filter = null;
             return nextReader;
         }
 
-
-        public SimpleFeature next() throws IOException, IllegalAttributeException, NoSuchElementException {
-            if( !hasNext() )
+        public SimpleFeature next() throws IOException, IllegalAttributeException,
+                NoSuchElementException {
+            if (!hasNext())
                 throw new NoSuchElementException();
-            
+
             SimpleFeature tmp = next;
             foundFids.add(tmp.getID());
-            next=null;
+            next = null;
             return tmp;
         }
-        
+
     }
 
 }

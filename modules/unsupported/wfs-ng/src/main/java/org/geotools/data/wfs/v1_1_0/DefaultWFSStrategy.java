@@ -64,9 +64,9 @@ import org.opengis.filter.sort.SortBy;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
  *         /wfs/v1_1_0/DefaultWFSStrategy.java $
@@ -279,8 +279,7 @@ public class DefaultWFSStrategy implements WFSStrategy {
      * @see WFSStrategy#splitFilters(WFS_1_1_0_Protocol, Filter)
      */
     public Filter[] splitFilters(Capabilities caps, Filter queryFilter) {
-        CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(
-                caps, null, null);
+        CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(caps, null, null);
 
         queryFilter.accept(splitter, null);
 

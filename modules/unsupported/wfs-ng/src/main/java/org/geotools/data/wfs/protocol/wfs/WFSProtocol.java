@@ -23,7 +23,6 @@ import java.util.Set;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.wfs.protocol.http.HttpMethod;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
@@ -48,9 +47,9 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
  *         /wfs/protocol/wfs/WFSProtocol.java $
@@ -120,8 +119,8 @@ public interface WFSProtocol {
     public Set<QName> getFeatureTypeNames();
 
     /**
-     * Returns the full feature type name for the {@code typeName} as declared in the {@code
-     * FeatureTypeList/FeatureType/Name} element of the capabilities document.
+     * Returns the full feature type name for the {@code typeName} as declared in the
+     * {@code FeatureTypeList/FeatureType/Name} element of the capabilities document.
      * <p>
      * The returned QName contains the namespace, localname as well as the prefix. {@code typeName}
      * is known to be {@code prefix:localName}.

@@ -29,7 +29,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class XmlSimpleFeatureParserTest extends AbstractGetFeatureParserTest {
@@ -39,14 +39,14 @@ public class XmlSimpleFeatureParserTest extends AbstractGetFeatureParserTest {
             final SimpleFeatureType featureType, final URL getFeaturesRequest) throws IOException {
 
         InputStream inputStream = new BufferedInputStream(getFeaturesRequest.openStream());
-        GetFeatureParser parser = new XmlSimpleFeatureParser(inputStream,  featureType, featureName);
+        GetFeatureParser parser = new XmlSimpleFeatureParser(inputStream, featureType, featureName);
         return parser;
     }
 
     /**
-     * This is to be run as a normal java application in order to reproduce a
-     * GetFeature request to the nsdi server and thus being able to
-     * assess/profile the OutOfMemory errors I'm getting in uDig
+     * This is to be run as a normal java application in order to reproduce a GetFeature request to
+     * the nsdi server and thus being able to assess/profile the OutOfMemory errors I'm getting in
+     * uDig
      * 
      * @param argv
      */

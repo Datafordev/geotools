@@ -76,39 +76,36 @@ import org.geotools.xml.schema.impl.FacetGT;
 import org.geotools.xml.schema.impl.SimpleTypeGT;
 import org.geotools.xml.xsi.XSISimpleTypes;
 
-
 /**
  * <p>
- * This class represents a hard coded, java interpreted version  of the WFS
- * WFS-basic schema. Instances of this class should be prefered for use over a
- * parsed instance as this class will create real instances  for elements
- * who's types correspond to types defined in this schema.
+ * This class represents a hard coded, java interpreted version of the WFS WFS-basic schema.
+ * Instances of this class should be prefered for use over a parsed instance as this class will
+ * create real instances for elements who's types correspond to types defined in this schema.
  * </p>
- *
+ * 
  * @author Norman Barker www.comsine.com
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class WFSSchema implements Schema {
     static Logger logger = org.geotools.util.logging.Logging.getLogger("net.refractions.xml.wfs");
+
     private static Schema instance = new WFSSchema();
 
     /** WFS target namespace */
     public static URI NAMESPACE = makeURI("http://www.opengis.net/wfs");
+
     static final Element[] elements = new Element[] {
             new WFSElement("GetCapabilities", GetCapabilitiesType.getInstance()),
-            new WFSElement("DescribeFeatureType",
-                DescribeFeatureTypeType.getInstance()),
+            new WFSElement("DescribeFeatureType", DescribeFeatureTypeType.getInstance()),
             new WFSElement("GetFeature", GetFeatureType.getInstance()), // 2
-            new WFSElement("FeatureCollection",
-                FeatureCollectionType.getInstance(), 1, 1, false,
-                findElement(GMLSchema.getInstance(), "_FeatureCollection")),
+            new WFSElement("FeatureCollection", FeatureCollectionType.getInstance(), 1, 1, false,
+                    findElement(GMLSchema.getInstance(), "_FeatureCollection")),
             new WFSElement("Query", QueryType.getInstance()),
             new WFSElement("Abstract", XSISimpleTypes.String.getInstance()),
-            new WFSElement("AccessConstraints",
-                XSISimpleTypes.String.getInstance()),
+            new WFSElement("AccessConstraints", XSISimpleTypes.String.getInstance()),
             new WFSElement("Fees", XSISimpleTypes.String.getInstance()),
             new WFSElement("Keywords", XSISimpleTypes.String.getInstance()),
             new WFSElement("OnlineResource", XSISimpleTypes.String.getInstance()),
@@ -121,21 +118,16 @@ public class WFSSchema implements Schema {
             new WFSElement("Update", EmptyType.getInstance()),
             new WFSElement("Delete", EmptyType.getInstance()),
             new WFSElement("Lock", EmptyType.getInstance()), // 16
-            new WFSElement("VendorSpecificCapabilities",
-                XSISimpleTypes.String.getInstance()),
-            new WFSElement("WFS_Capabilities",
-                WFS_CapabilitiesType.getInstance()),
+            new WFSElement("VendorSpecificCapabilities", XSISimpleTypes.String.getInstance()),
+            new WFSElement("WFS_Capabilities", WFS_CapabilitiesType.getInstance()),
             new WFSElement("GML2", EmptyType.getInstance()),
             new WFSElement("GML2-GZIP", EmptyType.getInstance()),
             new WFSElement("XMLSCHEMA", EmptyType.getInstance()), // 21
-            new WFSElement("GetFeatureWithLock",
-                GetFeatureWithLockType.getInstance()),
+            new WFSElement("GetFeatureWithLock", GetFeatureWithLockType.getInstance()),
             new WFSElement("LockFeature", LockFeatureType.getInstance()),
             new WFSElement("Transaction", TransactionType.getInstance()),
-            new WFSElement("WFS_TransactionResponse",
-                WFS_TransactionResponseType.getInstance()),
-            new WFSElement("WFS_LockFeatureResponse",
-                WFS_LockFeatureResponseType.getInstance()),
+            new WFSElement("WFS_TransactionResponse", WFS_TransactionResponseType.getInstance()),
+            new WFSElement("WFS_LockFeatureResponse", WFS_LockFeatureResponseType.getInstance()),
             new WFSElement("LockId", XSISimpleTypes.String.getInstance()),
             new WFSElement("Insert", InsertElementType.getInstance()),
             new WFSElement("Update", UpdateElementType.getInstance()),
@@ -144,41 +136,33 @@ public class WFSSchema implements Schema {
             new WFSElement("Property", PropertyType.getInstance()),
             new WFSElement("SUCCESS", EmptyType.getInstance()),
             new WFSElement("FAILED", EmptyType.getInstance()),
-            new WFSElement("PARTIAL", EmptyType.getInstance())
-        };
+            new WFSElement("PARTIAL", EmptyType.getInstance()) };
+
     static final ComplexType[] complexTypes = new ComplexType[] {
-            GetCapabilitiesType.getInstance(),
-            DescribeFeatureTypeType.getInstance(), GetFeatureType.getInstance(),
-            QueryType.getInstance(), FeatureCollectionType.getInstance(),
-            WFS_CapabilitiesType.getInstance(), ServiceType.getInstance(),
-            CapabilityType.getInstance(), FeatureTypeListType.getInstance(),
-            RequestType.getInstance(), TransactionType.getInstance(),
-            LockFeatureTypeType.getInstance(), DCPTypeType.getInstance(),
-            FeatureTypeType.getInstance(), GetType.getInstance(),
+            GetCapabilitiesType.getInstance(), DescribeFeatureTypeType.getInstance(),
+            GetFeatureType.getInstance(), QueryType.getInstance(),
+            FeatureCollectionType.getInstance(), WFS_CapabilitiesType.getInstance(),
+            ServiceType.getInstance(), CapabilityType.getInstance(),
+            FeatureTypeListType.getInstance(), RequestType.getInstance(),
+            TransactionType.getInstance(), LockFeatureTypeType.getInstance(),
+            DCPTypeType.getInstance(), FeatureTypeType.getInstance(), GetType.getInstance(),
             HTTPType.getInstance(), LatLongBoundingBoxType.getInstance(),
-            MetadataURLType.getInstance(), OperationsType.getInstance(),
-            PostType.getInstance(), ResultFormatType.getInstance(),
-            SchemaDescriptionLanguageType.getInstance(), EmptyType.getInstance(),
-            GetFeatureWithLockType.getInstance(), LockFeatureType.getInstance(),
-            LockType.getInstance(), InsertElementType.getInstance(),
+            MetadataURLType.getInstance(), OperationsType.getInstance(), PostType.getInstance(),
+            ResultFormatType.getInstance(), SchemaDescriptionLanguageType.getInstance(),
+            EmptyType.getInstance(), GetFeatureWithLockType.getInstance(),
+            LockFeatureType.getInstance(), LockType.getInstance(), InsertElementType.getInstance(),
             UpdateElementType.getInstance(), DeleteElementType.getInstance(),
             NativeType.getInstance(), PropertyType.getInstance(),
-            WFS_LockFeatureResponseType.getInstance(),
-            FeaturesLockedType.getInstance(),
-            FeaturesNotLockedType.getInstance(),
-            WFS_TransactionResponseType.getInstance(),
+            WFS_LockFeatureResponseType.getInstance(), FeaturesLockedType.getInstance(),
+            FeaturesNotLockedType.getInstance(), WFS_TransactionResponseType.getInstance(),
             TransactionResultType.getInstance(), InsertResultType.getInstance(),
-            StatusType.getInstance()
-        };
-    static final SimpleType[] simpleTypes = new SimpleType[] {
-            new SimpleTypeGT(null, "AllSomeType", NAMESPACE,
-                SimpleType.RESTRICTION,
-                new SimpleType[] { XSISimpleTypes.String.getInstance() },
-                new Facet[] {
-                    new FacetGT(Facet.ENUMERATION, "ALL"),
-                    new FacetGT(Facet.ENUMERATION, "SOME")
-                }, SimpleType.NONE),
-        };
+            StatusType.getInstance() };
+
+    static final SimpleType[] simpleTypes = new SimpleType[] { new SimpleTypeGT(null,
+            "AllSomeType", NAMESPACE, SimpleType.RESTRICTION,
+            new SimpleType[] { XSISimpleTypes.String.getInstance() },
+            new Facet[] { new FacetGT(Facet.ENUMERATION, "ALL"),
+                    new FacetGT(Facet.ENUMERATION, "SOME") }, SimpleType.NONE), };
 
     // convinience method to deal with the URISyntaxException
     private static URI makeURI(String s) {
@@ -351,10 +335,10 @@ public class WFSSchema implements Schema {
 
     /**
      * <p>
-     * This abstract class represents some default and constant values
-     * associated with a GML complexType.
+     * This abstract class represents some default and constant values associated with a GML
+     * complexType.
      * </p>
-     *
+     * 
      * @see ComplexType
      */
     static abstract class WFSComplexType implements ComplexType {
@@ -394,8 +378,8 @@ public class WFSSchema implements Schema {
         }
 
         /*
-         * included here to deal generically with a GML complexType ...
-         * part of the singleton pattern.
+         * included here to deal generically with a GML complexType ... part of the singleton
+         * pattern.
          */
         static WFSComplexType getInstance() {
             return null;
@@ -447,23 +431,27 @@ public class WFSSchema implements Schema {
 
     /**
      * <p>
-     * Adds some common information and functionality to a base element to  be
-     * used by the WFSSchema. The remaining data will be configured upon
-     * creation.
+     * Adds some common information and functionality to a base element to be used by the WFSSchema.
+     * The remaining data will be configured upon creation.
      * </p>
-     *
+     * 
      * @author David Zwiers
-     *
+     * 
      * @see Element
      */
     static class WFSElement implements Element {
-        // default visibily to remove the set* methods ... this class is 
+        // default visibily to remove the set* methods ... this class is
         // only package visible
         boolean abstracT = false;
+
         int max;
+
         int min;
+
         String name;
+
         Type type;
+
         Element substitutionGroup;
 
         /*
@@ -474,11 +462,10 @@ public class WFSSchema implements Schema {
         }
 
         /**
-         * Configures the Element for this particular WFS instance.  The
-         * following params match schema definition attributes found in an
-         * element declaration. Those missing have been hard coded for the gml
-         * Schema.
-         *
+         * Configures the Element for this particular WFS instance. The following params match
+         * schema definition attributes found in an element declaration. Those missing have been
+         * hard coded for the gml Schema.
+         * 
          * @param name
          * @param type
          */
@@ -491,11 +478,10 @@ public class WFSSchema implements Schema {
         }
 
         /**
-         * Configures the Element for this particular WFS instance.  The
-         * following params match schema definition attributes found in an
-         * element declaration. Those missing have been hard coded for the gml
-         * Schema.
-         *
+         * Configures the Element for this particular WFS instance. The following params match
+         * schema definition attributes found in an element declaration. Those missing have been
+         * hard coded for the gml Schema.
+         * 
          * @param name
          * @param type
          * @param min
@@ -503,8 +489,8 @@ public class WFSSchema implements Schema {
          * @param abstracT
          * @param substitutionGroup
          */
-        public WFSElement(String name, Type type, int min, int max,
-            boolean abstracT, Element substitutionGroup) {
+        public WFSElement(String name, Type type, int min, int max, boolean abstracT,
+                Element substitutionGroup) {
             this.abstracT = abstracT;
             this.max = max;
             this.min = min;
@@ -515,7 +501,7 @@ public class WFSSchema implements Schema {
 
         /**
          * Creates a clone using the new min/max occurences.
-         *
+         * 
          * @param element
          * @param min
          * @param max
@@ -647,28 +633,27 @@ public class WFSSchema implements Schema {
             return WFSSchema.NAMESPACE;
         }
 
-		public Element findChildElement(String localName, URI namespaceURI) {
-			if (this.name != null) {
+        public Element findChildElement(String localName, URI namespaceURI) {
+            if (this.name != null) {
                 if (this.name.equals(localName) && this.getNamespace().equals(namespaceURI)) {
                     return this;
                 }
             }
 
-			return null;
-		}
+            return null;
+        }
     }
 
     /**
      * <p>
-     * An instance of this class represents a WFS attribute. This
-     * implementation contains some constant data pertinent to the WFS Schema,
-     * and some configurable data depending on the WFS attribute being
-     * represented.
+     * An instance of this class represents a WFS attribute. This implementation contains some
+     * constant data pertinent to the WFS Schema, and some configurable data depending on the WFS
+     * attribute being represented.
      * </p>
-     *
+     * 
      * @author Norman Barker
      * @author David Zwiers
-     *
+     * 
      * @see Attribute
      */
     static class WFSAttribute extends AttributeGT {
@@ -676,46 +661,40 @@ public class WFSSchema implements Schema {
          * Should never be called
          */
         private WFSAttribute() {
-            super(null, null, WFSSchema.NAMESPACE, null, OPTIONAL, null, null,
-                false);
+            super(null, null, WFSSchema.NAMESPACE, null, OPTIONAL, null, null, false);
         }
 
         /**
          * Creates a GML attribute based on the name and type provided.
-         *
+         * 
          * @param name
          * @param simpleType
          */
         public WFSAttribute(String name, SimpleType simpleType) {
-            super(null, name, WFSSchema.NAMESPACE, simpleType, OPTIONAL, null,
-                null, false);
+            super(null, name, WFSSchema.NAMESPACE, simpleType, OPTIONAL, null, null, false);
         }
 
         /**
          * Creates a GML attribute based on the name, use and type provided.
-         *
+         * 
          * @param name
          * @param simpleType
          * @param use
          */
         public WFSAttribute(String name, SimpleType simpleType, int use) {
-            super(null, name, WFSSchema.NAMESPACE, simpleType, use, null, null,
-                false);
+            super(null, name, WFSSchema.NAMESPACE, simpleType, use, null, null, false);
         }
 
         /**
-         * Creates a GML attribute based on the name, use, default  and type
-         * provided.
-         *
+         * Creates a GML attribute based on the name, use, default and type provided.
+         * 
          * @param name
          * @param simpleType
          * @param use
          * @param def
          */
-        public WFSAttribute(String name, SimpleType simpleType, int use,
-            String def) {
-            super(null, name, WFSSchema.NAMESPACE, simpleType, use, def, null,
-                false);
+        public WFSAttribute(String name, SimpleType simpleType, int use, String def) {
+            super(null, name, WFSSchema.NAMESPACE, simpleType, use, def, null, false);
         }
     }
 }

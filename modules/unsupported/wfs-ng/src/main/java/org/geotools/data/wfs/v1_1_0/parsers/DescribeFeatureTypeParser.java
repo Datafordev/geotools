@@ -33,17 +33,17 @@ import org.geotools.xml.Parser;
  * limitations have to be with the fact that the {@link Parser} and
  * {@link ApplicationSchemaConfiguration configuration} used to parse a response need a direct
  * handle to the DescribeFeatureType request URL and have no way to directly parse from the plain
- * response {@link InputStream}.
- * So, for the time being, the request/response handling for GetFeatureType is being made in an ad-hoc
- * manner inside {@link WFS_1_1_0_DataStore#getSchema(String)}
+ * response {@link InputStream}. So, for the time being, the request/response handling for
+ * GetFeatureType is being made in an ad-hoc manner inside
+ * {@link WFS_1_1_0_DataStore#getSchema(String)}
  * </p>
  * 
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class DescribeFeatureTypeParser implements WFSResponseParser {

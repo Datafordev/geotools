@@ -57,9 +57,9 @@ import com.vividsolutions.jts.geom.GeometryFactory;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6.x
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class CubeWerxStrategyTest {
@@ -75,8 +75,9 @@ public class CubeWerxStrategyTest {
 
     @Test
     public void testCreateGetFeatureRequest() throws IOException {
-        GetFeature query = new GetFeatureQueryAdapter(new Query(
-                CUBEWERX_GOVUNITCE.FEATURETYPENAME), "GML2", "EPSG:4326", ResultType.RESULTS);
+        GetFeature query = new GetFeatureQueryAdapter(
+                new Query(CUBEWERX_GOVUNITCE.FEATURETYPENAME), "GML2", "EPSG:4326",
+                ResultType.RESULTS);
         RequestComponents getFeatureRequest = strategy.createGetFeatureRequest(wfs, query);
         GetFeatureType serverRequest = getFeatureRequest.getServerRequest();
         ResultTypeType resultType = serverRequest.getResultType();

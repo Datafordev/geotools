@@ -23,7 +23,7 @@ import org.opengis.filter.sort.SortBy;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class GetFeatureQueryAdapter implements GetFeature {

@@ -68,11 +68,10 @@ import com.vividsolutions.jts.geom.Polygon;
  * @author Gabriel Roldan
  * @version $Id$
  * @since 2.5.x
- *
- *
- *
- * @source $URL$
- *         java/org/geotools/wfs/v_1_1_0/data/StreamingParserFeatureReaderTest .java $
+ * 
+ * 
+ * 
+ * @source $URL$ java/org/geotools/wfs/v_1_1_0/data/StreamingParserFeatureReaderTest .java $
  * @see XmlSimpleFeatureParserTest
  * @see StreamingParserFeatureReaderTest
  */
@@ -126,8 +125,8 @@ public abstract class AbstractGetFeatureParserTest {
      * subset FeatureType comprised of only the required {@code properties}
      * 
      * @param featureName
-     *            the name of the Features produced for the target FeatureType (i.e. {@code
-     *            topp:states} instead of {@code topp:states_Type})
+     *            the name of the Features produced for the target FeatureType (i.e.
+     *            {@code topp:states} instead of {@code topp:states_Type})
      * @param schemaName
      *            the location of the schema file under {@code test-data/}
      * @param epsgCrsId

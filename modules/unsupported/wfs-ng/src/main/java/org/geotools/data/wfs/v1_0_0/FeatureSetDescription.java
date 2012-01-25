@@ -22,58 +22,70 @@ import java.util.List;
 
 import com.vividsolutions.jts.geom.Envelope;
 
-
 /**
  * <p>
- * Represents a wfs:FeatureType ... and didn't want to use FeatureType as it
- * could get confused with org.geotools.data.FeatureType
+ * Represents a wfs:FeatureType ... and didn't want to use FeatureType as it could get confused with
+ * org.geotools.data.FeatureType
  * </p>
- *
+ * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class FeatureSetDescription {
-	/**
-	 * Mask for no operation allowed on the FeatureType
-	 */
+    /**
+     * Mask for no operation allowed on the FeatureType
+     */
     public static final int NO_OPERATION = 0;
-	/**
-	 * Mask for query operation allowed on the FeatureType
-	 */
+
+    /**
+     * Mask for query operation allowed on the FeatureType
+     */
     public static final int QUERY_OPERATION = 1;
-	/**
-	 * Mask for insert operation allowed on the FeatureType
-	 */
+
+    /**
+     * Mask for insert operation allowed on the FeatureType
+     */
     public static final int INSERT_OPERATION = 2;
-	/**
-	 * Mask for update operation allowed on the FeatureType
-	 */
+
+    /**
+     * Mask for update operation allowed on the FeatureType
+     */
     public static final int UPDATE_OPERATION = 4;
-	/**
-	 * Mask for delete operation allowed on the FeatureType
-	 */
+
+    /**
+     * Mask for delete operation allowed on the FeatureType
+     */
     public static final int DELETE_OPERATION = 8;
-	/**
-	 * Mask for lock operation allowed on the FeatureType
-	 */
+
+    /**
+     * Mask for lock operation allowed on the FeatureType
+     */
     public static final int LOCK_OPERATION = 16;
 
     private String name;
+
     private URI namespace;
+
     private String title;
+
     private String _abstract;
+
     private String SRS;
+
     private List keywords;
+
     private Envelope latLongBoundingBox;
+
     private int operations;
 
     /**
      * Converts the string into the appropriate mask.
      * 
-     * @param s The String to attempt to convert
+     * @param s
+     *            The String to attempt to convert
      * @return one of the Constant Operation Values
      * @see FeatureSetDescription#DELETE_OPERATION
      * @see FeatureSetDescription#UPDATE_OPERATION
@@ -109,7 +121,8 @@ public class FeatureSetDescription {
     /**
      * Converts the int into the appropriate String.
      * 
-     * @param i the int to convert, must match exactly.
+     * @param i
+     *            the int to convert, must match exactly.
      * @return A string representation of the int.
      * @see FeatureSetDescription#DELETE_OPERATION
      * @see FeatureSetDescription#UPDATE_OPERATION
@@ -142,7 +155,8 @@ public class FeatureSetDescription {
     /**
      * Converts the int mask into the appropriate set of Strings.
      * 
-     * @param i The int mask to attempt to convert
+     * @param i
+     *            The int mask to attempt to convert
      * @return Set of Strings representing the mask
      * @see FeatureSetDescription#DELETE_OPERATION
      * @see FeatureSetDescription#UPDATE_OPERATION
@@ -179,7 +193,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the abstracT.
      */
     public String getAbstract() {
@@ -188,8 +202,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param _abstract The abstracT to set.
+     * 
+     * @param _abstract
+     *            The abstracT to set.
      */
     public void setAbstract(String _abstract) {
         this._abstract = _abstract;
@@ -197,7 +212,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the keywords.
      */
     public List getKeywords() {
@@ -206,8 +221,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param keywords The keywords to set.
+     * 
+     * @param keywords
+     *            The keywords to set.
      */
     public void setKeywords(List keywords) {
         this.keywords = keywords;
@@ -215,7 +231,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the latLongBoundingBox.
      */
     public Envelope getLatLongBoundingBox() {
@@ -224,8 +240,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param latLongBoundingBox The latLongBoundingBox to set.
+     * 
+     * @param latLongBoundingBox
+     *            The latLongBoundingBox to set.
      */
     public void setLatLongBoundingBox(Envelope latLongBoundingBox) {
         this.latLongBoundingBox = latLongBoundingBox;
@@ -233,7 +250,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the name.
      */
     public String getName() {
@@ -242,8 +259,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param name The name to set.
+     * 
+     * @param name
+     *            The name to set.
      */
     public void setName(String name) {
         this.name = name;
@@ -251,7 +269,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the operations.
      */
     public int getOperations() {
@@ -260,8 +278,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param operations The operations to set.
+     * 
+     * @param operations
+     *            The operations to set.
      */
     public void setOperations(int operations) {
         this.operations = operations;
@@ -269,7 +288,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the sRS.
      */
     public String getSRS() {
@@ -278,8 +297,9 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param srs The sRS to set.
+     * 
+     * @param srs
+     *            The sRS to set.
      */
     public void setSRS(String srs) {
         SRS = srs;
@@ -287,7 +307,7 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the title.
      */
     public String getTitle() {
@@ -296,20 +316,24 @@ public class FeatureSetDescription {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param title The title to set.
+     * 
+     * @param title
+     *            The title to set.
      */
     public void setTitle(String title) {
         this.title = title;
     }
+
     /**
      * @return Returns the namespace.
      */
     public URI getNamespace() {
         return namespace;
     }
+
     /**
-     * @param namespace The namespace to set.
+     * @param namespace
+     *            The namespace to set.
      */
     public void setNamespace(URI namespace) {
         this.namespace = namespace;

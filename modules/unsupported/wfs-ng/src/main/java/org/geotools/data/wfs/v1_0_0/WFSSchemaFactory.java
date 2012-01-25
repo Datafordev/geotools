@@ -28,16 +28,15 @@ import org.geotools.xml.schema.Schema;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
-
 /**
  * <p>
  * DOCUMENT ME!
  * </p>
- *
+ * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class WFSSchemaFactory extends SchemaFactory {
@@ -65,7 +64,9 @@ public class WFSSchemaFactory extends SchemaFactory {
         /**
          * Comment for <code>serialVersionUID</code>
          */
-        private static final long serialVersionUID = "org.geotools.data.wfs.WFSSchemaFactory.WFSRootHandler".hashCode();
+        private static final long serialVersionUID = "org.geotools.data.wfs.WFSSchemaFactory.WFSRootHandler"
+                .hashCode();
+
         private ServiceExceptionReportHandler se = null;
 
         /**
@@ -80,8 +81,7 @@ public class WFSSchemaFactory extends SchemaFactory {
          * 
          * @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String)
          */
-        public XSIElementHandler getHandler(String namespaceURI,
-            String localName){
+        public XSIElementHandler getHandler(String namespaceURI, String localName) {
             XSIElementHandler r = null;
             r = super.getHandler(namespaceURI, localName);
 
@@ -91,8 +91,8 @@ public class WFSSchemaFactory extends SchemaFactory {
 
             if ("ServiceExceptionReport".equalsIgnoreCase(localName)
                     && FilterSchema.NAMESPACE.toString().equalsIgnoreCase(namespaceURI)) {
-                //                FilterSchema.getInstance().getElements()[37]
-                //                ServiceException
+                // FilterSchema.getInstance().getElements()[37]
+                // ServiceException
                 if (se == null) {
                     se = new ServiceExceptionReportHandler();
                 }
@@ -122,8 +122,11 @@ public class WFSSchemaFactory extends SchemaFactory {
         /**
          * Comment for <code>serialVersionUID</code>
          */
-        private static final long serialVersionUID = "org.geotools.data.wfs.WFSSchemaFactory.ServiceExceptionReportHandler".hashCode();
+        private static final long serialVersionUID = "org.geotools.data.wfs.WFSSchemaFactory.ServiceExceptionReportHandler"
+                .hashCode();
+
         private ServiceException exception;
+
         private boolean inside = false;
 
         /**
@@ -138,19 +141,17 @@ public class WFSSchemaFactory extends SchemaFactory {
         }
 
         /**
-         * @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String,
-         *      java.lang.String)
+         * @see org.geotools.xml.XSIElementHandler#endElement(java.lang.String, java.lang.String)
          */
-        public void endElement(String namespaceURI, String localName){
+        public void endElement(String namespaceURI, String localName) {
             inside = false;
         }
 
         /**
-         * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String,
-         *      java.lang.String, org.xml.sax.Attributes)
+         * @see org.geotools.xml.XSIElementHandler#startElement(java.lang.String, java.lang.String,
+         *      org.xml.sax.Attributes)
          */
-        public void startElement(String namespaceURI, String localName,
-            Attributes attr){
+        public void startElement(String namespaceURI, String localName, Attributes attr) {
             if ("ServiceException".equalsIgnoreCase(localName)) {
                 inside = true;
 
@@ -175,19 +176,16 @@ public class WFSSchemaFactory extends SchemaFactory {
         /**
          * @see org.geotools.xml.XSIElementHandler#characters(java.lang.String)
          */
-        public void characters(String text){
+        public void characters(String text) {
             if (inside) {
-                exception = new ServiceException(text, exception.getCode(),
-                        exception.getLocator());
+                exception = new ServiceException(text, exception.getCode(), exception.getLocator());
             }
         }
 
         /**
-         * @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String,
-         *      java.lang.String)
+         * @see org.geotools.xml.XSIElementHandler#getHandler(java.lang.String, java.lang.String)
          */
-        public XSIElementHandler getHandler(String namespaceURI,
-            String localName){
+        public XSIElementHandler getHandler(String namespaceURI, String localName) {
             if ("ServiceException".equalsIgnoreCase(localName)
                     && FilterSchema.NAMESPACE.toString().equalsIgnoreCase(namespaceURI)) {
                 return this;

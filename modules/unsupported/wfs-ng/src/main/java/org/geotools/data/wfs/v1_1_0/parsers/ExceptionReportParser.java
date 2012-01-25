@@ -47,14 +47,14 @@ import org.geotools.xml.Parser;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
  *         /wfs/v1_1_0/parsers/ExceptionReportParser.java $
  */
-@SuppressWarnings( { "nls", "unchecked" })
+@SuppressWarnings({ "nls", "unchecked" })
 public class ExceptionReportParser implements WFSResponseParser {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
@@ -91,8 +91,8 @@ public class ExceptionReportParser implements WFSResponseParser {
         if (originatingRequest != null) {
             try {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                WFS_1_1_0_Protocol.encode(originatingRequest, configuration, out, Charset
-                        .forName("UTF-8"));
+                WFS_1_1_0_Protocol.encode(originatingRequest, configuration, out,
+                        Charset.forName("UTF-8"));
                 String requestStr = out.toString("UTF-8");
 
                 msg.append(". Originating request is: \n").append(requestStr).append("\n");

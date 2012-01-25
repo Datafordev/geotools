@@ -24,63 +24,71 @@ import org.geotools.data.ows.Capabilities;
 import org.geotools.data.ows.OperationType;
 import org.geotools.filter.FilterCapabilities;
 
-
 /**
  * <p>
  * DOCUMENT ME!
  * </p>
- *
+ * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class WFSCapabilities extends Capabilities {
     private List<FeatureSetDescription> featureTypes; // FeatureSetDescriptions
+
     private OperationType describeFeatureType;
+
     private OperationType getCapabilities;
+
     private OperationType getFeature;
+
     private OperationType getFeatureWithLock;
+
     private OperationType transaction;
+
     private OperationType lockFeature;
+
     private String vendorSpecificCapabilities;
+
     private FilterCapabilities filterCapabilities;
 
     /**
-     * Makes a few assumptions about ":" in the name (prefix:typename). 
+     * Makes a few assumptions about ":" in the name (prefix:typename).
      * 
-     * Although this case is uncommon, it may result in the occational error. 
-     * The specification is unclear as to the inclusion or exclusion of the 
-     * prefix (although most xml documents would support prefix exclusion). 
+     * Although this case is uncommon, it may result in the occational error. The specification is
+     * unclear as to the inclusion or exclusion of the prefix (although most xml documents would
+     * support prefix exclusion).
      * 
      * @param capabilities
      * @param typename
      */
-    public static FeatureSetDescription getFeatureSetDescription(WFSCapabilities capabilities, String typename){
+    public static FeatureSetDescription getFeatureSetDescription(WFSCapabilities capabilities,
+            String typename) {
         List l = capabilities.getFeatureTypes();
         Iterator i = l.iterator();
         String crsName = null;
 
-        while (i.hasNext() && crsName==null) {
-                FeatureSetDescription fsd = (FeatureSetDescription) i.next();
-                String name = fsd.getName();
-                if (typename.equals( name )) {
+        while (i.hasNext() && crsName == null) {
+            FeatureSetDescription fsd = (FeatureSetDescription) i.next();
+            String name = fsd.getName();
+            if (typename.equals(name)) {
+                return fsd;
+            }
+            if (name != null) {
+                int index = name.indexOf(':');
+                if (index != -1 && typename.equals(name.substring(index + 1))) {
                     return fsd;
                 }
-                if(name !=null){
-                	int index = name.indexOf(':'); 
-                	if(index!=-1 && typename.equals(name.substring(index+1))){
-                	    return fsd;
-                	}
-                }
+            }
         }
         return null;
     }
-    
+
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the featureTypes.
      */
     public List<FeatureSetDescription> getFeatureTypes() {
@@ -89,8 +97,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param featureTypes The featureTypes to set.
+     * 
+     * @param featureTypes
+     *            The featureTypes to set.
      */
     public void setFeatureTypes(List featureTypes) {
         this.featureTypes = featureTypes;
@@ -98,7 +107,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the filterCapabilities.
      */
     public FilterCapabilities getFilterCapabilities() {
@@ -107,8 +116,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param filterCapabilities The filterCapabilities to set.
+     * 
+     * @param filterCapabilities
+     *            The filterCapabilities to set.
      */
     public void setFilterCapabilities(FilterCapabilities filterCapabilities) {
         this.filterCapabilities = filterCapabilities;
@@ -116,7 +126,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the vendorSpecificCapabilities.
      */
     public String getVendorSpecificCapabilities() {
@@ -125,8 +135,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param vendorSpecificCapabilities The vendorSpecificCapabilities to set.
+     * 
+     * @param vendorSpecificCapabilities
+     *            The vendorSpecificCapabilities to set.
      */
     public void setVendorSpecificCapabilities(String vendorSpecificCapabilities) {
         this.vendorSpecificCapabilities = vendorSpecificCapabilities;
@@ -134,7 +145,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the describeFeatureType.
      */
     public OperationType getDescribeFeatureType() {
@@ -143,8 +154,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param describeFeatureType The describeFeatureType to set.
+     * 
+     * @param describeFeatureType
+     *            The describeFeatureType to set.
      */
     public void setDescribeFeatureType(OperationType describeFeatureType) {
         this.describeFeatureType = describeFeatureType;
@@ -152,7 +164,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the getCapabilities.
      */
     public OperationType getGetCapabilities() {
@@ -161,8 +173,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param getCapabilities The getCapabilities to set.
+     * 
+     * @param getCapabilities
+     *            The getCapabilities to set.
      */
     public void setGetCapabilities(OperationType getCapabilities) {
         this.getCapabilities = getCapabilities;
@@ -170,7 +183,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the getFeature.
      */
     public OperationType getGetFeature() {
@@ -179,8 +192,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param getFeature The getFeature to set.
+     * 
+     * @param getFeature
+     *            The getFeature to set.
      */
     public void setGetFeature(OperationType getFeature) {
         this.getFeature = getFeature;
@@ -188,7 +202,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the getFeatureWithLock.
      */
     public OperationType getGetFeatureWithLock() {
@@ -197,8 +211,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param getFeatureWithLock The getFeatureWithLock to set.
+     * 
+     * @param getFeatureWithLock
+     *            The getFeatureWithLock to set.
      */
     public void setGetFeatureWithLock(OperationType getFeatureWithLock) {
         this.getFeatureWithLock = getFeatureWithLock;
@@ -206,7 +221,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the transaction.
      */
     public OperationType getTransaction() {
@@ -215,8 +230,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param transaction The transaction to set.
+     * 
+     * @param transaction
+     *            The transaction to set.
      */
     public void setTransaction(OperationType transaction) {
         this.transaction = transaction;
@@ -224,7 +240,7 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
+     * 
      * @return Returns the lockFeature.
      */
     public OperationType getLockFeature() {
@@ -233,8 +249,9 @@ public class WFSCapabilities extends Capabilities {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param lockFeature The lockFeature to set.
+     * 
+     * @param lockFeature
+     *            The lockFeature to set.
      */
     public void setLockFeature(OperationType lockFeature) {
         this.lockFeature = lockFeature;

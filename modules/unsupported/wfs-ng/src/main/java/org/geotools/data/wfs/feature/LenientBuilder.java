@@ -23,40 +23,43 @@ import org.opengis.feature.Attribute;
 import org.opengis.feature.FeatureFactory;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+
 /**
- * A build that can be used as a replacement for SimpleFeatureBuilder in order
- * to avoid validation.
+ * A build that can be used as a replacement for SimpleFeatureBuilder in order to avoid validation.
  * <p>
- * The normal SimpleFeatureBuilder performs validation (rather than leaving that up
- * to the factory implementation). 
+ * The normal SimpleFeatureBuilder performs validation (rather than leaving that up to the factory
+ * implementation).
  * <p>
+ * 
  * @author Jody Garnett
- *
- *
- *
- *
+ * 
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class LenientBuilder {
     private SimpleFeatureType schema;
+
     private FeatureFactory factory;
+
     private Object[] properties;
-    
-    public LenientBuilder(SimpleFeatureType schmea ){
+
+    public LenientBuilder(SimpleFeatureType schmea) {
         this.schema = schmea;
         this.factory = new LenientFeatureFactory();
         reset();
     }
-    
-    public static SimpleFeature build( SimpleFeatureType ft, Object atts[], String fid ){
+
+    public static SimpleFeature build(SimpleFeatureType ft, Object atts[], String fid) {
         LenientFeatureFactory featureFactory = new LenientFeatureFactory();
         List<Attribute> properties = new ArrayList<Attribute>();
-        for( int i=0; i<atts.length;i++){
+        for (int i = 0; i < atts.length; i++) {
             Object value = atts[i];
             Attribute property = featureFactory.createAttribute(value, ft.getDescriptor(i), null);
-            properties.add(property);            
+            properties.add(property);
         }
-        return featureFactory.createSimpleFeature(properties, ft, fid );
+        return featureFactory.createSimpleFeature(properties, ft, fid);
     }
 
     /** You can inject another Factory; this builder will still not do validation */
@@ -69,18 +72,19 @@ public class LenientBuilder {
     }
 
     public SimpleFeature buildFeature(String fid) {
-        return factory.createSimpleFeature( properties, schema, fid );
+        return factory.createSimpleFeature(properties, schema, fid);
     }
 
-    public void reset(){
+    public void reset() {
         properties = new Object[schema.getAttributeCount()];
     }
 
     public static SimpleFeature copy(SimpleFeature f) {
-        if( f == null ) return null;
-        
-        LenientBuilder builder = new LenientBuilder(f.getFeatureType());        
-        builder.addAll( f.getAttributes().toArray() );
+        if (f == null)
+            return null;
+
+        LenientBuilder builder = new LenientBuilder(f.getFeatureType());
+        builder.addAll(f.getAttributes().toArray());
         return builder.buildFeature(f.getID());
     }
 }

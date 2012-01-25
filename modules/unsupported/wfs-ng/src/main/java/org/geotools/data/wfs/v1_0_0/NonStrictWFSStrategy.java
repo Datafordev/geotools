@@ -36,27 +36,29 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.SAXException;
 
 /**
- * A version that is not strict about its filter compliance. It can be used with
- * geoserver but no other servers.
+ * A version that is not strict about its filter compliance. It can be used with geoserver but no
+ * other servers.
  * 
  * @author Jesse
  */
 class NonStrictWFSStrategy implements WFSStrategy {
 
     protected WFS_1_0_0_DataStore store;
+
     @SuppressWarnings("unused")
     private Integer compliance;
 
     public NonStrictWFSStrategy(WFS_1_0_0_DataStore store) {
         this(store, null);
     }
-    
+
     public NonStrictWFSStrategy(WFS_1_0_0_DataStore store, Integer filterCompliance) {
         this.store = store;
         compliance = filterCompliance;
     }
 
-    public  FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query2, Transaction transaction) throws IOException {
+    public FeatureReader<SimpleFeatureType, SimpleFeature> getFeatureReader(Query query2,
+            Transaction transaction) throws IOException {
         Query query = new Query(query2);
         Filter processedFilter = store.processFilter(query.getFilter());
         // process the filter to update fidfilters using the transaction.
@@ -69,10 +71,12 @@ class NonStrictWFSStrategy implements WFSStrategy {
             postFilter = filters[1];
         }
 
-        CoordinateReferenceSystem dataCRS = correctFilterForServer( query.getTypeName(), serverFilter);
+        CoordinateReferenceSystem dataCRS = correctFilterForServer(query.getTypeName(),
+                serverFilter);
 
         ((Query) query).setFilter(serverFilter);
-         FeatureReader<SimpleFeatureType, SimpleFeature> reader = createFeatureReader(transaction, query);
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader = createFeatureReader(transaction,
+                query);
 
         if (reader.hasNext()) { // opportunity to throw exception
 
@@ -84,10 +88,12 @@ class NonStrictWFSStrategy implements WFSStrategy {
             throw new IOException("There are features but no feature type ... odd");
         }
 
-        return new EmptyFeatureReader<SimpleFeatureType, SimpleFeature>(store.getSchema(query.getTypeName()));
+        return new EmptyFeatureReader<SimpleFeatureType, SimpleFeature>(store.getSchema(query
+                .getTypeName()));
     }
 
-    protected  FeatureReader<SimpleFeatureType, SimpleFeature> wrapWithFilteringFeatureReader(Filter postFilter,  FeatureReader<SimpleFeatureType, SimpleFeature> reader,
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> wrapWithFilteringFeatureReader(
+            Filter postFilter, FeatureReader<SimpleFeatureType, SimpleFeature> reader,
             Filter processedFilter) {
         if (!postFilter.equals(Filter.INCLUDE)) {
             return new FilteringFeatureReader<SimpleFeatureType, SimpleFeature>(reader, postFilter);
@@ -95,8 +101,8 @@ class NonStrictWFSStrategy implements WFSStrategy {
         return reader;
     }
 
-    protected  FeatureReader<SimpleFeatureType, SimpleFeature> createFeatureReader(Transaction transaction, Query query)
-            throws IOException {
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> createFeatureReader(
+            Transaction transaction, Query query) throws IOException {
         Data data;
         data = createFeatureReaderPOST(query, transaction);
 
@@ -104,7 +110,8 @@ class NonStrictWFSStrategy implements WFSStrategy {
             data = createFeatureReaderGET(query, transaction);
 
         if (data.reader == null && data.saxException != null)
-            throw (IOException) new IOException(data.saxException.toString()).initCause(data.saxException);
+            throw (IOException) new IOException(data.saxException.toString())
+                    .initCause(data.saxException);
         if (data.reader == null && data.ioException != null)
             throw data.ioException;
 
@@ -147,11 +154,13 @@ class NonStrictWFSStrategy implements WFSStrategy {
         return data;
     }
 
-    protected  FeatureReader<SimpleFeatureType, SimpleFeature> applyReprojectionDecorator(FeatureReader <SimpleFeatureType, SimpleFeature> reader, Query query,
+    protected FeatureReader<SimpleFeatureType, SimpleFeature> applyReprojectionDecorator(
+            FeatureReader<SimpleFeatureType, SimpleFeature> reader, Query query,
             CoordinateReferenceSystem dataCRS) {
-         FeatureReader<SimpleFeatureType, SimpleFeature> tmp = reader;
+        FeatureReader<SimpleFeatureType, SimpleFeature> tmp = reader;
         if (query.getCoordinateSystem() != null
-                && !query.getCoordinateSystem().equals(reader.getFeatureType().getCoordinateReferenceSystem())) {
+                && !query.getCoordinateSystem().equals(
+                        reader.getFeatureType().getCoordinateReferenceSystem())) {
             try {
                 reader = new ForceCoordinateSystemFeatureReader(reader, query.getCoordinateSystem());
             } catch (SchemaException e) {
@@ -172,37 +181,40 @@ class NonStrictWFSStrategy implements WFSStrategy {
         }
         return reader;
     }
-    
+
     /**
      * If we are being exacting about folowing the WFS Capabilities.
      * 
      * @return true if we are being exacting about following the WFS Capabilities
      */
-    protected boolean isStrict(){
+    protected boolean isStrict() {
         return false;
     }
+
     /**
      * Using the provided query; obtain a FeatureSetDescriptor and modify the provided serverFilter
      * to be correct.
      * <p>
-     * If we are being strict the implementation may also clip any geometry or bbox 
-     * to the valid bounds advertised as valid by the server (or by the data CRS).
+     * If we are being strict the implementation may also clip any geometry or bbox to the valid
+     * bounds advertised as valid by the server (or by the data CRS).
      * <p>
+     * 
      * @param query
      * @param serverFilter
-     * @return CoordinateReferenceSystem to use when making the request (usually the data CRS for a WFS 1.0 Datastore)
+     * @return CoordinateReferenceSystem to use when making the request (usually the data CRS for a
+     *         WFS 1.0 Datastore)
      */
-    protected CoordinateReferenceSystem correctFilterForServer( String typeName, Filter serverFilter) {
+    protected CoordinateReferenceSystem correctFilterForServer(String typeName, Filter serverFilter) {
         // TODO modify bbox requests here
         FeatureSetDescription fsd = WFSCapabilities.getFeatureSetDescription(store.capabilities,
                 typeName);
 
         CoordinateReferenceSystem dataCRS = null;
-        
+
         if (fsd.getSRS() != null) {
             // reproject this filter!
             try {
-                dataCRS = CRS.decode( fsd.getSRS() );
+                dataCRS = CRS.decode(fsd.getSRS());
             } catch (FactoryException e) {
                 WFS_1_0_0_DataStore.LOGGER.warning(e.getMessage());
             } catch (MismatchedDimensionException e) {
@@ -213,8 +225,8 @@ class NonStrictWFSStrategy implements WFSStrategy {
         // anything; and just return the dataCRS
         // Rewrite request if we have a maxbox
         FixBBOXFilterVisitor visitor = new FixBBOXFilterVisitor(null);
-        serverFilter = (Filter) serverFilter.accept(visitor, null );
-        //Filters.accept(serverFilter, visitor);
+        serverFilter = (Filter) serverFilter.accept(visitor, null);
+        // Filters.accept(serverFilter, visitor);
         return dataCRS;
     }
 
@@ -223,7 +235,7 @@ class NonStrictWFSStrategy implements WFSStrategy {
 
         SAXException saxException;
 
-         FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
     }
 
 }

@@ -40,9 +40,9 @@ import org.geotools.util.logging.Logging;
  * @author Gabriel Roldan (OpenGeo)
  * @version $Id$
  * @since 2.6
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
  *         /wfs/v1_1_0/parsers/Gml31GetFeatureResponseParserFactory.java $
@@ -68,8 +68,8 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
      * request.
      * <p>
      * For instance, this factory can create a parser as long as the request is a
-     * {@link GetFeatureType GetFeature} request and the request output format matches {@code
-     * "text/xml; subtype=gml/3.1.1"}.
+     * {@link GetFeatureType GetFeature} request and the request output format matches
+     * {@code "text/xml; subtype=gml/3.1.1"}.
      * </p>
      * 
      * @see WFSResponseParserFactory#canProcess(WFSOperationType, String)

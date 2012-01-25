@@ -21,31 +21,31 @@ import java.util.Map;
 import org.geotools.data.FeatureLock;
 import org.opengis.filter.Filter;
 
-
 /**
- * Extension to FeatureLock that
- * records types and filters effected.
- *
+ * Extension to FeatureLock that records types and filters effected.
+ * 
  * @author dzwiers
- *
- *
- *
+ * 
+ * 
+ * 
  * @source $URL$
  */
 public class LockRequest extends FeatureLock {
-    //private long duration = 0;
+    // private long duration = 0;
     private String[] types = null;
+
     private Filter[] filters = null;
-    //private String lockId = null;
+
+    // private String lockId = null;
 
     private LockRequest() {
-        super(null,-1);
+        super(null, -1);
         // should not be used
     }
 
-    protected LockRequest(long duration, Map<String,Filter> dataSets) {
-        super( null, duration );
-        //this.duration = duration;
+    protected LockRequest(long duration, Map<String, Filter> dataSets) {
+        super(null, duration);
+        // this.duration = duration;
         types = (String[]) dataSets.keySet().toArray(new String[dataSets.size()]);
         filters = new Filter[types.length];
 
@@ -54,7 +54,7 @@ public class LockRequest extends FeatureLock {
     }
 
     protected LockRequest(long duration, String[] types, Filter[] filters) {
-        super( null, duration );
+        super(null, duration);
         this.types = types;
         this.filters = filters;
     }

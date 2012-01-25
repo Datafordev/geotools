@@ -80,7 +80,7 @@ import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class GeoServerOnlineTest {
@@ -153,8 +153,7 @@ public class GeoServerOnlineTest {
             features.getSchema();
             // features.getFeatureType();
 
-            Query query = new Query(typeName, Filter.INCLUDE, 20, Query.ALL_NAMES,
-                    "work already");
+            Query query = new Query(typeName, Filter.INCLUDE, 20, Query.ALL_NAMES, "work already");
             features = source.getFeatures(query);
             features.size();
             Iterator reader = features.iterator();
@@ -201,8 +200,7 @@ public class GeoServerOnlineTest {
         features.getSchema();
         // features.getFeatureType();
 
-        Query query = new Query(typeName, Filter.INCLUDE, 20, Query.ALL_NAMES,
-                "work already");
+        Query query = new Query(typeName, Filter.INCLUDE, 20, Query.ALL_NAMES, "work already");
         features = source.getFeatures(query);
         features.size();
 
@@ -247,73 +245,75 @@ public class GeoServerOnlineTest {
      */
     @Test
     public void testDataStoreSupportsPlainBBOXInterface() throws Exception {
-        if( url == null) return;
+        if (url == null)
+            return;
         final WFS_1_0_0_DataStore wfs = WFSDataStoreReadTest.getDataStore(url);
         final SimpleFeatureType ft = wfs.getSchema(TO_EDIT_TYPE);
         final ReferencedEnvelope bounds = wfs.getFeatureSource(TO_EDIT_TYPE).getBounds();
-        
+
         final FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
-        final BBOX bbox = ff.bbox("the_geom", bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(), bounds.getMaxY(), null);
-        
+        final BBOX bbox = ff.bbox("the_geom", bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
+                bounds.getMaxY(), null);
+
         /**
          * This one does not implement the deprecated geotools filter interfaces
          */
         final BBOX strictBBox = new BBOX() {
-            
+
             public boolean evaluate(Object object) {
                 return bbox.evaluate(object);
             }
-            
+
             public Object accept(FilterVisitor visitor, Object extraData) {
                 return bbox.accept(visitor, extraData);
             }
-            
+
             public Expression getExpression2() {
                 return bbox.getExpression2();
             }
-            
+
             public Expression getExpression1() {
                 return bbox.getExpression1();
             }
-            
+
             public String getSRS() {
                 return bbox.getSRS();
             }
-            
+
             public String getPropertyName() {
                 return bbox.getPropertyName();
             }
-            
+
             public double getMinY() {
                 return bbox.getMinY();
             }
-            
+
             public double getMinX() {
                 return bbox.getMinX();
             }
-            
+
             public double getMaxY() {
                 return bbox.getMaxY();
             }
-            
+
             public double getMaxX() {
                 return bbox.getMaxX();
             }
-            
+
             public MatchAction getMatchAction() {
                 return MatchAction.ANY;
             }
         };
-        
+
         final Query query = new Query(ft.getTypeName());
         query.setFilter(strictBBox);
-        
+
         FeatureReader<SimpleFeatureType, SimpleFeature> reader;
-        
-        reader = wfs.getFeatureReaderGet(query, Transaction.AUTO_COMMIT);        
+
+        reader = wfs.getFeatureReaderGet(query, Transaction.AUTO_COMMIT);
         assertNotNull(reader);
 
-        reader = wfs.getFeatureReaderPost(query, Transaction.AUTO_COMMIT);        
+        reader = wfs.getFeatureReaderPost(query, Transaction.AUTO_COMMIT);
         assertNotNull(reader);
     }
 
@@ -433,8 +433,8 @@ public class GeoServerOnlineTest {
                 .getFilterFactory2(GeoTools.getDefaultHints());
         try {
             GeometryFactory gf = new GeometryFactory();
-            MultiPolygon mp = gf.createMultiPolygon(new Polygon[] { gf.createPolygon(gf
-                    .createLinearRing(new Coordinate[] { new Coordinate(-88.071564, 37.51099),
+            MultiPolygon mp = gf.createMultiPolygon(new Polygon[] { gf.createPolygon(
+                    gf.createLinearRing(new Coordinate[] { new Coordinate(-88.071564, 37.51099),
                             new Coordinate(-88.467644, 37.400757),
                             new Coordinate(-90.638329, 42.509361),
                             new Coordinate(-89.834618, 42.50346),
@@ -444,8 +444,8 @@ public class GeoServerOnlineTest {
             PropertyName geometryAttributeExpression = filterFac.property(ft
                     .getGeometryDescriptor().getLocalName());
             PropertyIsNull geomNullCheck = filterFac.isNull(geometryAttributeExpression);
-            Query query = new Query(typename, filterFac.not(geomNullCheck), 1,
-                    Query.ALL_NAMES, null);
+            Query query = new Query(typename, filterFac.not(geomNullCheck), 1, Query.ALL_NAMES,
+                    null);
             SimpleFeatureIterator inStore = fs.getFeatures(query).features();
 
             SimpleFeature f, f2;
@@ -483,16 +483,14 @@ public class GeoServerOnlineTest {
             // assertFalse("events not fired", watcher.count == 0);
         } finally {
             try {
-                ((SimpleFeatureStore) fs).removeFeatures(filterFac
-                        .not(startingFeatures));
+                ((SimpleFeatureStore) fs).removeFeatures(filterFac.not(startingFeatures));
             } catch (Exception e) {
                 System.out.println(e);
             }
         }
     }
 
-    private Id createFidFilter(SimpleFeatureSource fs)
-            throws IOException {
+    private Id createFidFilter(SimpleFeatureSource fs) throws IOException {
         SimpleFeatureIterator iter = fs.getFeatures().features();
         FilterFactory2 ffac = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
         Set fids = new HashSet();

@@ -16,7 +16,7 @@
  */
 package org.geotools.data.wfs.v1_0_0;
 
-import static org.geotools.data.wfs.protocol.http.HttpMethod.GET;
+import static org.geotools.data.wfs.protocol.HttpMethod.GET;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 import org.geotools.data.DataSourceException;
 import org.geotools.data.ows.OperationType;
-import org.geotools.data.wfs.protocol.http.HttpMethod;
+import org.geotools.data.wfs.protocol.HttpMethod;
 import org.geotools.data.wfs.protocol.wfs.Version;
 import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
 import org.geotools.util.logging.Logging;
@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 
 /**
  * 
- *
+ * 
  * @source $URL$
  */
 public class WFS100ProtocolHandler extends WFSProtocolHandler {
@@ -46,7 +46,8 @@ public class WFS100ProtocolHandler extends WFSProtocolHandler {
 
     private WFSCapabilities capabilities;
 
-    public WFS100ProtocolHandler(InputStream capabilitiesReader, ConnectionFactory connectionFac) throws IOException {
+    public WFS100ProtocolHandler(InputStream capabilitiesReader, ConnectionFactory connectionFac)
+            throws IOException {
         super(Version.v1_0_0, connectionFac);
         capabilities = parseCapabilities(capabilitiesReader);
     }
@@ -55,13 +56,13 @@ public class WFS100ProtocolHandler extends WFSProtocolHandler {
         return capabilities;
     }
 
-    public ConnectionFactory getConnectionFactory(){
+    public ConnectionFactory getConnectionFactory() {
         return super.connectionFac;
     }
-    
+
     private WFSCapabilities parseCapabilities(InputStream capabilitiesReader) throws IOException {
         // TODO: move to some 1.0.0 specific class
-        Map<String,Object> hints = new HashMap<String,Object>();
+        Map<String, Object> hints = new HashMap<String, Object>();
         hints.put(DocumentFactory.VALIDATION_HINT, Boolean.FALSE);
 
         Object parsed;
