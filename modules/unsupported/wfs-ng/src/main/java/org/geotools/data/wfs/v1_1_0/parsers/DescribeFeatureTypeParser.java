@@ -18,10 +18,9 @@ package org.geotools.data.wfs.v1_1_0.parsers;
 
 import java.io.InputStream;
 
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
-import org.geotools.data.wfs.protocol.wfs.WFSResponseParser;
-import org.geotools.data.wfs.protocol.wfs.WFSResponseParserFactory;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
+import org.geotools.data.wfs.protocol.WFSResponse;
+import org.geotools.data.wfs.protocol.WFSResponseParser;
+import org.geotools.data.wfs.protocol.WFSResponseParserFactory;
 import org.geotools.gml3.ApplicationSchemaConfiguration;
 import org.geotools.xml.Parser;
 
@@ -48,7 +47,7 @@ import org.geotools.xml.Parser;
  */
 public class DescribeFeatureTypeParser implements WFSResponseParser {
 
-    public Object parse(WFS_1_1_0_DataStore wfs, WFSResponse response) {
+    public Object parse(WFSResponse response) {
         throw new UnsupportedOperationException(
                 "DescribeFeatureType responses not yet engaged in the framework, see class' javadocs");
     }

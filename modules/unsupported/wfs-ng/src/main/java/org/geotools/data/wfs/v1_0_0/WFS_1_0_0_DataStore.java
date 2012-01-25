@@ -960,24 +960,29 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
         return capabilities;
     }
 
+    @Override
     public SimpleFeatureSource getFeatureSource(Name typeName) throws IOException {
         return null;
     }
 
+    @Override
     public List<Name> getNames() throws IOException {
         return null;
     }
 
+    @Override
     public SimpleFeatureType getSchema(Name name) throws IOException {
         return null;
     }
 
+    @Override
     public void updateSchema(Name typeName, SimpleFeatureType featureType) throws IOException {
     }
 
     /**
      * @see WFSDataStore#getDescribeFeatureTypeURL(String)
      */
+    @Override
     public URL getDescribeFeatureTypeURL(String typeName) {
         try {
             return protocolHandler.getDescribeFeatureTypeURLGet(typeName);
@@ -989,6 +994,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#getFeatureTypeBounds(String)
      */
+    @Override
     public String getFeatureTypeAbstract(String typeName) {
         try {
             return getFeatureSource(typeName).getInfo().getDescription();
@@ -1000,6 +1006,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#getFeatureTypeBounds(String)
      */
+    @Override
     public ReferencedEnvelope getFeatureTypeBounds(String typeName) {
         try {
             return getFeatureSource(typeName).getInfo().getBounds();
@@ -1011,6 +1018,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#getFeatureTypeCRS(String)
      */
+    @Override
     public CoordinateReferenceSystem getFeatureTypeCRS(String typeName) {
         try {
             return getFeatureSource(typeName).getInfo().getCRS();
@@ -1022,6 +1030,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#
      */
+    @Override
     public Set<String> getFeatureTypeKeywords(String typeName) {
         try {
             Set<String> keywords = getFeatureSource(typeName).getInfo().getKeywords();
@@ -1034,6 +1043,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#getFeatureTypeTitle(String)
      */
+    @Override
     public String getFeatureTypeTitle(String typeName) {
         try {
             return getFeatureSource(typeName).getInfo().getTitle();
@@ -1045,6 +1055,7 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
     /**
      * @see WFSDataStore#getFeatureTypeWGS84Bounds(String)
      */
+    @Override
     public ReferencedEnvelope getFeatureTypeWGS84Bounds(String typeName) {
         FeatureSetDescription fsd = WFSCapabilities
                 .getFeatureSetDescription(capabilities, typeName);
@@ -1052,64 +1063,73 @@ public class WFS_1_0_0_DataStore extends AbstractDataStore implements WFSDataSto
         return new ReferencedEnvelope(latLongBoundingBox, DefaultGeographicCRS.WGS84);
     }
 
+    @Override
     public void setMaxFeatures(Integer maxFeatures) {
         // ignored... this class needs to move to the new arch
     }
 
+    @Override
     public URL getCapabilitiesURL() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public QName getFeatureTypeName(String typeName) {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public Integer getMaxFeatures() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public String getServiceAbstract() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public Set<String> getServiceKeywords() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public URI getServiceProviderUri() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public String getServiceTitle() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public String getServiceVersion() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public boolean isPreferPostOverGet() {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
+    @Override
     public void setPreferPostOverGet(Boolean booleanValue) {
         throw new UnsupportedOperationException(
                 "Not used, this class needs to be adapted to the new architecture in the wfs.v_1_1_0 package");
     }
 
-    /**
-     * @see org.geotools.data.wfs.WFSDataStore#setNamespaceOverride(java.lang.String)
-     */
-    public void setNamespaceOverride(String namespaceOverride) {
+    @Override
+    public void setNamespaceURI(String namespaceOverride) {
         this.namespaceOverride = namespaceOverride;
     }
 }

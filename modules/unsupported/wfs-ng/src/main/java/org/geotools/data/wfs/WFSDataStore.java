@@ -91,5 +91,5 @@ public interface WFSDataStore extends DataStore {
 
     public boolean isPreferPostOverGet();
 
-    public void setNamespaceOverride(String namespaceOverride);
+    public void setNamespaceURI(String namespaceOverride);
 }

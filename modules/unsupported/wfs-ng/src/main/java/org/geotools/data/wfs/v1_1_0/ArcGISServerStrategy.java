@@ -19,8 +19,8 @@ package org.geotools.data.wfs.v1_1_0;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 
 /**
  * B3partners B.V. http://www.b3partners.nl

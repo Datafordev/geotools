@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.protocol.wfs;
+package org.geotools.data.wfs.protocol;
 
 import java.io.IOException;
 import java.net.URI;
@@ -133,6 +133,8 @@ public interface WFSProtocol {
      *             if the {@code typeName} does not exist
      */
     public QName getFeatureTypeName(final String typeName);
+
+    public String getSimpleTypeName(QName qname);
 
     /**
      * Returns the parsed version of the FilterCapabilities section in the capabilities document
@@ -307,4 +309,8 @@ public interface WFSProtocol {
 
     public SimpleFeatureType issueDescribeFeatureTypeGET(String prefixedTypeName,
             CoordinateReferenceSystem crs) throws IOException;
+
+    public TransactionResult issueTransaction(TransactionRequest transaction) throws IOException;
+
+    public TransactionRequest createTransaction();
 }

@@ -18,8 +18,8 @@ package org.geotools.data.wfs.v1_1_0;
 
 import java.util.Set;
 
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.xml.Configuration;
 

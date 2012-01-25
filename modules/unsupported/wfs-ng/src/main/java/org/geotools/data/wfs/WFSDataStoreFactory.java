@@ -51,8 +51,8 @@ import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.protocol.HttpMethod;
 import org.geotools.data.wfs.protocol.URIs;
-import org.geotools.data.wfs.protocol.wfs.Version;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.Version;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.data.wfs.v1_0_0.WFS100ProtocolHandler;
 import org.geotools.data.wfs.v1_0_0.WFS_1_0_0_DataStore;
 import org.geotools.data.wfs.v1_1_0.ArcGISServerStrategy;
@@ -61,7 +61,6 @@ import org.geotools.data.wfs.v1_1_0.DefaultWFSStrategy;
 import org.geotools.data.wfs.v1_1_0.GeoServerStrategy;
 import org.geotools.data.wfs.v1_1_0.IonicStrategy;
 import org.geotools.data.wfs.v1_1_0.WFSStrategy;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_Protocol;
 import org.geotools.util.logging.Logging;
 import org.geotools.wfs.WFS;
@@ -448,11 +447,11 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             WFSStrategy strategy = determineCorrectStrategy(getCapabilitiesRequest, capsDoc,
                     wfsStrategy);
             wfs.setStrategy(strategy);
-            dataStore = new WFS_1_1_0_DataStore(wfs);
+            dataStore = new WFSContentDataStore(wfs);
             dataStore.setMaxFeatures(maxFeatures);
             dataStore.setPreferPostOverGet(protocol);
         }
-        dataStore.setNamespaceOverride(namespaceOverride);
+        dataStore.setNamespaceURI(namespaceOverride);
 
         return dataStore;
     }

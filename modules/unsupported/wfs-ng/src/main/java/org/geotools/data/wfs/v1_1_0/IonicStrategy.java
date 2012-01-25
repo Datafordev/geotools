@@ -27,9 +27,9 @@ import javax.xml.namespace.QName;
 import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.QueryType;
 
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.GetFeature;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.gml2.GML;

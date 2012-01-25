@@ -14,15 +14,18 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.protocol.wfs;
+package org.geotools.data.wfs.protocol;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.xml.namespace.QName;
+
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.util.logging.Logging;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
  * A handle to a WFS response that contains the input stream to the actual contents and some well
@@ -50,6 +53,10 @@ public class WFSResponse {
     private EObject request;
 
     private String targetUrl;
+
+    private SimpleFeatureType queryType;
+
+    private QName remoteTypeName;
 
     /**
      * @param charset
@@ -124,5 +131,21 @@ public class WFSResponse {
     public String toString() {
         return new StringBuilder("WFSResponse[charset=").append(charset).append(", contentType=")
                 .append(contentType).append("]").toString();
+    }
+
+    public SimpleFeatureType getQueryType() {
+        return queryType;
+    }
+
+    public void setQueryType(SimpleFeatureType queryType) {
+        this.queryType = queryType;
+    }
+
+    public QName getRemoteTypeName() {
+        return remoteTypeName;
+    }
+
+    public void setRemoteTypeName(final QName remoteName) {
+        remoteTypeName = remoteName;
     }
 }

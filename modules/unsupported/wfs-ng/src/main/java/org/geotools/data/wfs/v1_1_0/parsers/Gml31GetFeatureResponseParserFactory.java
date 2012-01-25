@@ -26,11 +26,10 @@ import java.util.logging.Logger;
 import net.opengis.wfs.GetFeatureType;
 
 import org.eclipse.emf.ecore.EObject;
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
-import org.geotools.data.wfs.protocol.wfs.WFSResponseParser;
-import org.geotools.data.wfs.protocol.wfs.WFSResponseParserFactory;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSResponse;
+import org.geotools.data.wfs.protocol.WFSResponseParser;
+import org.geotools.data.wfs.protocol.WFSResponseParserFactory;
 import org.geotools.util.logging.Logging;
 
 /**
@@ -98,12 +97,11 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
      * of an heuristic may be needed in order to identify the actual response.
      * </p>
      * 
-     * @see WFSResponseParserFactory#createParser(WFS_1_1_0_DataStore, WFSResponse)
+     * @see WFSResponseParserFactory#createParser(WFSResponse)
      * @see FeatureCollectionParser
      * @see ExceptionReportParser
      */
-    public WFSResponseParser createParser(WFS_1_1_0_DataStore wfs, WFSResponse response)
-            throws IOException {
+    public WFSResponseParser createParser(WFSResponse response) throws IOException {
         final WFSResponseParser parser;
         final String contentType = response.getContentType();
         if (isSupportedOutputFormat(contentType)) {

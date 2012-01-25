@@ -27,8 +27,8 @@ import net.opengis.wfs.impl.GetFeatureTypeImpl;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.GetFeature;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;

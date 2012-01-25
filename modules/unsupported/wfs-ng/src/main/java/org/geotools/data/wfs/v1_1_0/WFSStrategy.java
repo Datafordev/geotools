@@ -24,9 +24,9 @@ import net.opengis.wfs.GetFeatureType;
 
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.GetFeature;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.filter.Capabilities;
 import org.geotools.wfs.WFSConfiguration;
 import org.geotools.xml.Configuration;

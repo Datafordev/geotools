@@ -1,6 +1,6 @@
 package org.geotools.data.wfs.v1_1_0;
 
-import static org.geotools.data.wfs.protocol.wfs.WFSOperationType.DESCRIBE_FEATURETYPE;
+import static org.geotools.data.wfs.protocol.WFSOperationType.DESCRIBE_FEATURETYPE;
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.CUBEWERX_GOVUNITCE;
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.CUBEWERX_ROADSEG;
 import static org.geotools.data.wfs.v1_1_0.DataTestSupport.GEOS_ARCHSITES;
@@ -42,11 +42,11 @@ import org.geotools.data.Query;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.wfs.protocol.GetFeature;
 import org.geotools.data.wfs.protocol.URIs;
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.GetFeature.ResultType;
-import org.geotools.data.wfs.protocol.wfs.Version;
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
+import org.geotools.data.wfs.protocol.Version;
+import org.geotools.data.wfs.protocol.WFSResponse;
+import org.geotools.data.wfs.protocol.GetFeature.ResultType;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHTTPClient;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHttpResponse;
 import org.geotools.factory.CommonFactoryFinder;
@@ -355,7 +355,7 @@ public class WFS_1_1_0_ProtocolTest {
 
     /**
      * Test method for
-     * {@link WFS_1_1_0_Protocol#supportsOperation(org.geotools.data.wfs.protocol.wfs.WFSOperationType, org.geotools.data.wfs.protocol.http.HttpMethod)}
+     * {@link WFS_1_1_0_Protocol#supportsOperation(org.geotools.data.wfs.protocol.WFSOperationType, org.geotools.data.wfs.protocol.http.HttpMethod)}
      * .
      * 
      * @throws IOException
@@ -374,7 +374,7 @@ public class WFS_1_1_0_ProtocolTest {
 
     /**
      * Test method for
-     * {@link WFS_1_1_0_Protocol#getOperationURL(org.geotools.data.wfs.protocol.wfs.WFSOperationType, org.geotools.data.wfs.protocol.http.HttpMethod)}
+     * {@link WFS_1_1_0_Protocol#getOperationURL(org.geotools.data.wfs.protocol.WFSOperationType, org.geotools.data.wfs.protocol.http.HttpMethod)}
      * .
      * 
      * @throws IOException

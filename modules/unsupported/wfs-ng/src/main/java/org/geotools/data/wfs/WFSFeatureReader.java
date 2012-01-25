@@ -14,13 +14,12 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.v1_1_0;
+package org.geotools.data.wfs;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
 import org.geotools.data.FeatureReader;
-import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.protocol.GetFeatureParser;
 import org.geotools.data.wfs.v1_1_0.parsers.EmfAppSchemaParser;
 import org.opengis.feature.simple.SimpleFeature;

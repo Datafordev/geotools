@@ -27,9 +27,9 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.DataSourceException;
-import org.geotools.data.wfs.protocol.wfs.GetFeatureParser;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
+import org.geotools.data.wfs.protocol.GetFeatureParser;
+import org.geotools.data.wfs.protocol.WFSProtocol;
+import org.geotools.data.wfs.protocol.WFSResponse;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.gml3.GML;
 import org.geotools.referencing.CRS;

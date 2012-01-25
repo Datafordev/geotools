@@ -33,8 +33,8 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.ResultTypeType;
 
 import org.geotools.data.Query;
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.GetFeature.ResultType;
+import org.geotools.data.wfs.protocol.GetFeature;
+import org.geotools.data.wfs.protocol.GetFeature.ResultType;
 import org.geotools.data.wfs.v1_1_0.WFSStrategy.RequestComponents;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Capabilities;

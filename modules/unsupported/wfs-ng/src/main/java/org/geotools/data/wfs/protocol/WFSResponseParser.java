@@ -14,11 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.protocol.wfs;
+package org.geotools.data.wfs.protocol;
 
 import java.io.IOException;
-
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 
 /**
  * A simple interface to parse the response of a WFS request.
@@ -42,14 +40,12 @@ public interface WFSResponseParser {
      * parser produces for it.
      * </p>
      * 
-     * @param wfs
-     *            the datastore that issued the request and obtained the given response
      * @param response
      *            the handle to the WFS response contents
      * @return the implementation dependent object that's parsed from the WFS response contents
      * @throws IOException
      *             if an exception is produced while parsing the response
      */
-    Object parse(WFS_1_1_0_DataStore wfs, WFSResponse response) throws IOException;
+    Object parse(WFSResponse response) throws IOException;
 
 }

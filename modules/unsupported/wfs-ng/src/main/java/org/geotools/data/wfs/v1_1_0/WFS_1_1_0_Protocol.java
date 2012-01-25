@@ -18,7 +18,7 @@ package org.geotools.data.wfs.v1_1_0;
 
 import static org.geotools.data.wfs.protocol.HttpMethod.GET;
 import static org.geotools.data.wfs.protocol.HttpMethod.POST;
-import static org.geotools.data.wfs.protocol.wfs.WFSOperationType.DESCRIBE_FEATURETYPE;
+import static org.geotools.data.wfs.protocol.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,13 +74,16 @@ import org.geotools.data.DataSourceException;
 import org.geotools.data.Query;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.wfs.protocol.GetFeature;
 import org.geotools.data.wfs.protocol.HttpMethod;
+import org.geotools.data.wfs.protocol.TransactionRequest;
+import org.geotools.data.wfs.protocol.TransactionRequest.TransactionElement;
+import org.geotools.data.wfs.protocol.TransactionResult;
 import org.geotools.data.wfs.protocol.URIs;
-import org.geotools.data.wfs.protocol.wfs.GetFeature;
-import org.geotools.data.wfs.protocol.wfs.Version;
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
+import org.geotools.data.wfs.protocol.Version;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
+import org.geotools.data.wfs.protocol.WFSResponse;
 import org.geotools.data.wfs.v1_1_0.WFSStrategy.RequestComponents;
 import org.geotools.data.wfs.v1_1_0.parsers.EmfAppSchemaParser;
 import org.geotools.filter.Capabilities;
@@ -297,10 +300,26 @@ public class WFS_1_1_0_Protocol implements WFSProtocol {
     /**
      * @see WFSProtocol#getFeatureTypeName(String)
      */
+    @Override
     public QName getFeatureTypeName(String typeName) {
         FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
         QName name = featureTypeInfo.getName();
         return name;
+    }
+
+    /**
+     * @see org.geotools.data.wfs.protocol.WFSProtocol#getSimpleTypeName(javax.xml.namespace.QName)
+     */
+    @Override
+    public String getSimpleTypeName(QName qname) {
+        String prefix = qname.getPrefix();
+        String simpleName;
+        if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+            simpleName = qname.getLocalPart();
+        } else {
+            simpleName = prefix + ":" + qname.getLocalPart();
+        }
+        return simpleName;
     }
 
     /**
@@ -723,7 +742,7 @@ public class WFS_1_1_0_Protocol implements WFSProtocol {
     }
 
     /**
-     * @see org.geotools.data.wfs.protocol.wfs.WFSProtocol#issueDescribeFeatureTypeGET(java.lang.String,
+     * @see org.geotools.data.wfs.protocol.WFSProtocol#issueDescribeFeatureTypeGET(java.lang.String,
      *      org.opengis.referencing.crs.CoordinateReferenceSystem)
      */
     @Override
@@ -765,5 +784,51 @@ public class WFS_1_1_0_Protocol implements WFSProtocol {
             }
         }
         return featureType;
+    }
+
+
+    @Override
+    public TransactionResult issueTransaction(final TransactionRequest transactionRequest)
+            throws IOException {
+
+        if (!supportsOperation(WFSOperationType.TRANSACTION, true)) {
+            throw new IOException("WFS does not support transactions");
+        }
+
+        WFS_1_1_0_TransactionRequest req = (WFS_1_1_0_TransactionRequest) transactionRequest;
+        TransactionType transaction = req.getTransaction();
+
+        // used to declare prefixes on the encoder later
+        Set<QName> affectedTypes = new HashSet<QName>();
+        for (TransactionElement e : transactionRequest.getTransactionElements()) {
+            String localTypeName = e.getLocalTypeName();
+            QName remoteTypeName = getFeatureTypeName(localTypeName);
+            affectedTypes.add(remoteTypeName);
+        }
+
+        final Encoder encoder = new Encoder(strategy.getWfsConfiguration());
+        // declare prefixes
+        for (QName remoteType : affectedTypes) {
+            if (XMLConstants.DEFAULT_NS_PREFIX.equals(remoteType.getPrefix())) {
+                continue;
+            }
+            encoder.getNamespaces().declarePrefix(remoteType.getPrefix(),
+                    remoteType.getNamespaceURI());
+        }
+        encoder.setIndenting(true);
+        encoder.setIndentSize(2);
+
+        final URL operationURL = getOperationURL(WFSOperationType.TRANSACTION, true);
+        final WFSResponse wfsResponse = issuePostRequest(transaction, operationURL, encoder);
+        return toTransactionResult(wfsResponse);
+    }
+
+    private TransactionResult toTransactionResult(WFSResponse wfsResponse) {
+        return null;
+    }
+
+    @Override
+    public TransactionRequest createTransaction() {
+        return new WFS_1_1_0_TransactionRequest(this);
     }
 }

@@ -37,7 +37,6 @@ import org.geotools.data.wfs.v1_1_0.CubeWerxStrategy;
 import org.geotools.data.wfs.v1_1_0.GeoServerStrategy;
 import org.geotools.data.wfs.v1_1_0.IonicStrategy;
 import org.geotools.data.wfs.v1_1_0.WFSStrategy;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 import org.geotools.test.TestData;
 import org.junit.After;
 import org.junit.Before;
@@ -154,7 +153,7 @@ public class WFSDataStoreFactoryTest {
         params.put(WFSDataStoreFactory.URL.key, capabilitiesUrl);
 
         WFSDataStore dataStore = dsf.createDataStore(params);
-        assertTrue(dataStore instanceof WFS_1_1_0_DataStore);
+        assertTrue(dataStore instanceof WFSContentDataStore);
     }
 
     @SuppressWarnings("nls")

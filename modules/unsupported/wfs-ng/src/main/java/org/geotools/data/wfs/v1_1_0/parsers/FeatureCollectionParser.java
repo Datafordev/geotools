@@ -26,10 +26,9 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.QueryType;
 
 import org.geotools.data.DataUtilities;
-import org.geotools.data.wfs.protocol.wfs.GetFeatureParser;
-import org.geotools.data.wfs.protocol.wfs.WFSResponse;
-import org.geotools.data.wfs.protocol.wfs.WFSResponseParser;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
+import org.geotools.data.wfs.protocol.GetFeatureParser;
+import org.geotools.data.wfs.protocol.WFSResponse;
+import org.geotools.data.wfs.protocol.WFSResponseParser;
 import org.geotools.feature.SchemaException;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -52,12 +51,14 @@ public class FeatureCollectionParser implements WFSResponseParser {
     /**
      * @return a {@link GetFeatureParser} to stream the contents of the GML 3.1 response
      */
-    public Object parse(WFS_1_1_0_DataStore wfs, WFSResponse response) throws IOException {
+    public Object parse(WFSResponse response) throws IOException {
 
-        GetFeatureType request = (GetFeatureType) response.getOriginatingRequest();
-        QueryType queryType = (QueryType) request.getQuery().get(0);
-        String prefixedTypeName = (String) queryType.getTypeName().get(0);
-        SimpleFeatureType schema = wfs.getSchema(prefixedTypeName);
+        final GetFeatureType request = (GetFeatureType) response.getOriginatingRequest();
+        final QueryType queryType = (QueryType) request.getQuery().get(0);
+        final QName remoteFeatureName = response.getRemoteTypeName();
+
+        SimpleFeatureType schema = response.getQueryType();
+        @SuppressWarnings("unchecked")
         List<String> propertyNames = queryType.getPropertyName();
         if (propertyNames.size() > 0) {
             // the expected schema may contain less properties than the full schema. Let's say it to
@@ -70,10 +71,10 @@ public class FeatureCollectionParser implements WFSResponseParser {
                 throw (RuntimeException) new RuntimeException().initCause(e);
             }
         }
-        QName featureName = wfs.getFeatureTypeName(prefixedTypeName);
+
         InputStream in = response.getInputStream();
 
-        GetFeatureParser featureReader = new XmlSimpleFeatureParser(in, schema, featureName);
+        GetFeatureParser featureReader = new XmlSimpleFeatureParser(in, schema, remoteFeatureName);
         return featureReader;
     }
 }

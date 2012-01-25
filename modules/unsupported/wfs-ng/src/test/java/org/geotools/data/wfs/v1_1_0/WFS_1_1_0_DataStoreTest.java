@@ -29,12 +29,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.SchemaNotFoundException;
 import org.geotools.data.Transaction;
+import org.geotools.data.wfs.WFSContentDataStore;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHTTPClient;
 import org.geotools.data.wfs.v1_1_0.DataTestSupport.TestHttpResponse;
 import org.geotools.test.TestData;
@@ -43,7 +46,7 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
- * Unit test suite for {@link WFS_1_1_0_DataStore}
+ * Unit test suite for {@link WFSContentDataStore}
  * 
  * @author Gabriel Roldan
  * @version $Id$
@@ -59,7 +62,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class WFS_1_1_0_DataStoreTest {
 
     /**
-     * Test method for {@link WFS_1_1_0_DataStore#getTypeNames()}.
+     * Test method for {@link WFSContentDataStore#getTypeNames()}.
      * 
      * @throws IOException
      */
@@ -70,22 +73,22 @@ public class WFS_1_1_0_DataStoreTest {
                 "hyd:HydroElementFLHI", "hyd:HydroElementFLMD", "hyd:HydroElementLIHI",
                 "hyd:HydroElementLIMD", "hyd:HydroElementPTHI", "hyd:HydroElementPTMD",
                 "hyd:HydroElementWBHI", "hyd:HydroElementWBMD", "trans:RoadSeg" };
-        List<String> expectedTypeNames = Arrays.asList(expected);
+        Set<String> expectedTypeNames = new HashSet<String>(Arrays.asList(expected));
 
         createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES);
 
-        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
+        WFSContentDataStore ds = new WFSContentDataStore(wfs);
 
         String[] typeNames = ds.getTypeNames();
         assertNotNull(typeNames);
-        List<String> names = Arrays.asList(typeNames);
+        Set<String> names = new HashSet<String>(Arrays.asList(typeNames));
         assertEquals(expectedTypeNames.size(), names.size());
         assertEquals(expectedTypeNames, names);
     }
 
     /**
      * Test method for
-     * {@link org.geotools.wfs.v_1_1_0.data.WFS_1_1_0_DataStore#getSchema(java.lang.String)}.
+     * {@link org.geotools.wfs.v_1_1_0.data.WFSContentDataStore#getSchema(java.lang.String)}.
      * 
      * @throws IOException
      */
@@ -100,12 +103,12 @@ public class WFS_1_1_0_DataStoreTest {
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
         wfs.setDescribeFeatureTypeURLOverride(describeUrl);
 
-        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
+        WFSContentDataStore ds = new WFSContentDataStore(wfs);
 
         try {
             ds.getSchema("nonExistentTypeName");
-            fail("Expected SchemaNotFoundException");
-        } catch (SchemaNotFoundException e) {
+            fail("Expected IOException");
+        } catch (IOException e) {
             assertTrue(true);
         }
 
@@ -125,7 +128,7 @@ public class WFS_1_1_0_DataStoreTest {
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
         wfs.setDescribeFeatureTypeURLOverride(describeUrl);
 
-        WFS_1_1_0_DataStore ds = new WFS_1_1_0_DataStore(wfs);
+        WFSContentDataStore ds = new WFSContentDataStore(wfs);
         Query query = new Query(CUBEWERX_GOVUNITCE.FEATURETYPENAME);
         FeatureReader<SimpleFeatureType, SimpleFeature> featureReader;
         featureReader = ds.getFeatureReader(query, Transaction.AUTO_COMMIT);

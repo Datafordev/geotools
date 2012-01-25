@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.v1_1_0;
+package org.geotools.data.wfs;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,6 +26,7 @@ import java.util.logging.Logger;
 import javax.swing.Icon;
 
 import org.geotools.data.ServiceInfo;
+import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSServiceInfo;
 import org.geotools.util.logging.Logging;
 
@@ -51,9 +52,9 @@ final class CapabilitiesServiceInfo implements WFSServiceInfo {
         }
     }
 
-    private WFS_1_1_0_DataStore wfs;
+    private WFSDataStore wfs;
 
-    public CapabilitiesServiceInfo(WFS_1_1_0_DataStore service) {
+    public CapabilitiesServiceInfo(WFSDataStore service) {
         this.wfs = service;
     }
 

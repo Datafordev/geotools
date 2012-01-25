@@ -17,7 +17,7 @@
 package org.geotools.wfs.protocol;
 
 import static org.geotools.data.wfs.protocol.HttpMethod.GET;
-import static org.geotools.data.wfs.protocol.wfs.WFSOperationType.DESCRIBE_FEATURETYPE;
+import static org.geotools.data.wfs.protocol.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -26,9 +26,9 @@ import java.net.URL;
 import java.util.logging.Logger;
 
 import org.geotools.data.wfs.protocol.HttpMethod;
-import org.geotools.data.wfs.protocol.wfs.Version;
-import org.geotools.data.wfs.protocol.wfs.WFSOperationType;
-import org.geotools.data.wfs.protocol.wfs.WFSProtocol;
+import org.geotools.data.wfs.protocol.Version;
+import org.geotools.data.wfs.protocol.WFSOperationType;
+import org.geotools.data.wfs.protocol.WFSProtocol;
 import org.geotools.util.logging.Logging;
 
 /**

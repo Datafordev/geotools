@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.protocol.wfs;
+package org.geotools.data.wfs.protocol;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -25,7 +25,6 @@ import javax.imageio.spi.ServiceRegistry;
 
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.wfs.WFSDataStore;
-import org.geotools.data.wfs.v1_1_0.WFS_1_1_0_DataStore;
 import org.geotools.factory.FactoryNotFoundException;
 
 /**
@@ -71,14 +70,14 @@ public class WFSExtensions {
      * @return
      * @throws IOException
      */
-    public static Object process(WFS_1_1_0_DataStore wfs, WFSResponse response) throws IOException {
+    public static Object process(WFSResponse response) throws IOException {
 
         EObject originatingRequest = response.getOriginatingRequest();
         WFSResponseParserFactory pf = findParserFactory(originatingRequest);
 
-        WFSResponseParser parser = pf.createParser(wfs, response);
+        WFSResponseParser parser = pf.createParser(response);
 
-        Object result = parser.parse(wfs, response);
+        Object result = parser.parse(response);
         return result;
     }
 

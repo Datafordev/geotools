@@ -55,17 +55,6 @@
   <!-- =========================================================== -->
   <developers>
     <developer>
-      <name>Justin Deoliveira</name>
-      <id>jdeolive</id>
-      <email>jdeolive@opengeo.org</email>
-      <organization>OpenGeo</organization>
-      <organizationUrl>http://opengeo.org</organizationUrl>
-      <roles>  
-        <role>Module Maintainer</role>
-        <role>Java Developer</role>
-      </roles>
-    </developer>
-    <developer>
       <name>Gabriel Roldan</name>
       <id>groldan</id>
       <email>groldan@opengeo.org</email>
@@ -76,14 +65,6 @@
         <role>Java Developer</role>
       </roles>
     </developer>
-    <developer>
-      <name>David Zwiers</name>
-      <id>dzwiers</id>
-      <email>david.zwiers@gmail.com</email>
-      <roles>  
-        <role>Retired Module Maintainer</role>
-      </roles>
-    </developer>
   </developers>
 
 
@@ -91,6 +72,11 @@
   <!--     Dependency Management                                   -->
   <!-- =========================================================== -->
   <dependencies>
+    <dependency>
+      <groupId>org.geotools</groupId>
+      <artifactId>gt-data</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.geotools</groupId>
       <artifactId>gt-xml</artifactId>

@@ -41,6 +41,7 @@ import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.wfs.WFSContentDataStore;
 import org.geotools.data.wfs.WFSDataStore;
 import org.geotools.data.wfs.WFSDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
@@ -145,7 +146,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
             return;
         }
 
-        assertTrue(wfs instanceof WFS_1_1_0_DataStore);
+        assertTrue(wfs instanceof WFSContentDataStore);
 
         String types[] = wfs.getTypeNames();
         List<String> typeNames = Arrays.asList(types);
