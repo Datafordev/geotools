@@ -15,7 +15,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-public class WFSContentFeatureStore extends ContentFeatureStore {
+class WFSContentFeatureStore extends ContentFeatureStore {
 
     private WFSContentFeatureSource source;
 

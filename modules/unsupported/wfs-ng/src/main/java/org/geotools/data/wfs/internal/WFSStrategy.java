@@ -46,16 +46,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * This interface provides enough information extracted or derived from the WFS capabilities
  * document as for the client code to issue requests appropriate for the server capabilities.
  * </p>
- * 
- * @author Gabriel Roldan (OpenGeo)
- * @version $Id$
- * @since 2.6
- * 
- * 
- * 
- * @source $URL$
- *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
- *         /wfs/protocol/wfs/WFSProtocol.java $
  */
 public interface WFSStrategy {
 

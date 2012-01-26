@@ -21,13 +21,6 @@ import java.io.IOException;
 /**
  * A simple interface to parse the response of a WFS request.
  * 
- * @author Gabriel Roldan (OpenGeo)
- * @version $Id$
- * @since 2.6
- * 
- * 
- * 
- * @source $URL$
  * @see WFSResponseParserFactory
  * @see WFSResponse
  */

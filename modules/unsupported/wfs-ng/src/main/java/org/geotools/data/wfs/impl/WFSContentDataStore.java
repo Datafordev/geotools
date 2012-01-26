@@ -15,7 +15,7 @@ import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.feature.NameImpl;
 import org.opengis.feature.type.Name;
 
-public class WFSContentDataStore extends ContentDataStore {
+class WFSContentDataStore extends ContentDataStore {
 
     private final WFSStrategy wfs;
 

@@ -23,14 +23,6 @@ import org.eclipse.emf.ecore.EObject;
 /**
  * A factory interface meant to be used through the usual GeoTools SPI mechanism to dynamically find
  * out a parser capable of processing a WFS response based on the request to be sent.
- * 
- * @author Gabriel Roldan (OpenGeo)
- * @version $Id$
- * @since 2.6
- * 
- * 
- * 
- * @source $URL$
  */
 public interface WFSResponseParserFactory {
 

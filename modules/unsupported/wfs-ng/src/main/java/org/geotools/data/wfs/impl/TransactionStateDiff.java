@@ -56,7 +56,7 @@ import com.vividsolutions.jts.geom.Geometry;
  * 
  * @source $URL$
  */
-public class TransactionStateDiff implements State {
+class TransactionStateDiff implements State {
     /**
      * DataStore used to commit() results of this transaction.
      * 

@@ -47,7 +47,7 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
-public class WFSContentFeatureSource extends ContentFeatureSource {
+class WFSContentFeatureSource extends ContentFeatureSource {
 
     private static final Logger LOGGER = Logging.getLogger(WFSContentFeatureSource.class);
 

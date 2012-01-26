@@ -21,6 +21,9 @@ import java.util.Map;
 
 import org.w3c.dom.Document;
 
+/**
+ * @see WFSStrategy#setConfig(WFSConfig)
+ */
 public class WFSConfig {
 
     private String user;

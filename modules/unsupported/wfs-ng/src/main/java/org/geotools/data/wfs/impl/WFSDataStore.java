@@ -40,6 +40,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
  *         /data/wfs/WFSDataStore.java $
  */
+@Deprecated
 public interface WFSDataStore extends DataStore {
     /**
      * Overrides {@link DataAccess#getInfo()} so it type narrows to a {@link WFSServiceInfo}
