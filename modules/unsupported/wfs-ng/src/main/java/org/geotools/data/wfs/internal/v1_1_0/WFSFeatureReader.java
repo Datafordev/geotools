@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 
 import org.geotools.data.FeatureReader;
-import org.geotools.data.wfs.impl.WFSDataStore;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.opengis.feature.simple.SimpleFeature;

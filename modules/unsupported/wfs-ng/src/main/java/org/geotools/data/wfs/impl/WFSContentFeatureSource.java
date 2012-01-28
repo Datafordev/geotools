@@ -20,14 +20,13 @@ import org.geotools.data.Transaction;
 import org.geotools.data.crs.ReprojectFeatureReader;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.data.wfs.internal.GetFeature;
-import org.geotools.data.wfs.internal.GetFeature.ResultType;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.WFSException;
 import org.geotools.data.wfs.internal.WFSExtensions;
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.GetFeatureQueryAdapter;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
@@ -150,6 +149,9 @@ class WFSContentFeatureSource extends ContentFeatureSource {
      */
     @Override
     protected int getCountInternal(Query query) throws IOException {
+        if (!wfsImpl.supports(ResultType.HITS)) {
+            return -1;
+        }
         final Filter[] filters = wfsImpl.splitFilters(query.getFilter());
         final Filter postFilter = filters[1];
         if (!Filter.INCLUDE.equals(postFilter)) {
@@ -341,8 +343,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
         final Query remoteQuery = new Query(localQuery);
         remoteQuery.setTypeName(localTypeName);
 
-        GetFeature request = new GetFeatureQueryAdapter(remoteQuery, outputFormat, srsName,
-                resultType);
+        GetFeatureRequest request = new GetFeatureRequest(remoteQuery, outputFormat, srsName, resultType);
 
         final WFSResponse response = sendGetFeatures(request);
         return response;
@@ -360,7 +361,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
      *             if a communication error occurs. If a server returns an exception report that's a
      *             normal response, no exception will be thrown here.
      */
-    private WFSResponse sendGetFeatures(GetFeature request) throws IOException {
+    private WFSResponse sendGetFeatures(GetFeatureRequest request) throws IOException {
         final WFSResponse response;
         if (useHttpPost()) {
             response = wfsImpl.issueGetFeaturePOST(request);

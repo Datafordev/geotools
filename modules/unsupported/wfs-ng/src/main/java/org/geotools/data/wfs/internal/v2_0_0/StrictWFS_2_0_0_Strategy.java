@@ -14,26 +14,32 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_0_0;
+package org.geotools.data.wfs.internal.v2_0_0;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSOperationType;
-import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.filter.v1_0.OGCConfiguration;
+import org.geotools.filter.v2_0.FESConfiguration;
 import org.geotools.util.Version;
-import org.geotools.wfs.v1_0.WFSConfiguration;
+import org.geotools.wfs.v2_0.WFSConfiguration;
 import org.geotools.xml.Configuration;
 
 /**
  * 
  */
-public class StrictWFS_1_0_0_Strategy extends AbstractWFSStrategy {
+public class StrictWFS_2_0_0_Strategy extends AbstractWFSStrategy {
 
-    public StrictWFS_1_0_0_Strategy() {
+    private static final List<String> PREFERRED_FORMATS = Collections.unmodifiableList(Arrays
+            .asList("text/xml; subtype=gml/3.2", "application/gml+xml; version=3.2", "gml32",
+                    "text/xml; subtype=gml/3.1.1", "gml3", "text/xml; subtype=gml/2.1.2", "GML2"));
+
+    public StrictWFS_2_0_0_Strategy() {
         super();
     }
 
@@ -42,12 +48,12 @@ public class StrictWFS_1_0_0_Strategy extends AbstractWFSStrategy {
      * ---------------------------------------------------------------------*/
     @Override
     protected Configuration getFilterConfiguration() {
-        return FILTER_1_0_0_CONFIGURATION;
+        return FILTER_2_0_0_CONFIGURATION;
     }
 
     @Override
     protected Configuration getWfsConfiguration() {
-        return WFS_1_0_0_CONFIGURATION;
+        return WFS_2_0_0_CONFIGURATION;
     }
 
     /*---------------------------------------------------------------------
@@ -58,6 +64,7 @@ public class StrictWFS_1_0_0_Strategy extends AbstractWFSStrategy {
     public boolean supports(ResultType resultType) {
         switch (resultType) {
         case RESULTS:
+        case HITS:
             return true;
         default:
             return false;
@@ -66,27 +73,56 @@ public class StrictWFS_1_0_0_Strategy extends AbstractWFSStrategy {
 
     @Override
     public Version getServiceVersion() {
-        return Versions.v1_0_0;
+        return Versions.v2_0_0;
     }
 
     @Override
     public String getDefaultOutputFormat(WFSOperationType operation) {
         switch (operation) {
         case GET_FEATURE:
-            Set<String> supportedOutputFormats = getSupportedGetFeatureOutputFormats();
-            if (supportedOutputFormats.contains("GML3")) {
-                return "GML3";
-            } else if (supportedOutputFormats.contains("GML2")) {
-                return "GML2";
-            } else {
-                throw new IllegalArgumentException(
-                        "Server does not support 'GML2' or 'GML3' output formats: "
-                                + supportedOutputFormats);
+            Set<String> serverFormats = getSupportedGetFeatureOutputFormats();
+            String outputFormat = findExact(PREFERRED_FORMATS, serverFormats);
+            if (outputFormat == null) {
+                outputFormat = findFuzzy(PREFERRED_FORMATS, serverFormats);
+                if (outputFormat != null) {
+                    // TODO: log
+                }
             }
+            if (outputFormat == null) {
+                throw new IllegalArgumentException(
+                        "Server does not support any of the client's supported formats: "
+                                + serverFormats);
+            }
+            return outputFormat;
 
         default:
             throw new UnsupportedOperationException(
                     "Not implemented for other than GET_FEATURE yet");
         }
+    }
+
+    private String findExact(List<String> preferredFormats, Set<String> serverFormats) {
+        for (String preferred : preferredFormats) {
+            for (String serverFormat : serverFormats) {
+                if (serverFormat.equalsIgnoreCase(preferred)) {
+                    return preferred;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String findFuzzy(List<String> preferredFormats, Set<String> serverFormats) {
+        for (String preferred : preferredFormats) {
+
+            preferred = preferred.toLowerCase();
+
+            for (String serverFormat : serverFormats) {
+                if (serverFormat.toLowerCase().startsWith(preferred)) {
+                    return preferred;
+                }
+            }
+        }
+        return null;
     }
 }

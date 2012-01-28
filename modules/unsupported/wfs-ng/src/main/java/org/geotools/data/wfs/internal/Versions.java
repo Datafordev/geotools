@@ -27,6 +27,8 @@ public final class Versions {
 
     public static final Version v1_1_0 = new Version("1.1.0");
 
+    public static final Version v2_0_0 = new Version("2.0.0");
+
     public static Version find(String capsVersion) {
         Version v = new Version(capsVersion);
         if (v1_0_0.equals(v)) {
@@ -34,6 +36,9 @@ public final class Versions {
         }
         if (v1_1_0.equals(v)) {
             return v1_1_0;
+        }
+        if (v2_0_0.equals(v)) {
+            return v2_0_0;
         }
         return null;
     }

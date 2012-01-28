@@ -34,7 +34,6 @@ import java.util.Set;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
-import org.geotools.data.wfs.impl.WFSContentDataStore;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.test.TestData;
 import org.junit.Test;
@@ -72,7 +71,7 @@ public class WFContentDataStore_1_1_0_Test extends DataTestSupport {
         Set<String> expectedTypeNames = new HashSet<String>(Arrays.asList(expected));
 
         WFSStrategy wfs = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES,
-                new Strict_1_1_0_Strategy());
+                new StrictWFS_1_1_0_Strategy());
 
         WFSContentDataStore ds = new WFSContentDataStore(wfs);
 
@@ -95,7 +94,7 @@ public class WFContentDataStore_1_1_0_Test extends DataTestSupport {
         TestHttpResponse httpResponse = new TestHttpResponse("", "UTF-8", schemaStream);
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
         WFSStrategy wfs = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, mockHttp,
-                new Strict_1_1_0_Strategy());
+                new StrictWFS_1_1_0_Strategy());
 
         wfs = spy(wfs);
         // override the describe feature type url so it loads from the test resource
@@ -124,7 +123,7 @@ public class WFContentDataStore_1_1_0_Test extends DataTestSupport {
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
 
         WFSStrategy wfs = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, mockHttp,
-                new Strict_1_1_0_Strategy());
+                new StrictWFS_1_1_0_Strategy());
 
         // override the describe feature type url so it loads from the test resource
         wfs = spy(wfs);

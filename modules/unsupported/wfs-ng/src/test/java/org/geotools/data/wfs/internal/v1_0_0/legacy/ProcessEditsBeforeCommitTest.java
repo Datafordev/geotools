@@ -22,7 +22,6 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import org.geotools.data.DataUtilities;
-import org.geotools.data.wfs.internal.v1_0_0.legacy.Action.InsertAction;
 import org.geotools.feature.IllegalAttributeException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.CompareFilter;

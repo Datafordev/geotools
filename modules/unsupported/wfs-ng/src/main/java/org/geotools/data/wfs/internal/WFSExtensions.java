@@ -24,7 +24,7 @@ import java.util.Set;
 import javax.imageio.spi.ServiceRegistry;
 
 import org.eclipse.emf.ecore.EObject;
-import org.geotools.data.wfs.impl.WFSDataStore;
+import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.factory.FactoryNotFoundException;
 
 /**
@@ -115,7 +115,8 @@ public class WFSExtensions {
                      */
                     final ClassLoader current = Thread.currentThread().getContextClassLoader();
                     try {
-                        final ClassLoader tempClassLoader = WFSDataStore.class.getClassLoader();
+                        final ClassLoader tempClassLoader = WFSDataStoreFactory.class
+                                .getClassLoader();
                         Thread.currentThread().setContextClassLoader(tempClassLoader);
                         /*
                          * Now that we're on the correct classloader lets perform the lookup

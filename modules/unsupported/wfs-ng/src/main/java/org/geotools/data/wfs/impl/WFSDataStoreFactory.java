@@ -55,7 +55,7 @@ import org.geotools.data.wfs.internal.v1_1_0.ArcGISServerStrategy;
 import org.geotools.data.wfs.internal.v1_1_0.CubeWerxStrategy;
 import org.geotools.data.wfs.internal.v1_1_0.GeoServerPre200Strategy;
 import org.geotools.data.wfs.internal.v1_1_0.IonicStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.Strict_1_1_0_Strategy;
+import org.geotools.data.wfs.internal.v1_1_0.StrictWFS_1_1_0_Strategy;
 import org.geotools.util.Version;
 import org.geotools.util.logging.Logging;
 import org.geotools.wfs.WFS;
@@ -539,9 +539,9 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         if (strategy == null) {
             // use fallback strategy
             if (Versions.v1_0_0.equals(version)) {
-                strategy = new Strict_1_1_0_Strategy();
+                strategy = new StrictWFS_1_1_0_Strategy();
             } else if (Versions.v1_1_0.equals(version)) {
-                strategy = new Strict_1_1_0_Strategy();
+                strategy = new StrictWFS_1_1_0_Strategy();
             } else {
                 throw new IllegalArgumentException("Unsupported version: " + version);
             }

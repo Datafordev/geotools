@@ -34,7 +34,7 @@ import org.geotools.xml.Configuration;
  * 
  * @source $URL$
  */
-public class GeoServerPre200Strategy extends Strict_1_1_0_Strategy {
+public class GeoServerPre200Strategy extends StrictWFS_1_1_0_Strategy {
 
     private static Configuration filter_1_0_0_Configuration = new OGCConfiguration();
 
@@ -51,7 +51,7 @@ public class GeoServerPre200Strategy extends Strict_1_1_0_Strategy {
         } catch (IllegalArgumentException e) {
             Set<String> supportedOutputFormats = getSupportedGetFeatureOutputFormats();
             if (supportedOutputFormats.contains(GEOSERVER_WRONG_FORMAT_NAME)) {
-                return Strict_1_1_0_Strategy.DEFAULT_OUTPUT_FORMAT;
+                return StrictWFS_1_1_0_Strategy.DEFAULT_OUTPUT_FORMAT;
             }
             throw new IllegalArgumentException("Server does not support '" + DEFAULT_OUTPUT_FORMAT
                     + "' output format: " + supportedOutputFormats);

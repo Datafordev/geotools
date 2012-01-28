@@ -12,7 +12,7 @@
  *    This library is distributed in the hope that it will be useful,
  *    but WITHOUT ANY WARRANTY; without even the implied warranty of
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
+ *    Lesser General public abstract License for more details.
  */
 package org.geotools.data.wfs.internal;
 
@@ -25,6 +25,8 @@ import java.util.Set;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.Specification;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.util.Version;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -47,50 +49,51 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
  * document as for the client code to issue requests appropriate for the server capabilities.
  * </p>
  */
-public interface WFSStrategy {
+public abstract class WFSStrategy extends Specification {
 
-    public void setConfig(WFSConfig config);
+    public abstract void setConfig(WFSConfig config);
 
-    public WFSConfig getConfig();
+    public abstract WFSConfig getConfig();
 
-    public void setHttpClient(HTTPClient httpClient);
+    public abstract void setHttpClient(HTTPClient httpClient);
 
-    public void initFromCapabilities(final InputStream capabilitiesContents) throws IOException;
+    public abstract void initFromCapabilities(final InputStream capabilitiesContents)
+            throws IOException;
 
     /**
      * Returns the WFS protocol version this facade talks to the WFS instance.
      * 
      * @return the protocol version in use by this facade
      */
-    public Version getServiceVersion();
+    public abstract Version getServiceVersion();
 
     /**
      * Returns service title as stated in the capabilities document
      * 
      * @return the service title
      */
-    public String getServiceTitle();
+    public abstract String getServiceTitle();
 
     /**
      * Returns service abstract as stated in the capabilities document
      * 
      * @return the service abstract, may be {@code null}
      */
-    public String getServiceAbstract();
+    public abstract String getServiceAbstract();
 
     /**
      * Returns service keywords as stated in the capabilities document
      * 
      * @return the service keywords, may be empty
      */
-    public Set<String> getServiceKeywords();
+    public abstract Set<String> getServiceKeywords();
 
     /**
      * Returns service provider URI as stated in the capabilities document
      * 
      * @return the service provider URI
      */
-    public URI getServiceProviderUri();
+    public abstract URI getServiceProviderUri();
 
     /**
      * Returns the output format names declared in the GetFeature operation metadata section of the
@@ -98,7 +101,7 @@ public interface WFSStrategy {
      * 
      * @return the global GetFeature output formats
      */
-    public Set<String> getSupportedGetFeatureOutputFormats();
+    public abstract Set<String> getSupportedGetFeatureOutputFormats();
 
     /**
      * Returns the union of {@link #getSupportedGetFeatureOutputFormats()} and the output formats
@@ -109,7 +112,7 @@ public interface WFSStrategy {
      *            the feature type name for which to return the supported output formats
      * @return the output formats supported by {@code typeName}
      */
-    public Set<String> getSupportedOutputFormats(final String typeName);
+    public abstract Set<String> getSupportedOutputFormats(final String typeName);
 
     /**
      * Returns the set of type names as extracted from the capabilities document, including the
@@ -117,7 +120,7 @@ public interface WFSStrategy {
      * 
      * @return the set of feature type names as extracted from the capabilities document
      */
-    public Set<QName> getFeatureTypeNames();
+    public abstract Set<QName> getFeatureTypeNames();
 
     /**
      * Returns the full feature type name for the {@code typeName} as declared in the
@@ -133,9 +136,9 @@ public interface WFSStrategy {
      * @throws IllegalArgumentException
      *             if the {@code typeName} does not exist
      */
-    public QName getFeatureTypeName(final String typeName);
+    public abstract QName getFeatureTypeName(final String typeName);
 
-    public String getSimpleTypeName(QName qname);
+    public abstract String getSimpleTypeName(QName qname);
 
     /**
      * Returns the parsed version of the FilterCapabilities section in the capabilities document
@@ -143,7 +146,7 @@ public interface WFSStrategy {
      * @return a {@link FilterCapabilities} out of the FilterCapabilities section in the
      *         getcapabilities document
      */
-    public FilterCapabilities getFilterCapabilities();
+    public abstract FilterCapabilities getFilterCapabilities();
 
     /**
      * Returns whether the service supports the given operation for the given HTTP method.
@@ -154,7 +157,7 @@ public interface WFSStrategy {
      *            the HTTP method to check if the server supports for the given operation
      * @return {@code true} if the operation/method is supported as stated in the WFS capabilities
      */
-    public boolean supportsOperation(final WFSOperationType operation, final boolean post);
+    public abstract boolean supportsOperation(final WFSOperationType operation, final boolean post);
 
     /**
      * Returns the URL for the given operation name and HTTP protocol as stated in the WFS
@@ -168,7 +171,7 @@ public interface WFSStrategy {
      *         capabilities does not declare an access point for the operation/method combination
      * @see #supportsOperation(WFSOperationType, HttpMethod)
      */
-    public URL getOperationURL(final WFSOperationType operation, final boolean post);
+    public abstract URL getOperationURL(final WFSOperationType operation, final boolean post);
 
     /**
      * Returns the title of the given feature type as declared in the corresponding FeatureType
@@ -179,7 +182,7 @@ public interface WFSStrategy {
      *            capabilities
      * @return the title for the given feature type
      */
-    public String getFeatureTypeTitle(final String typeName);
+    public abstract String getFeatureTypeTitle(final String typeName);
 
     /**
      * Returns the abstract of the given feature type as declared in the corresponding FeatureType
@@ -190,7 +193,7 @@ public interface WFSStrategy {
      *            capabilities
      * @return the abstract for the given feature type
      */
-    public String getFeatureTypeAbstract(final String typeName);
+    public abstract String getFeatureTypeAbstract(final String typeName);
 
     /**
      * Returns the lat lon envelope of the given feature type as declared in the corresponding
@@ -202,7 +205,7 @@ public interface WFSStrategy {
      * @return a WGS84 envelope representing the bounds declared for the feature type in the
      *         capabilities document
      */
-    public ReferencedEnvelope getFeatureTypeWGS84Bounds(final String typeName);
+    public abstract ReferencedEnvelope getFeatureTypeWGS84Bounds(final String typeName);
 
     /**
      * Returns the CRS identifier of the default CRS for the given feature type as declared in the
@@ -213,7 +216,7 @@ public interface WFSStrategy {
      *            capabilities
      * @return the default CRS for the given feature type
      */
-    public String getDefaultCRS(final String typeName);
+    public abstract String getDefaultCRS(final String typeName);
 
     /**
      * Returns the union of the default CRS and the other supported CRS's of the given feature type
@@ -224,7 +227,7 @@ public interface WFSStrategy {
      *            capabilities
      * @return the list of supported CRS identifiers for the given feature type
      */
-    public Set<String> getSupportedCRSIdentifiers(final String typeName);
+    public abstract Set<String> getSupportedCRSIdentifiers(final String typeName);
 
     /**
      * Returns the list of keywords of the given feature type as declared in the corresponding
@@ -235,7 +238,7 @@ public interface WFSStrategy {
      *            capabilities
      * @return the keywords for the given feature type
      */
-    public Set<String> getFeatureTypeKeywords(final String typeName);
+    public abstract Set<String> getFeatureTypeKeywords(final String typeName);
 
     /**
      * Issues a DescribeFeatureType request for the given type name and output format using the HTTP
@@ -244,8 +247,8 @@ public interface WFSStrategy {
      * @throws IOException
      * @throws UnsupportedOperationException
      */
-    public WFSResponse describeFeatureTypeGET(final String typeName, final String outputFormat)
-            throws IOException, UnsupportedOperationException;
+    public abstract WFSResponse describeFeatureTypeGET(final String typeName) throws IOException,
+            UnsupportedOperationException;
 
     /**
      * Issues a DescribeFeatureType request for the given type name and output format using the HTTP
@@ -254,8 +257,8 @@ public interface WFSStrategy {
      * @throws IOException
      * @throws UnsupportedOperationException
      */
-    public WFSResponse describeFeatureTypePOST(final String typeName, final String outputFormat)
-            throws IOException, UnsupportedOperationException;
+    public abstract WFSResponse describeFeatureTypePOST(final String typeName,
+            final String outputFormat) throws IOException, UnsupportedOperationException;
 
     /**
      * Issues a GetFeature request for the given request, using GET HTTP method
@@ -274,17 +277,17 @@ public interface WFSStrategy {
      * @throws IOException
      * @throws UnsupportedOperationException
      */
-    public WFSResponse issueGetFeatureGET(final GetFeature request) throws IOException,
+    public abstract WFSResponse issueGetFeatureGET(final GetFeatureRequest request) throws IOException,
             UnsupportedOperationException;
 
     /**
      * Issues a GetFeature request for the given request, using POST HTTP method
      * <p>
      * The query to WFS request parameter translation is the same than for
-     * {@link #issueGetFeatureGET(GetFeature)}
+     * {@link #issueGetFeatureGET(GetFeatureRequest)}
      * </p>
      */
-    public WFSResponse issueGetFeaturePOST(GetFeature request) throws IOException,
+    public abstract WFSResponse issueGetFeaturePOST(GetFeatureRequest request) throws IOException,
             UnsupportedOperationException;
 
     /**
@@ -294,17 +297,20 @@ public interface WFSStrategy {
      * to not be usable after the first invocation.
      * </p>
      */
-    public void dispose();
+    public abstract void dispose();
 
-    public String getDefaultOutputFormat(WFSOperationType get_feature);
+    public abstract String getDefaultOutputFormat(WFSOperationType get_feature);
 
-    public Filter[] splitFilters(Filter filter);
+    public abstract Filter[] splitFilters(Filter filter);
 
-    public SimpleFeatureType issueDescribeFeatureTypeGET(String prefixedTypeName,
+    public abstract SimpleFeatureType issueDescribeFeatureTypeGET(String prefixedTypeName,
             CoordinateReferenceSystem crs) throws IOException;
 
-    public TransactionResult issueTransaction(TransactionRequest transaction) throws IOException;
+    public abstract TransactionResult issueTransaction(TransactionRequest transaction)
+            throws IOException;
 
-    public TransactionRequest createTransaction();
+    public abstract TransactionRequest createTransaction();
+
+    public abstract boolean supports(ResultType resultType);
 
 }

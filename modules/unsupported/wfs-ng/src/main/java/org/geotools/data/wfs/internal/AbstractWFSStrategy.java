@@ -14,11 +14,11 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1_0;
+package org.geotools.data.wfs.internal;
 
 import static net.opengis.wfs.ResultTypeType.HITS_LITERAL;
 import static net.opengis.wfs.ResultTypeType.RESULTS_LITERAL;
-import static org.geotools.data.wfs.internal.GetFeature.ResultType.RESULTS;
+import static org.geotools.data.wfs.internal.GetFeatureRequest.ResultType.RESULTS;
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.HttpMethod.POST;
 import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
@@ -79,27 +79,18 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.DataSourceException;
 import org.geotools.data.Query;
+import org.geotools.data.ows.GetCapabilitiesRequest;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
-import org.geotools.data.wfs.internal.GetFeature;
-import org.geotools.data.wfs.internal.GetFeature.ResultType;
-import org.geotools.data.wfs.internal.HttpMethod;
-import org.geotools.data.wfs.internal.RequestComponents;
-import org.geotools.data.wfs.internal.TransactionRequest;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.TransactionRequest.TransactionElement;
-import org.geotools.data.wfs.internal.TransactionResult;
-import org.geotools.data.wfs.internal.URIs;
-import org.geotools.data.wfs.internal.Versions;
-import org.geotools.data.wfs.internal.WFSConfig;
-import org.geotools.data.wfs.internal.WFSOperationType;
-import org.geotools.data.wfs.internal.WFSResponse;
-import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.factory.GeoTools;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.v1_1.OGC;
 import org.geotools.filter.v1_1.OGCConfiguration;
+import org.geotools.filter.v2_0.FESConfiguration;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
@@ -127,7 +118,7 @@ import org.xml.sax.SAXException;
  * <ul>
  * <li> {@link #supportsGet()}
  * <li> {@link #supportsPost()}
- * <li> {@link #createGetFeatureRequest(GetFeature)}
+ * <li> {@link #createGetFeatureRequest(GetFeatureRequest)}
  * <li> {@link #buildGetFeatureParametersForGet(GetFeatureType)}
  * <li> {@link #encodeGetFeatureGetFilter(Filter)}
  * </ul>
@@ -135,36 +126,86 @@ import org.xml.sax.SAXException;
  * 
  * @author groldan
  */
-public class Strict_1_1_0_Strategy implements WFSStrategy {
+public abstract class AbstractWFSStrategy extends WFSStrategy {
 
-    private static final Logger LOGGER = Logging.getLogger(Strict_1_1_0_Strategy.class);
+    private static final Logger LOGGER = Logging.getLogger(AbstractWFSStrategy.class);
 
-    protected static final String DEFAULT_OUTPUT_FORMAT = "text/xml; subtype=gml/3.1.1";
+    public static final Configuration FILTER_1_0_0_CONFIGURATION = new OGCConfiguration();
 
-    private static final Configuration filter_1_1_0_Configuration = new OGCConfiguration();
+    public static final Configuration WFS_1_0_0_CONFIGURATION = new WFSConfiguration();
 
-    private static final Configuration wfs_1_1_0_Configuration = new WFSConfiguration();
+    public static final Configuration FILTER_1_1_0_CONFIGURATION = new OGCConfiguration();
+
+    public static final Configuration WFS_1_1_0_CONFIGURATION = new WFSConfiguration();
+
+    public static final Configuration FILTER_2_0_0_CONFIGURATION = new FESConfiguration();
+
+    public static final Configuration WFS_2_0_0_CONFIGURATION = new org.geotools.wfs.v2_0.WFSConfiguration();
 
     /**
      * The WFS GetCapabilities document. Final by now, as we're not handling updatesequence, so will
      * not ask the server for an updated capabilities during the life-time of this datastore.
      */
-    WFSCapabilitiesType capabilities;
+    protected WFSCapabilitiesType capabilities;
 
     /**
      * Per featuretype name Map of capabilities feature type information. Not to be used directly
      * but through {@link #getFeatureTypeInfo(String)}
      */
-    private final Map<String, FeatureTypeType> typeInfos;
+    protected final Map<String, FeatureTypeType> typeInfos;
 
-    private HTTPClient http;
+    protected HTTPClient http;
 
-    private WFSConfig config;
+    protected WFSConfig config;
 
-    public Strict_1_1_0_Strategy() {
+    public AbstractWFSStrategy() {
         this.config = new WFSConfig();
         this.http = new SimpleHttpClient();
         this.typeInfos = new HashMap<String, FeatureTypeType>();
+    }
+
+    /*
+     * org.geotools.data.ows.Specification methods
+     */
+
+    @Override
+    public String getVersion() {
+        return getServiceVersion().toString();
+    }
+
+    /**
+     * Factory method to create GetCapabilities Request
+     * 
+     * @param server
+     *            the URL that points to the server's getCapabilities document
+     * @return a configured GetCapabilitiesRequest that can be used to access the Document
+     */
+    public GetCapabilitiesRequest createGetCapabilitiesRequest(URL server) {
+        return new WFSGetCapabilitiesRequest(this, server);
+    }
+
+    /*
+     * This class' extension points
+     */
+    protected abstract Configuration getFilterConfiguration();
+
+    protected abstract Configuration getWfsConfiguration();
+
+    @Override
+    public abstract String getDefaultOutputFormat(WFSOperationType operation);
+
+    /*
+     * WFSStrategy methods
+     */
+    @Override
+    public TransactionRequest createTransaction() {
+        return new DefaultTransactionRequest(this);
+    }
+
+    protected TransactionType unwrapTransaction(final TransactionRequest transactionRequest) {
+        DefaultTransactionRequest req = (DefaultTransactionRequest) transactionRequest;
+        TransactionType transaction = req.getTransaction();
+        return transaction;
     }
 
     @Override
@@ -219,7 +260,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
      * 
      */
     @SuppressWarnings("unchecked")
-    protected RequestComponents createGetFeatureRequest(GetFeature query) throws IOException {
+    protected RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
         final WfsFactory factory = WfsFactory.eINSTANCE;
 
         GetFeatureType getFeature = factory.createGetFeatureType();
@@ -279,7 +320,8 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
             throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         map.put("SERVICE", "WFS");
-        map.put("VERSION", "1.1.0");
+        Version serviceVersion = getServiceVersion();
+        map.put("VERSION", serviceVersion.toString());
         map.put("REQUEST", "GetFeature");
         map.put("OUTPUTFORMAT", request.getOutputFormat());
 
@@ -357,13 +399,10 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
      * ---------------------------------------------------------------------*/
 
     /**
-     * @return {@link Versions#v1_1_0}
      * @see WFSStrategy#getServiceVersion()
      */
     @Override
-    public Version getServiceVersion() {
-        return Versions.v1_1_0;
-    }
+    public abstract Version getServiceVersion();
 
     /**
      * @see WFSStrategy#getServiceTitle()
@@ -532,14 +571,6 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
         return simpleName;
     }
 
-    protected Configuration getFilterConfiguration() {
-        return filter_1_1_0_Configuration;
-    }
-
-    protected Configuration getWfsConfiguration() {
-        return wfs_1_1_0_Configuration;
-    }
-
     /**
      * @see WFSStrategy#getFilterCapabilities()
      */
@@ -669,24 +700,19 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
         return ftypeKeywords;
     }
 
-    public URL buildDescribeFeatureTypeURLGet(String typeName) {
-        final String outputFormat = "text/xml; subtype=gml/3.1.1";
-        return getDescribeFeatureTypeURLGet(typeName, outputFormat);
-    }
-
     /**
      * @throws IOException
      * @see WFSStrategy#describeFeatureTypeGET(String, String)
      */
     @Override
-    public WFSResponse describeFeatureTypeGET(String typeName, String outputFormat)
-            throws IOException {
+    public WFSResponse describeFeatureTypeGET(String typeName) throws IOException {
+
         if (!supportsOperation(DESCRIBE_FEATURETYPE, false)) {
             throw new UnsupportedOperationException(
                     "The server does not support DescribeFeatureType for HTTP method GET");
         }
 
-        URL url = getDescribeFeatureTypeURLGet(typeName, outputFormat);
+        URL url = buildDescribeFeatureTypeURLGet(typeName);
         @SuppressWarnings("unchecked")
         WFSResponse response = issueGetRequest(null, url, Collections.EMPTY_MAP);
         return response;
@@ -707,7 +733,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
      * @see WFSStrategy#issueGetFeatureGET(GetFeatureType, Map)
      */
     @Override
-    public WFSResponse issueGetFeatureGET(final GetFeature request) throws IOException {
+    public WFSResponse issueGetFeatureGET(final GetFeatureRequest request) throws IOException {
         if (!supportsOperation(WFSOperationType.GET_FEATURE, false)) {
             throw new UnsupportedOperationException(
                     "The server does not support GetFeature for HTTP method GET");
@@ -729,7 +755,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
      * @see WFSStrategy#getFeaturePOST(Query, String)
      */
     @Override
-    public WFSResponse issueGetFeaturePOST(final GetFeature request) throws IOException {
+    public WFSResponse issueGetFeaturePOST(final GetFeatureRequest request) throws IOException {
         if (!supportsOperation(WFSOperationType.GET_FEATURE, true)) {
             throw new UnsupportedOperationException(
                     "The server does not support GetFeature for HTTP method POST");
@@ -793,12 +819,12 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
         try {
             parsed = parser.parse(capabilitiesReader);
         } catch (SAXException e) {
-            throw new DataSourceException("Exception parsing WFS 1.1.0 capabilities", e);
+            throw new DataSourceException("Exception parsing WFS capabilities", e);
         } catch (ParserConfigurationException e) {
-            throw new DataSourceException("WFS 1.1.0 parsing configuration error", e);
+            throw new DataSourceException("WFS parsing configuration error", e);
         }
         if (parsed == null) {
-            throw new DataSourceException("WFS 1.1.0 capabilities was not parsed");
+            throw new DataSourceException("WFS capabilities was not parsed");
         }
         if (!(parsed instanceof WFSCapabilitiesType)) {
             throw new DataSourceException("Expected WFS Capabilities, got " + parsed);
@@ -830,7 +856,9 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
                 + expectedOperationName + " in the capabilities document");
     }
 
-    private URL getDescribeFeatureTypeURLGet(String typeName, String outputFormat) {
+    protected URL buildDescribeFeatureTypeURLGet(final String typeName) {
+
+        // final String outputFormat = getDefaultOutputFormat(DESCRIBE_FEATURETYPE);
         final FeatureTypeType typeInfo = getFeatureTypeInfo(typeName);
 
         final URL describeFeatureTypeUrl = getOperationURL(DESCRIBE_FEATURETYPE, false);
@@ -879,7 +907,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
             LOGGER.finest("Sending POST request: ");
             LOGGER.finest(out.toString(requestCharset.name()));
         }
-        Strict_1_1_0_Strategy.encode(request, encoder, out);
+        AbstractWFSStrategy.encode(request, encoder, out);
         InputStream postContent = new ByteArrayInputStream(out.toByteArray());
         HTTPResponse httpResponse = http.post(url, postContent, "text/xml");
 
@@ -965,21 +993,6 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
         return encodeElementName;
     }
 
-    @Override
-    public String getDefaultOutputFormat(WFSOperationType operation) {
-        if (WFSOperationType.GET_FEATURE != operation) {
-            throw new UnsupportedOperationException(
-                    "Not implemented for other than GET_FEATURE yet");
-        }
-
-        Set<String> supportedOutputFormats = getSupportedGetFeatureOutputFormats();
-        if (supportedOutputFormats.contains(DEFAULT_OUTPUT_FORMAT)) {
-            return DEFAULT_OUTPUT_FORMAT;
-        }
-        throw new IllegalArgumentException("Server does not support '" + DEFAULT_OUTPUT_FORMAT
-                + "' output format: " + supportedOutputFormats);
-    }
-
     /**
      * Splits the filter provided by the geotools query into the server supported and unsupported
      * ones.
@@ -1017,7 +1030,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
         {
             final boolean isAuthenticating = http.getUser() != null;
             if (isAuthenticating) {
-                WFSResponse wfsResponse = describeFeatureTypeGET(prefixedTypeName, null);
+                WFSResponse wfsResponse = describeFeatureTypeGET(prefixedTypeName);
                 tmpFile = File.createTempFile("describeft", ".xsd");
                 OutputStream output = new FileOutputStream(tmpFile);
                 InputStream response = wfsResponse.getInputStream();
@@ -1057,8 +1070,7 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
             throw new IOException("WFS does not support transactions");
         }
 
-        WFS_1_1_0_TransactionRequest req = (WFS_1_1_0_TransactionRequest) transactionRequest;
-        TransactionType transaction = req.getTransaction();
+        TransactionType transaction = unwrapTransaction(transactionRequest);
 
         // used to declare prefixes on the encoder later
         Set<QName> affectedTypes = new HashSet<QName>();
@@ -1087,10 +1099,5 @@ public class Strict_1_1_0_Strategy implements WFSStrategy {
 
     private TransactionResult toTransactionResult(WFSResponse wfsResponse) {
         return null;
-    }
-
-    @Override
-    public TransactionRequest createTransaction() {
-        return new WFS_1_1_0_TransactionRequest(this);
     }
 }

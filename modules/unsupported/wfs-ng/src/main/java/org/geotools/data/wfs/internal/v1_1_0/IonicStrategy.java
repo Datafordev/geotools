@@ -27,7 +27,7 @@ import javax.xml.namespace.QName;
 import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.QueryType;
 
-import org.geotools.data.wfs.internal.GetFeature;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.RequestComponents;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.filter.Capabilities;
@@ -54,7 +54,7 @@ import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
  *
  * @source $URL$
  */
-public class IonicStrategy extends Strict_1_1_0_Strategy {
+public class IonicStrategy extends StrictWFS_1_1_0_Strategy {
 
     private static final Logger LOGGER = Logging.getLogger(IonicStrategy.class);
 
@@ -108,7 +108,7 @@ public class IonicStrategy extends Strict_1_1_0_Strategy {
      * case, the query srsName is replaced by the kown "EPSG:4269" code
      */
     @Override
-    public RequestComponents createGetFeatureRequest(GetFeature query) throws IOException {
+    public RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
         RequestComponents req = super.createGetFeatureRequest(query);
         GetFeatureType getFeature = req.getServerRequest();
         QueryType queryType = (QueryType) getFeature.getQuery().get(0);

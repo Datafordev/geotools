@@ -32,9 +32,9 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.ResultTypeType;
 
 import org.geotools.data.Query;
-import org.geotools.data.wfs.internal.GetFeature;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.RequestComponents;
-import org.geotools.data.wfs.internal.GetFeature.ResultType;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Capabilities;
 import org.junit.Before;
@@ -73,7 +73,7 @@ public class CubeWerxStrategyTest extends DataTestSupport {
 
     @Test
     public void testCreateGetFeatureRequest() throws IOException {
-        GetFeature query = new GetFeatureQueryAdapter(
+        GetFeatureRequest query = new GetFeatureQueryAdapter(
                 new Query(CUBEWERX_GOVUNITCE.FEATURETYPENAME), "GML2", "EPSG:4326",
                 ResultType.RESULTS);
 

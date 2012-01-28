@@ -27,7 +27,7 @@ import net.opengis.wfs.impl.GetFeatureTypeImpl;
 
 import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
-import org.geotools.data.wfs.internal.GetFeature;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.RequestComponents;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
@@ -39,7 +39,7 @@ import org.opengis.filter.Or;
 import org.opengis.filter.spatial.BinarySpatialOperator;
 
 /**
- * An strategy object to deal in querying a CubeWerx WFS 1.1 server
+ * A strategy object to aid in querying a CubeWerx WFS 1.1 server
  * <p>
  * This strategy was created as per the limitations encountered at the CubeWerx server being tested
  * while developing this plugin.
@@ -54,7 +54,7 @@ import org.opengis.filter.spatial.BinarySpatialOperator;
  * 
  * @author groldan
  */
-public class CubeWerxStrategy extends Strict_1_1_0_Strategy {
+public class CubeWerxStrategy extends StrictWFS_1_1_0_Strategy {
 
     /**
      * Addresses the following issues with the CubeWerx WFS server:
@@ -70,7 +70,7 @@ public class CubeWerxStrategy extends Strict_1_1_0_Strategy {
      * </p>
      */
     @Override
-    public RequestComponents createGetFeatureRequest(GetFeature query) throws IOException {
+    public RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
         RequestComponents parts = super.createGetFeatureRequest(query);
 
         GetFeatureType serverRequest = parts.getServerRequest();

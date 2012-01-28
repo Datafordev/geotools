@@ -30,7 +30,7 @@ import org.geotools.data.wfs.internal.WFSOperationType;
  * 
  * @source $URL$
  */
-public class ArcGISServerStrategy extends Strict_1_1_0_Strategy {
+public class ArcGISServerStrategy extends StrictWFS_1_1_0_Strategy {
 
     /**
      * ArcGIS server configuration without @DefaultWFSStrategy#DEFAULT_OUTPUT_FORMAT but with some
