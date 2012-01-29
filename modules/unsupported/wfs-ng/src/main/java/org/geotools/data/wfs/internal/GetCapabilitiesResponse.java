@@ -52,8 +52,8 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
                 }
                 rawResponse = buff.toByteArray();
             }
-            if (RESPONSES.isLoggable(Level.INFO)) {
-                RESPONSES.info("Full GetCapabilities response: " + new String(rawResponse));
+            if (RESPONSES.isLoggable(Level.FINER)) {
+                RESPONSES.finer("Full GetCapabilities response: " + new String(rawResponse));
             }
             try {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
