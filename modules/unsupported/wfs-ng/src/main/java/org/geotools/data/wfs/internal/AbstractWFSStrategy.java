@@ -16,99 +16,42 @@
  */
 package org.geotools.data.wfs.internal;
 
-import static net.opengis.wfs.ResultTypeType.HITS_LITERAL;
-import static net.opengis.wfs.ResultTypeType.RESULTS_LITERAL;
-import static org.geotools.data.wfs.internal.GetFeatureRequest.ResultType.RESULTS;
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.HttpMethod.POST;
-import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
-import javax.xml.parsers.ParserConfigurationException;
 
-import net.opengis.ows10.DCPType;
-import net.opengis.ows10.DomainType;
-import net.opengis.ows10.KeywordsType;
-import net.opengis.ows10.OnlineResourceType;
-import net.opengis.ows10.OperationType;
-import net.opengis.ows10.OperationsMetadataType;
-import net.opengis.ows10.Ows10Factory;
-import net.opengis.ows10.RequestMethodType;
-import net.opengis.ows10.ServiceIdentificationType;
-import net.opengis.ows10.ServiceProviderType;
-import net.opengis.ows10.WGS84BoundingBoxType;
-import net.opengis.wfs.DescribeFeatureTypeType;
-import net.opengis.wfs.FeatureTypeType;
-import net.opengis.wfs.GetCapabilitiesType;
-import net.opengis.wfs.GetFeatureType;
-import net.opengis.wfs.GetGmlObjectType;
-import net.opengis.wfs.LockFeatureType;
-import net.opengis.wfs.OutputFormatListType;
-import net.opengis.wfs.QueryType;
-import net.opengis.wfs.TransactionType;
-import net.opengis.wfs.WFSCapabilitiesType;
-import net.opengis.wfs.WfsFactory;
-
-import org.apache.commons.io.IOUtils;
 import org.eclipse.emf.ecore.EObject;
-import org.geotools.data.DataSourceException;
-import org.geotools.data.Query;
-import org.geotools.data.ows.GetCapabilitiesRequest;
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.data.ows.SimpleHttpClient;
-import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
-import org.geotools.data.wfs.internal.TransactionRequest.TransactionElement;
-import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
-import org.geotools.factory.GeoTools;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.v1_1.OGC;
-import org.geotools.filter.v1_1.OGCConfiguration;
-import org.geotools.filter.v2_0.FESConfiguration;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.Version;
-import org.geotools.util.logging.Logging;
-import org.geotools.wfs.WFS;
-import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Configuration;
 import org.geotools.xml.Encoder;
-import org.geotools.xml.Parser;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.filter.Id;
 import org.opengis.filter.capability.FilterCapabilities;
+import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.identity.Identifier;
-import org.opengis.filter.sort.SortBy;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.xml.sax.SAXException;
 
 /**
  * {@link WFSStrategy} implementation to talk to a WFS 1.1.0 server leveraging the GeoTools
@@ -118,9 +61,9 @@ import org.xml.sax.SAXException;
  * <ul>
  * <li> {@link #supportsGet()}
  * <li> {@link #supportsPost()}
- * <li> {@link #createGetFeatureRequest(GetFeatureRequest)}
- * <li> {@link #buildGetFeatureParametersForGet(GetFeatureType)}
- * <li> {@link #encodeGetFeatureGetFilter(Filter)}
+ * <li> {@link #buildGetFeatureRequest}
+ * <li> {@link #buildGetFeatureParametersForGet}
+ * <li> {@link #encodeGetFeatureGetFilter}
  * </ul>
  * </p>
  * 
@@ -128,40 +71,24 @@ import org.xml.sax.SAXException;
  */
 public abstract class AbstractWFSStrategy extends WFSStrategy {
 
-    private static final Logger LOGGER = Logging.getLogger(AbstractWFSStrategy.class);
+    private static final Logger LOGGER = Loggers.MODULE;
 
-    public static final Configuration FILTER_1_0_0_CONFIGURATION = new OGCConfiguration();
+    public static final Configuration FILTER_1_0_0_CONFIGURATION = new org.geotools.filter.v1_0.OGCConfiguration();
 
-    public static final Configuration WFS_1_0_0_CONFIGURATION = new WFSConfiguration();
+    public static final Configuration WFS_1_0_0_CONFIGURATION = new org.geotools.wfs.v1_0.WFSConfiguration();
 
-    public static final Configuration FILTER_1_1_0_CONFIGURATION = new OGCConfiguration();
+    public static final Configuration FILTER_1_1_0_CONFIGURATION = new org.geotools.filter.v1_1.OGCConfiguration();
 
-    public static final Configuration WFS_1_1_0_CONFIGURATION = new WFSConfiguration();
+    public static final Configuration WFS_1_1_0_CONFIGURATION = new org.geotools.wfs.v1_1.WFSConfiguration();
 
-    public static final Configuration FILTER_2_0_0_CONFIGURATION = new FESConfiguration();
+    public static final Configuration FILTER_2_0_0_CONFIGURATION = new org.geotools.filter.v2_0.FESConfiguration();
 
     public static final Configuration WFS_2_0_0_CONFIGURATION = new org.geotools.wfs.v2_0.WFSConfiguration();
-
-    /**
-     * The WFS GetCapabilities document. Final by now, as we're not handling updatesequence, so will
-     * not ask the server for an updated capabilities during the life-time of this datastore.
-     */
-    protected WFSCapabilitiesType capabilities;
-
-    /**
-     * Per featuretype name Map of capabilities feature type information. Not to be used directly
-     * but through {@link #getFeatureTypeInfo(String)}
-     */
-    protected final Map<String, FeatureTypeType> typeInfos;
-
-    protected HTTPClient http;
 
     protected WFSConfig config;
 
     public AbstractWFSStrategy() {
         this.config = new WFSConfig();
-        this.http = new SimpleHttpClient();
-        this.typeInfos = new HashMap<String, FeatureTypeType>();
     }
 
     /*
@@ -180,8 +107,9 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      *            the URL that points to the server's getCapabilities document
      * @return a configured GetCapabilitiesRequest that can be used to access the Document
      */
+    @Override
     public GetCapabilitiesRequest createGetCapabilitiesRequest(URL server) {
-        return new WFSGetCapabilitiesRequest(this, server);
+        return new GetCapabilitiesRequest(server);
     }
 
     /*
@@ -191,23 +119,9 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
     protected abstract Configuration getWfsConfiguration();
 
-    @Override
-    public abstract String getDefaultOutputFormat(WFSOperationType operation);
-
     /*
      * WFSStrategy methods
      */
-    @Override
-    public TransactionRequest createTransaction() {
-        return new DefaultTransactionRequest(this);
-    }
-
-    protected TransactionType unwrapTransaction(final TransactionRequest transactionRequest) {
-        DefaultTransactionRequest req = (DefaultTransactionRequest) transactionRequest;
-        TransactionType transaction = req.getTransaction();
-        return transaction;
-    }
-
     @Override
     public void setConfig(WFSConfig config) {
         this.config = config;
@@ -216,27 +130,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     @Override
     public WFSConfig getConfig() {
         return config;
-    }
-
-    @Override
-    public void setHttpClient(HTTPClient httpClient) {
-        this.http = httpClient;
-    }
-
-    @Override
-    public void initFromCapabilities(final InputStream capabilitiesContents) throws IOException {
-        this.capabilities = parseCapabilities(capabilitiesContents);
-        this.typeInfos.clear();
-
-        @SuppressWarnings("unchecked")
-        final List<FeatureTypeType> ftypes = capabilities.getFeatureTypeList().getFeatureType();
-        QName typeName;
-        for (FeatureTypeType ftype : ftypes) {
-            typeName = ftype.getName();
-            assert !("".equals(typeName.getPrefix()));
-            String prefixedTypeName = typeName.getPrefix() + ":" + typeName.getLocalPart();
-            typeInfos.put(prefixedTypeName, ftype);
-        }
     }
 
     /**
@@ -253,89 +146,29 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return true;
     }
 
-    /**
-     * Creates the mapping {@link GetFeatureType GetFeature} request for the given {@link Query} and
-     * {@code outputFormat}, and post-processing filter based on the server's stated filter
-     * capabilities.
-     * 
-     */
-    @SuppressWarnings("unchecked")
-    protected RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
-        final WfsFactory factory = WfsFactory.eINSTANCE;
+    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
 
-        GetFeatureType getFeature = factory.createGetFeatureType();
-        getFeature.setService("WFS");
-        getFeature.setVersion(getServiceVersion().toString());
-        getFeature.setOutputFormat(query.getOutputFormat());
-
-        getFeature.setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore");
-        Integer maxFeatures = query.getMaxFeatures();
-        if (maxFeatures != null) {
-            getFeature.setMaxFeatures(BigInteger.valueOf(maxFeatures.intValue()));
-        }
-
-        ResultType resultType = query.getResultType();
-        getFeature.setResultType(RESULTS == resultType ? RESULTS_LITERAL : HITS_LITERAL);
-
-        QueryType wfsQuery = factory.createQueryType();
-        wfsQuery.setTypeName(Collections.singletonList(query.getTypeName()));
-
-        Filter serverFilter = query.getFilter();
-        if (!Filter.INCLUDE.equals(serverFilter)) {
-            wfsQuery.setFilter(serverFilter);
-        }
-        String srsName = query.getSrsName();
-        try {
-            wfsQuery.setSrsName(new URI(srsName));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Can't create a URI from the query CRS: " + srsName, e);
-        }
-        String[] propertyNames = query.getPropertyNames();
-        boolean retrieveAllProperties = propertyNames == null;
-        if (!retrieveAllProperties) {
-            List<String> propertyName = wfsQuery.getPropertyName();
-            for (String propName : propertyNames) {
-                propertyName.add(propName);
-            }
-        }
-        SortBy[] sortByList = query.getSortBy();
-        if (sortByList != null) {
-            for (SortBy sortBy : sortByList) {
-                wfsQuery.getSortBy().add(sortBy);
-            }
-        }
-
-        getFeature.getQuery().add(wfsQuery);
-
-        RequestComponents reqParts = new RequestComponents();
-        reqParts.setServerRequest(getFeature);
-
-        Map<String, String> parametersForGet = buildGetFeatureParametersForGet(getFeature);
-        reqParts.setKvpParameters(parametersForGet);
-
-        return reqParts;
-    }
-
-    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureType request)
-            throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         map.put("SERVICE", "WFS");
         Version serviceVersion = getServiceVersion();
         map.put("VERSION", serviceVersion.toString());
         map.put("REQUEST", "GetFeature");
-        map.put("OUTPUTFORMAT", request.getOutputFormat());
+        String outputFormat = request.getOutputFormat();
+        if (outputFormat == null) {
+            outputFormat = getDefaultOutputFormat(WFSOperationType.GET_FEATURE);
+        }
+        map.put("OUTPUTFORMAT", outputFormat);
 
         if (request.getMaxFeatures() != null) {
             map.put("MAXFEATURES", String.valueOf(request.getMaxFeatures()));
         }
 
-        final QueryType query = (QueryType) request.getQuery().get(0);
-        final String typeName = (String) query.getTypeName().get(0);
-        map.put("TYPENAME", typeName);
+        QName typeName = request.getTypeName();
+        String queryTypeName = getPrefixedTypeName(typeName);
+        map.put("TYPENAME", queryTypeName);
 
-        if (query.getPropertyName().size() > 0) {
-            @SuppressWarnings("unchecked")
-            List<String> propertyNames = query.getPropertyName();
+        if (request.getPropertyNames() != null && request.getPropertyNames().length > 0) {
+            List<String> propertyNames = Arrays.asList(request.getPropertyNames());
             StringBuilder pnames = new StringBuilder();
             for (Iterator<String> it = propertyNames.iterator(); it.hasNext();) {
                 pnames.append(it.next());
@@ -346,13 +179,14 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             map.put("PROPERTYNAME", pnames.toString());
         }
 
-        // SRSNAME parameter. Let the server reproject.
-        // TODO: should check if the server supports the required crs
-        URI srsName = query.getSrsName();
+        final String srsName = request.getSrsName();
         if (srsName != null) {
-            map.put("SRSNAME", srsName.toString());
+            final Set<String> supportedCRSIdentifiers = getSupportedCRSIdentifiers(typeName);
+            if (supportedCRSIdentifiers.contains(srsName)) {
+                map.put("SRSNAME", srsName.toString());
+            }
         }
-        final Filter filter = query.getFilter();
+        final Filter filter = request.getFilter();
 
         if (filter != null && Filter.INCLUDE != filter) {
             if (filter instanceof Id) {
@@ -360,15 +194,23 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
                 StringBuffer idValues = new StringBuffer();
                 for (Iterator<Identifier> it = identifiers.iterator(); it.hasNext();) {
                     Object id = it.next().getID();
-                    // REVISIT: should URL encode the id?
-                    idValues.append(String.valueOf(id));
+                    if (id instanceof FeatureId) {
+                        idValues.append(((FeatureId) id).getRid());
+                    } else {
+                        idValues.append(String.valueOf(id));
+                    }
                     if (it.hasNext()) {
                         idValues.append(",");
                     }
                 }
                 map.put("FEATUREID", idValues.toString());
             } else {
-                String xmlEncodedFilter = encodeGetFeatureGetFilter(filter);
+                String xmlEncodedFilter;
+                try {
+                    xmlEncodedFilter = encodeGetFeatureGetFilter(filter);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 map.put("FILTER", xmlEncodedFilter);
             }
         }
@@ -404,163 +246,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     @Override
     public abstract Version getServiceVersion();
 
-    /**
-     * @see WFSStrategy#getServiceTitle()
-     */
-    public String getServiceTitle() {
-        return getServiceIdentification().getTitle();
-    }
-
-    /**
-     * @see WFSStrategy#getServiceAbstract()
-     */
-    @Override
-    public String getServiceAbstract() {
-        return getServiceIdentification().getAbstract();
-    }
-
-    /**
-     * @see WFSStrategy#getServiceKeywords()
-     */
-    @Override
-    public Set<String> getServiceKeywords() {
-        @SuppressWarnings("unchecked")
-        List<KeywordsType> capsKeywords = getServiceIdentification().getKeywords();
-        return extractKeywords(capsKeywords);
-    }
-
-    private ServiceIdentificationType getServiceIdentification() {
-        ServiceIdentificationType serviceId = capabilities.getServiceIdentification();
-        if (serviceId == null) {
-            LOGGER.info("Capabilities did not provide a ServiceIdentification section");
-            serviceId = Ows10Factory.eINSTANCE.createServiceIdentificationType();
-            capabilities.setServiceIdentification(serviceId);
-        }
-        return serviceId;
-    }
-
-    /**
-     * @see WFSStrategy#getServiceProviderUri()
-     */
-    @Override
-    public URI getServiceProviderUri() {
-        ServiceProviderType serviceProvider = capabilities.getServiceProvider();
-        if (serviceProvider == null) {
-            return null;
-        }
-        OnlineResourceType providerSite = serviceProvider.getProviderSite();
-        if (providerSite == null) {
-            return null;
-        }
-        String href = providerSite.getHref();
-        if (href == null) {
-            return null;
-        }
-        try {
-            return new URI(href);
-        } catch (URISyntaxException e) {
-            return null;
-        }
-    }
-
-    /**
-     * @see WFSStrategy#getSupportedGetFeatureOutputFormats()
-     */
-    @Override
-    public Set<String> getSupportedGetFeatureOutputFormats() {
-        OperationType operationMetadata = getOperationMetadata(WFSOperationType.GET_FEATURE);
-        @SuppressWarnings("unchecked")
-        List<DomainType> parameters = operationMetadata.getParameter();
-        @SuppressWarnings("unchecked")
-        List<FeatureTypeType> featuretypes = capabilities.getFeatureTypeList().getFeatureType();
-
-        List<String> supportedByAllFeatureTypes = null;
-        for (int i = 0; i < featuretypes.size(); i++) {
-            net.opengis.wfs.FeatureTypeType ft = (FeatureTypeType) featuretypes.get(i);
-            if (ft.getOutputFormats() != null) {
-                @SuppressWarnings("unchecked")
-                List<String> value = ft.getOutputFormats().getFormat();
-                if (supportedByAllFeatureTypes == null) {
-                    supportedByAllFeatureTypes = value;
-                } else {
-                    List<String> removeOutputFormats = new ArrayList<String>();
-                    for (String o : supportedByAllFeatureTypes) {
-                        if (!value.contains(o)) {
-                            removeOutputFormats.add(o);
-                        }
-                    }
-                    for (Object o : removeOutputFormats) {
-                        supportedByAllFeatureTypes.remove(o);
-                    }
-                    if (supportedByAllFeatureTypes.size() == 0) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        Set<String> outputFormats = new HashSet<String>();
-        for (DomainType param : parameters) {
-            String paramName = param.getName();
-            if ("outputFormat".equals(paramName)) {
-                @SuppressWarnings("unchecked")
-                List<String> value = param.getValue();
-                outputFormats.addAll(value);
-            }
-        }
-        if (supportedByAllFeatureTypes != null)
-            outputFormats.addAll(supportedByAllFeatureTypes);
-        return outputFormats;
-    }
-
-    /**
-     * @see WFSStrategy#getSupportedOutputFormats(String)
-     */
-    @Override
-    public Set<String> getSupportedOutputFormats(String typeName) {
-        final Set<String> serviceOutputFormats = getSupportedGetFeatureOutputFormats();
-        final FeatureTypeType typeInfo = getFeatureTypeInfo(typeName);
-        final OutputFormatListType outputFormats = typeInfo.getOutputFormats();
-
-        Set<String> ftypeFormats = new HashSet<String>();
-        if (outputFormats != null) {
-            @SuppressWarnings("unchecked")
-            List<String> ftypeDeclaredFormats = outputFormats.getFormat();
-            ftypeFormats.addAll(ftypeDeclaredFormats);
-        }
-
-        ftypeFormats.addAll(serviceOutputFormats);
-        return ftypeFormats;
-    }
-
-    /**
-     * @see WFSStrategy#getFeatureTypeNames()
-     */
-    @Override
-    public Set<QName> getFeatureTypeNames() {
-        Set<QName> typeNames = new HashSet<QName>();
-        for (FeatureTypeType typeInfo : typeInfos.values()) {
-            QName name = typeInfo.getName();
-            typeNames.add(name);
-        }
-        return typeNames;
-    }
-
-    /**
-     * @see WFSStrategy#getFeatureTypeName(String)
-     */
-    @Override
-    public QName getFeatureTypeName(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        QName name = featureTypeInfo.getName();
-        return name;
-    }
-
-    /**
-     * @see org.geotools.data.wfs.internal.WFSStrategy#getSimpleTypeName(javax.xml.namespace.QName)
-     */
-    @Override
-    public String getSimpleTypeName(QName qname) {
+    protected String getPrefixedTypeName(QName qname) {
         String prefix = qname.getPrefix();
         String simpleName;
         if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
@@ -569,16 +255,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             simpleName = prefix + ":" + qname.getLocalPart();
         }
         return simpleName;
-    }
-
-    /**
-     * @see WFSStrategy#getFilterCapabilities()
-     */
-    @Override
-    public FilterCapabilities getFilterCapabilities() {
-        FilterCapabilities wfsFilterCapabilities;
-        wfsFilterCapabilities = capabilities.getFilterCapabilities();
-        return wfsFilterCapabilities;
     }
 
     /**
@@ -615,68 +291,14 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return null;
     }
 
-    /**
-     * @see WFSStrategy#getFeatureTypeTitle(String)
-     */
-    @Override
-    public String getFeatureTypeTitle(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        return featureTypeInfo.getTitle();
-    }
+    protected abstract String getOperationURI(WFSOperationType operation, HttpMethod method);
 
     /**
-     * @see WFSStrategy#getFeatureTypeAbstract(String)
+     * @see WFSStrategy#getSupportedCRSIdentifiers
      */
     @Override
-    public String getFeatureTypeAbstract(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        return featureTypeInfo.getAbstract();
-    }
-
-    /**
-     * @see WFSStrategy#getFeatureTypeWGS84Bounds(String)
-     */
-    @Override
-    public ReferencedEnvelope getFeatureTypeWGS84Bounds(String typeName) {
-        final FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        @SuppressWarnings("unchecked")
-        List<WGS84BoundingBoxType> bboxList = featureTypeInfo.getWGS84BoundingBox();
-        if (bboxList != null && bboxList.size() > 0) {
-            WGS84BoundingBoxType bboxType = bboxList.get(0);
-            @SuppressWarnings("unchecked")
-            List<Double> lowerCorner = bboxType.getLowerCorner();
-            @SuppressWarnings("unchecked")
-            List<Double> upperCorner = bboxType.getUpperCorner();
-            double minLon = (Double) lowerCorner.get(0);
-            double minLat = (Double) lowerCorner.get(1);
-            double maxLon = (Double) upperCorner.get(0);
-            double maxLat = (Double) upperCorner.get(1);
-
-            ReferencedEnvelope latLonBounds = new ReferencedEnvelope(minLon, maxLon, minLat,
-                    maxLat, DefaultGeographicCRS.WGS84);
-
-            return latLonBounds;
-        }
-        throw new IllegalStateException(
-                "The capabilities document does not supply the ows:WGS84BoundingBox element");
-    }
-
-    /**
-     * @see WFSStrategy#getDefaultCRS(String)
-     */
-    @Override
-    public String getDefaultCRS(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        String defaultSRS = featureTypeInfo.getDefaultSRS();
-        return defaultSRS;
-    }
-
-    /**
-     * @see WFSStrategy#getSupportedCRSIdentifiers(String)
-     */
-    @Override
-    public Set<String> getSupportedCRSIdentifiers(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
+    public Set<String> getSupportedCRSIdentifiers(QName typeName) {
+        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfo(typeName);
         // TODO: another wrong emf mapping: getOtherSRS():String? should be a list
         String defaultSRS = featureTypeInfo.getDefaultSRS();
         @SuppressWarnings("unchecked")
@@ -688,98 +310,35 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return ftypeCrss;
     }
 
-    /**
-     * @see WFSStrategy#getFeatureTypeKeywords(String)
-     */
-    @Override
-    public Set<String> getFeatureTypeKeywords(String typeName) {
-        FeatureTypeType featureTypeInfo = getFeatureTypeInfo(typeName);
-        @SuppressWarnings("unchecked")
-        List<KeywordsType> ftKeywords = featureTypeInfo.getKeywords();
-        Set<String> ftypeKeywords = extractKeywords(ftKeywords);
-        return ftypeKeywords;
-    }
-
-    /**
-     * @throws IOException
-     * @see WFSStrategy#describeFeatureTypeGET(String, String)
-     */
-    @Override
-    public WFSResponse describeFeatureTypeGET(String typeName) throws IOException {
-
-        if (!supportsOperation(DESCRIBE_FEATURETYPE, false)) {
-            throw new UnsupportedOperationException(
-                    "The server does not support DescribeFeatureType for HTTP method GET");
-        }
-
-        URL url = buildDescribeFeatureTypeURLGet(typeName);
-        @SuppressWarnings("unchecked")
-        WFSResponse response = issueGetRequest(null, url, Collections.EMPTY_MAP);
-        return response;
-    }
-
-    /**
-     * @throws IOException
-     * @see WFSStrategy#describeFeatureTypePOST(String, String)
-     */
-    @Override
-    public WFSResponse describeFeatureTypePOST(String typeName, String outputFormat)
-            throws IOException {
-        throw new UnsupportedOperationException("POST not implemented yet for DescribeFeatureType");
-
-    }
-
-    /**
-     * @see WFSStrategy#issueGetFeatureGET(GetFeatureType, Map)
-     */
-    @Override
-    public WFSResponse issueGetFeatureGET(final GetFeatureRequest request) throws IOException {
-        if (!supportsOperation(WFSOperationType.GET_FEATURE, false)) {
-            throw new UnsupportedOperationException(
-                    "The server does not support GetFeature for HTTP method GET");
-        }
-        URL url = getOperationURL(WFSOperationType.GET_FEATURE, false);
-
-        RequestComponents reqParts = createGetFeatureRequest(request);
-        Map<String, String> getFeatureKvp = reqParts.getKvpParameters();
-        GetFeatureType requestType = reqParts.getServerRequest();
-
-        System.out.println(" > getFeatureGET: Request url: " + url + ". Parameters: "
-                + getFeatureKvp);
-        WFSResponse response = issueGetRequest(requestType, url, getFeatureKvp);
-
-        return response;
-    }
-
-    /**
-     * @see WFSStrategy#getFeaturePOST(Query, String)
-     */
-    @Override
-    public WFSResponse issueGetFeaturePOST(final GetFeatureRequest request) throws IOException {
-        if (!supportsOperation(WFSOperationType.GET_FEATURE, true)) {
-            throw new UnsupportedOperationException(
-                    "The server does not support GetFeature for HTTP method POST");
-        }
-        URL url = getOperationURL(WFSOperationType.GET_FEATURE, true);
-
-        RequestComponents reqParts = createGetFeatureRequest(request);
-        GetFeatureType serverRequest = reqParts.getServerRequest();
-
-        Encoder encoder = new Encoder(getWfsConfiguration());
-
-        // If the typeName is of the form prefix:typeName we better declare the namespace since we
-        // don't know how picky the server parser will be
-        String typeName = reqParts.getKvpParameters().get("TYPENAME");
-        QName fullName = getFeatureTypeName(typeName);
-        String prefix = fullName.getPrefix();
-        String namespace = fullName.getNamespaceURI();
-        if (!XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
-            encoder.getNamespaces().declarePrefix(prefix, namespace);
-        }
-        WFSResponse response = issuePostRequest(serverRequest, url, encoder);
-
-        return response;
-    }
+    // /**
+    // * @see WFSStrategy#getFeaturePOST(Query, String)
+    // */
+    // @Override
+    // public WFSResponse issueGetFeaturePOST(final GetFeatureRequest request) throws IOException {
+    // if (!supportsOperation(WFSOperationType.GET_FEATURE, true)) {
+    // throw new UnsupportedOperationException(
+    // "The server does not support GetFeature for HTTP method POST");
+    // }
+    // URL url = getOperationURL(WFSOperationType.GET_FEATURE, true);
+    //
+    // RequestComponents reqParts = createGetFeatureRequest(request);
+    // GetFeatureType serverRequest = reqParts.getServerRequest();
+    //
+    // Encoder encoder = new Encoder(getWfsConfiguration());
+    //
+    // // If the typeName is of the form prefix:typeName we better declare the namespace since we
+    // // don't know how picky the server parser will be
+    // String typeName = reqParts.getKvpParameters().get("TYPENAME");
+    // QName fullName = getFeatureTypeName(typeName);
+    // String prefix = fullName.getPrefix();
+    // String namespace = fullName.getNamespaceURI();
+    // if (!XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+    // encoder.getNamespaces().declarePrefix(prefix, namespace);
+    // }
+    // WFSResponse response = issuePostRequest(serverRequest, url, encoder);
+    //
+    // return response;
+    // }
 
     /**
      * @see WFSStrategy#dispose()
@@ -789,209 +348,156 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         // do nothing
     }
 
-    /**
-     * Returns the feature type metadata object parsed from the capabilities document for the given
-     * {@code typeName}
-     * <p>
-     * NOTE: this method is package protected just to be also accessed by unit test.
-     * </p>
-     * 
-     * @param typeName
-     *            the typeName as stated in the capabilities {@code FeatureTypeList} to get the info
-     *            for
-     * @return the WFS capabilities metadata {@link FeatureTypeType metadata} for {@code typeName}
-     * @throws IllegalArgumentException
-     *             if {@code typeName} is not the name of a FeatureType stated in the capabilities
-     *             document.
-     */
-    private FeatureTypeType getFeatureTypeInfo(final String typeName) {
-        if (!typeInfos.containsKey(typeName)) {
-            throw new IllegalArgumentException("Type name not found: " + typeName);
-        }
-        return typeInfos.get(typeName);
-    }
+    // private OperationType getOperationMetadata(WFSOperationType operation) {
+    // final OperationsMetadataType operationsMetadata = capabilities.getOperationsMetadata();
+    // @SuppressWarnings("unchecked")
+    // final List<OperationType> operations = operationsMetadata.getOperation();
+    // final String expectedOperationName = operation.getName();
+    // for (OperationType operationType : operations) {
+    // String operationName = operationType.getName();
+    // if (expectedOperationName.equalsIgnoreCase(operationName)) {
+    // return operationType;
+    // }
+    // }
+    // throw new NoSuchElementException("Operation metadata not found for "
+    // + expectedOperationName + " in the capabilities document");
+    // }
 
-    private WFSCapabilitiesType parseCapabilities(InputStream capabilitiesReader)
-            throws IOException {
-        final Configuration wfsConfig = getWfsConfiguration();
-        final Parser parser = new Parser(wfsConfig);
-        final Object parsed;
-        try {
-            parsed = parser.parse(capabilitiesReader);
-        } catch (SAXException e) {
-            throw new DataSourceException("Exception parsing WFS capabilities", e);
-        } catch (ParserConfigurationException e) {
-            throw new DataSourceException("WFS parsing configuration error", e);
-        }
-        if (parsed == null) {
-            throw new DataSourceException("WFS capabilities was not parsed");
-        }
-        if (!(parsed instanceof WFSCapabilitiesType)) {
-            throw new DataSourceException("Expected WFS Capabilities, got " + parsed);
-        }
-        return (WFSCapabilitiesType) parsed;
-    }
+    protected Map<String, String> buildDescribeFeatureTypeURLGet(
+            final DescribeFeatureTypeRequest request) {
 
-    @SuppressWarnings("unchecked")
-    private Set<String> extractKeywords(List<KeywordsType> keywordsList) {
-        Set<String> keywords = new HashSet<String>();
-        for (KeywordsType keys : keywordsList) {
-            keywords.addAll(keys.getKeyword());
-        }
-        return keywords;
-    }
-
-    private OperationType getOperationMetadata(WFSOperationType operation) {
-        final OperationsMetadataType operationsMetadata = capabilities.getOperationsMetadata();
-        @SuppressWarnings("unchecked")
-        final List<OperationType> operations = operationsMetadata.getOperation();
-        final String expectedOperationName = operation.getName();
-        for (OperationType operationType : operations) {
-            String operationName = operationType.getName();
-            if (expectedOperationName.equalsIgnoreCase(operationName)) {
-                return operationType;
-            }
-        }
-        throw new NoSuchElementException("Operation metadata not found for "
-                + expectedOperationName + " in the capabilities document");
-    }
-
-    protected URL buildDescribeFeatureTypeURLGet(final String typeName) {
+        final QName typeName = request.getTypeName();
 
         // final String outputFormat = getDefaultOutputFormat(DESCRIBE_FEATURETYPE);
-        final FeatureTypeType typeInfo = getFeatureTypeInfo(typeName);
-
-        final URL describeFeatureTypeUrl = getOperationURL(DESCRIBE_FEATURETYPE, false);
+        try {
+            getFeatureTypeInfo(typeName);
+        } catch (RuntimeException e) {
+            throw e;
+        }
 
         Map<String, String> kvp = new HashMap<String, String>();
         kvp.put("SERVICE", "WFS");
         kvp.put("VERSION", getServiceVersion().toString());
         kvp.put("REQUEST", "DescribeFeatureType");
-        kvp.put("TYPENAME", typeName);
+        String prefixedTypeName = getPrefixedTypeName(typeName);
+        kvp.put("TYPENAME", prefixedTypeName);
 
-        QName name = typeInfo.getName();
-        if (!XMLConstants.DEFAULT_NS_PREFIX.equals(name.getPrefix())) {
-            String nsUri = name.getNamespaceURI();
-            kvp.put("NAMESPACE", "xmlns(" + name.getPrefix() + "=" + nsUri + ")");
+        if (!XMLConstants.DEFAULT_NS_PREFIX.equals(typeName.getPrefix())) {
+            String nsUri = typeName.getNamespaceURI();
+            kvp.put("NAMESPACE", "xmlns(" + typeName.getPrefix() + "=" + nsUri + ")");
         }
 
         // ommit output format by now, server should just return xml shcema
         // kvp.put("OUTPUTFORMAT", outputFormat);
 
-        URL url = URIs.buildURL(describeFeatureTypeUrl, kvp);
-        return url;
+        return kvp;
     }
 
-    private WFSResponse issueGetRequest(EObject request, URL baseUrl, Map<String, String> kvp)
-            throws IOException {
-        WFSResponse response;
-        URL url = URIs.buildURL(baseUrl, kvp);
-        HTTPResponse httpResponse = http.get(url);
+    // private WFSResponse issueGetRequest(EObject request, URL baseUrl, Map<String, String> kvp)
+    // throws IOException {
+    // WFSResponse response;
+    // URL url = URIs.buildURL(baseUrl, kvp);
+    // HTTPResponse httpResponse = http.get(url);
+    //
+    // String responseCharset = httpResponse.getResponseHeader("charset");
+    // Charset charset = responseCharset == null ? null : Charset.forName(responseCharset);
+    // String contentType = httpResponse.getContentType();
+    // InputStream responseStream = httpResponse.getResponseStream();
+    // String target = url.toExternalForm();
+    // response = new WFSResponse(target, request, charset, contentType, responseStream);
+    // return response;
+    // }
 
-        String responseCharset = httpResponse.getResponseHeader("charset");
-        Charset charset = responseCharset == null ? null : Charset.forName(responseCharset);
-        String contentType = httpResponse.getContentType();
-        InputStream responseStream = httpResponse.getResponseStream();
-        String target = url.toExternalForm();
-        response = new WFSResponse(target, request, charset, contentType, responseStream);
-        return response;
-    }
+    // private WFSResponse issuePostRequest(final EObject request, final URL url, final Encoder
+    // encoder)
+    // throws IOException {
+    //
+    // final Charset requestCharset = config.getDefaultEncoding();
+    // encoder.setEncoding(requestCharset);
+    // ByteArrayOutputStream out = new ByteArrayOutputStream();
+    // if (LOGGER.isLoggable(Level.FINEST)) {
+    // LOGGER.finest("Sending POST request: ");
+    // LOGGER.finest(out.toString(requestCharset.name()));
+    // }
+    // AbstractWFSStrategy.encode(request, encoder, out);
+    // InputStream postContent = new ByteArrayInputStream(out.toByteArray());
+    // HTTPResponse httpResponse = http.post(url, postContent, "text/xml");
+    //
+    // String responseCharset = httpResponse.getResponseHeader("charset");
+    // Charset charset = responseCharset == null ? null : Charset.forName(responseCharset);
+    // String contentType = httpResponse.getContentType();
+    // InputStream responseStream = httpResponse.getResponseStream();
+    // String target = url.toExternalForm();
+    // WFSResponse response = new WFSResponse(target, request, charset, contentType,
+    // responseStream);
+    // return response;
+    // }
 
-    private WFSResponse issuePostRequest(final EObject request, final URL url, final Encoder encoder)
-            throws IOException {
-
-        final Charset requestCharset = config.getDefaultEncoding();
-        encoder.setEncoding(requestCharset);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        if (LOGGER.isLoggable(Level.FINEST)) {
-            LOGGER.finest("Sending POST request: ");
-            LOGGER.finest(out.toString(requestCharset.name()));
-        }
-        AbstractWFSStrategy.encode(request, encoder, out);
-        InputStream postContent = new ByteArrayInputStream(out.toByteArray());
-        HTTPResponse httpResponse = http.post(url, postContent, "text/xml");
-
-        String responseCharset = httpResponse.getResponseHeader("charset");
-        Charset charset = responseCharset == null ? null : Charset.forName(responseCharset);
-        String contentType = httpResponse.getContentType();
-        InputStream responseStream = httpResponse.getResponseStream();
-        String target = url.toExternalForm();
-        WFSResponse response = new WFSResponse(target, request, charset, contentType,
-                responseStream);
-        return response;
-    }
-
-    /**
-     * Returns the operation URI for the given operation/http method as a String to avoid creating a
-     * URL instance when not needed
-     */
-    @SuppressWarnings("unchecked")
-    private String getOperationURI(WFSOperationType operation, HttpMethod method) {
-        final OperationType operationType = getOperationMetadata(operation);
-        final List<DCPType> dcps = operationType.getDCP();
-        for (DCPType dcp : dcps) {
-            List<RequestMethodType> requests;
-            if (GET == method) {
-                requests = dcp.getHTTP().getGet();
-            } else {
-                requests = dcp.getHTTP().getPost();
-            }
-            for (RequestMethodType req : requests) {
-                String href = req.getHref();
-                return href;
-            }
-        }
-        return null;
-    }
+    // /**
+    // * Returns the operation URI for the given operation/http method as a String to avoid creating
+    // a
+    // * URL instance when not needed
+    // */
+    // @SuppressWarnings("unchecked")
+    // private String getOperationURI(WFSOperationType operation, HttpMethod method) {
+    // final OperationType operationType = getOperationMetadata(operation);
+    // final List<DCPType> dcps = operationType.getDCP();
+    // for (DCPType dcp : dcps) {
+    // List<RequestMethodType> requests;
+    // if (GET == method) {
+    // requests = dcp.getHTTP().getGet();
+    // } else {
+    // requests = dcp.getHTTP().getPost();
+    // }
+    // for (RequestMethodType req : requests) {
+    // String href = req.getHref();
+    // return href;
+    // }
+    // }
+    // return null;
+    // }
 
     /**
      * Encodes a WFS request into {@code out}
      * 
-     * @param request
-     *            one of {@link GetCapabilitiesType}, {@link GetFeatureType}, etc
-     * @param configuration
-     *            the wfs configuration to use for encoding the request into the output stream
-     * @param out
-     *            the output stream where to encode the request into
-     * @param charset
-     *            the charset to use to encode the request in
      * @throws IOException
      */
-    public static void encode(final EObject request, final Configuration configuration,
-            final OutputStream out, final Charset charset) throws IOException {
+    public void encode(final QName rootName, final EObject request, final OutputStream out)
+            throws IOException {
+
+        final Configuration configuration = getWfsConfiguration();
+        Charset charset = getConfig().getDefaultEncoding();
+        if (null == charset) {
+            charset = Charset.forName("UTF-8");
+        }
         Encoder encoder = new Encoder(configuration);
         encoder.setEncoding(charset);
-        encode(request, encoder, out);
-    }
-
-    private static void encode(EObject request, Encoder encoder, OutputStream out)
-            throws IOException {
         encoder.setIndentSize(1);
-        QName encodeElementName = getElementName(request);
-        encoder.encode(request, encodeElementName, out);
+        encoder.encode(request, rootName, out);
     }
 
-    private static QName getElementName(EObject originatingRequest) {
-        QName encodeElementName;
-        if (originatingRequest instanceof GetCapabilitiesType) {
-            encodeElementName = WFS.GetCapabilities;
-        } else if (originatingRequest instanceof GetFeatureType) {
-            encodeElementName = WFS.GetFeature;
-        } else if (originatingRequest instanceof DescribeFeatureTypeType) {
-            encodeElementName = WFS.DescribeFeatureType;
-        } else if (originatingRequest instanceof GetCapabilitiesType) {
-            encodeElementName = WFS.GetCapabilities;
-        } else if (originatingRequest instanceof GetGmlObjectType) {
-            encodeElementName = WFS.GetGmlObject;
-        } else if (originatingRequest instanceof LockFeatureType) {
-            encodeElementName = WFS.LockFeature;
-        } else if (originatingRequest instanceof TransactionType) {
-            encodeElementName = WFS.Transaction;
-        } else {
-            throw new IllegalArgumentException("Unkown xml element name for " + originatingRequest);
-        }
-        return encodeElementName;
-    }
+    //
+    // private static QName getElementName(EObject originatingRequest) {
+    // QName encodeElementName;
+    // if (originatingRequest instanceof GetCapabilitiesType) {
+    // encodeElementName = WFS.GetCapabilities;
+    // } else if (originatingRequest instanceof GetFeatureType) {
+    // encodeElementName = WFS.GetFeature;
+    // } else if (originatingRequest instanceof DescribeFeatureTypeType) {
+    // encodeElementName = WFS.DescribeFeatureType;
+    // } else if (originatingRequest instanceof GetCapabilitiesType) {
+    // encodeElementName = WFS.GetCapabilities;
+    // } else if (originatingRequest instanceof GetGmlObjectType) {
+    // encodeElementName = WFS.GetGmlObject;
+    // } else if (originatingRequest instanceof LockFeatureType) {
+    // encodeElementName = WFS.LockFeature;
+    // } else if (originatingRequest instanceof TransactionType) {
+    // encodeElementName = WFS.Transaction;
+    // } else {
+    // throw new IllegalArgumentException("Unkown xml element name for " + originatingRequest);
+    // }
+    // return encodeElementName;
+    // }
 
     /**
      * Splits the filter provided by the geotools query into the server supported and unsupported
@@ -1017,87 +523,140 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return new Filter[] { server, post };
     }
 
-    /**
-     * @see org.geotools.data.wfs.internal.WFSStrategy#issueDescribeFeatureTypeGET(java.lang.String,
-     *      org.opengis.referencing.crs.CoordinateReferenceSystem)
-     */
+    // /**
+    // * @see
+    // org.geotools.data.wfs.internal.WFSStrategy#issueDescribeFeatureTypeGET(java.lang.String,
+    // * org.opengis.referencing.crs.CoordinateReferenceSystem)
+    // */
+    // @Override
+    // public SimpleFeatureType issueDescribeFeatureTypeGET(final String prefixedTypeName,
+    // CoordinateReferenceSystem crs) throws IOException {
+    //
+    // File tmpFile = null;
+    // final URL describeUrl;
+    // {
+    // final boolean isAuthenticating = http.getUser() != null;
+    // if (isAuthenticating) {
+    // WFSResponse wfsResponse = describeFeatureTypeGET(prefixedTypeName);
+    // tmpFile = File.createTempFile("describeft", ".xsd");
+    // OutputStream output = new FileOutputStream(tmpFile);
+    // InputStream response = wfsResponse.getInputStream();
+    // try {
+    // IOUtils.copy(response, output);
+    // } finally {
+    // output.flush();
+    // output.close();
+    // response.close();
+    // }
+    // describeUrl = tmpFile.toURI().toURL();
+    // } else {
+    // describeUrl = buildDescribeFeatureTypeURLGet(prefixedTypeName);
+    // }
+    // }
+    //
+    // final Configuration wfsConfiguration = getWfsConfiguration();
+    // final QName featureDescriptorName = getFeatureTypeName(prefixedTypeName);
+    //
+    // SimpleFeatureType featureType;
+    // try {
+    // featureType = EmfAppSchemaParser.parseSimpleFeatureType(wfsConfiguration,
+    // featureDescriptorName, describeUrl, crs);
+    // } finally {
+    // if (tmpFile != null) {
+    // tmpFile.delete();
+    // }
+    // }
+    // return featureType;
+    // }
+
+    // @Override
+    // public TransactionResponse issueTransaction(final TransactionRequest transactionRequest)
+    // throws IOException {
+    //
+    // if (!supportsOperation(WFSOperationType.TRANSACTION, true)) {
+    // throw new IOException("WFS does not support transactions");
+    // }
+    //
+    // TransactionType transaction = unwrapTransaction(transactionRequest);
+    //
+    // // used to declare prefixes on the encoder later
+    // Set<QName> affectedTypes = new HashSet<QName>();
+    // for (TransactionElement e : transactionRequest.getTransactionElements()) {
+    // String localTypeName = e.getLocalTypeName();
+    // QName remoteTypeName = getFeatureTypeName(localTypeName);
+    // affectedTypes.add(remoteTypeName);
+    // }
+    //
+    // final Encoder encoder = new Encoder(getWfsConfiguration());
+    // // declare prefixes
+    // for (QName remoteType : affectedTypes) {
+    // if (XMLConstants.DEFAULT_NS_PREFIX.equals(remoteType.getPrefix())) {
+    // continue;
+    // }
+    // encoder.getNamespaces().declarePrefix(remoteType.getPrefix(),
+    // remoteType.getNamespaceURI());
+    // }
+    // encoder.setIndenting(true);
+    // encoder.setIndentSize(2);
+    //
+    // final URL operationURL = getOperationURL(WFSOperationType.TRANSACTION, true);
+    // final WFSResponse wfsResponse = issuePostRequest(transaction, operationURL, encoder);
+    // return toTransactionResult(wfsResponse);
+    // }
+    //
+    // private TransactionResponse toTransactionResult(WFSResponse wfsResponse) {
+    // return null;
+    // }
+
     @Override
-    public SimpleFeatureType issueDescribeFeatureTypeGET(final String prefixedTypeName,
-            CoordinateReferenceSystem crs) throws IOException {
+    public URL buildUrlGET(WFSRequest request) {
+        final WFSOperationType operation = request.getOperation();
 
-        File tmpFile = null;
-        final URL describeUrl;
-        {
-            final boolean isAuthenticating = http.getUser() != null;
-            if (isAuthenticating) {
-                WFSResponse wfsResponse = describeFeatureTypeGET(prefixedTypeName);
-                tmpFile = File.createTempFile("describeft", ".xsd");
-                OutputStream output = new FileOutputStream(tmpFile);
-                InputStream response = wfsResponse.getInputStream();
-                try {
-                    IOUtils.copy(response, output);
-                } finally {
-                    output.flush();
-                    output.close();
-                    response.close();
-                }
-                describeUrl = tmpFile.toURI().toURL();
-            } else {
-                describeUrl = buildDescribeFeatureTypeURLGet(prefixedTypeName);
-            }
+        Map<String, String> requestParams;
+
+        switch (operation) {
+        case GET_FEATURE:
+            requestParams = buildGetFeatureParametersForGet((GetFeatureRequest) request);
+            break;
+        case DESCRIBE_FEATURETYPE:
+            requestParams = buildDescribeFeatureTypeURLGet((DescribeFeatureTypeRequest) request);
+            break;
+        default:
+            throw new UnsupportedOperationException();
         }
 
-        final Configuration wfsConfiguration = getWfsConfiguration();
-        final QName featureDescriptorName = getFeatureTypeName(prefixedTypeName);
+        URL baseUrl = getOperationURL(operation, false);
 
-        SimpleFeatureType featureType;
-        try {
-            featureType = EmfAppSchemaParser.parseSimpleFeatureType(wfsConfiguration,
-                    featureDescriptorName, describeUrl, crs);
-        } finally {
-            if (tmpFile != null) {
-                tmpFile.delete();
-            }
-        }
-        return featureType;
+        URL finalURL = URIs.buildURL(baseUrl, requestParams);
+
+        return finalURL;
     }
 
     @Override
-    public TransactionResult issueTransaction(final TransactionRequest transactionRequest)
-            throws IOException {
-
-        if (!supportsOperation(WFSOperationType.TRANSACTION, true)) {
-            throw new IOException("WFS does not support transactions");
-        }
-
-        TransactionType transaction = unwrapTransaction(transactionRequest);
-
-        // used to declare prefixes on the encoder later
-        Set<QName> affectedTypes = new HashSet<QName>();
-        for (TransactionElement e : transactionRequest.getTransactionElements()) {
-            String localTypeName = e.getLocalTypeName();
-            QName remoteTypeName = getFeatureTypeName(localTypeName);
-            affectedTypes.add(remoteTypeName);
-        }
-
-        final Encoder encoder = new Encoder(getWfsConfiguration());
-        // declare prefixes
-        for (QName remoteType : affectedTypes) {
-            if (XMLConstants.DEFAULT_NS_PREFIX.equals(remoteType.getPrefix())) {
-                continue;
-            }
-            encoder.getNamespaces().declarePrefix(remoteType.getPrefix(),
-                    remoteType.getNamespaceURI());
-        }
-        encoder.setIndenting(true);
-        encoder.setIndentSize(2);
-
-        final URL operationURL = getOperationURL(WFSOperationType.TRANSACTION, true);
-        final WFSResponse wfsResponse = issuePostRequest(transaction, operationURL, encoder);
-        return toTransactionResult(wfsResponse);
+    public String getPostContentType(WFSRequest wfsRequest) {
+        throw new UnsupportedOperationException();
     }
 
-    private TransactionResult toTransactionResult(WFSResponse wfsResponse) {
-        return null;
+    @Override
+    public InputStream getPostContents(WFSRequest request) throws IOException {
+        EObject requestObject;
+
+        switch (request.getOperation()) {
+        case GET_FEATURE:
+            requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
+            break;
+        default:
+            throw new UnsupportedOperationException("not yet implemented for "
+                    + request.getOperation());
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        encode(org.geotools.wfs.WFS.GetFeature, requestObject, out);
+
+        return new ByteArrayInputStream(out.toByteArray());
+
     }
+
+    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
+            throws IOException;
 }

@@ -108,8 +108,8 @@ public class IonicStrategy extends StrictWFS_1_1_0_Strategy {
      * case, the query srsName is replaced by the kown "EPSG:4269" code
      */
     @Override
-    public RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
-        RequestComponents req = super.createGetFeatureRequest(query);
+    public RequestComponents buildGetFeatureRequest(GetFeatureRequest query) throws IOException {
+        RequestComponents req = super.buildGetFeatureRequest(query);
         GetFeatureType getFeature = req.getServerRequest();
         QueryType queryType = (QueryType) getFeature.getQuery().get(0);
         URI srsNameUri = queryType.getSrsName();

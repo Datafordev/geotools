@@ -3,24 +3,38 @@ package org.geotools.data.wfs.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.data.wfs.internal.CapabilitiesServiceInfo;
-import org.geotools.data.wfs.internal.WFSStrategy;
+import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.feature.NameImpl;
 import org.opengis.feature.type.Name;
 
 class WFSContentDataStore extends ContentDataStore {
 
-    private final WFSStrategy wfs;
+    private final WFSClient client;
 
-    public WFSContentDataStore(final WFSStrategy wfsImpl) {
-        this.wfs = wfsImpl;
+    private final Map<Name, QName> names;
+
+    public WFSContentDataStore(final WFSClient client) {
+        this.client = client;
+        this.names = new ConcurrentHashMap<Name, QName>();
+    }
+
+    public QName getRemoteTypeName(Name localTypeName) {
+        QName qName = names.get(localTypeName);
+        if (null == qName) {
+            throw new NoSuchElementException(localTypeName.toString());
+        }
+        return qName;
     }
 
     /**
@@ -28,11 +42,16 @@ class WFSContentDataStore extends ContentDataStore {
      */
     @Override
     protected List<Name> createTypeNames() throws IOException {
-        Set<QName> featureTypeNames = wfs.getFeatureTypeNames();
-        List<Name> names = new ArrayList<Name>(featureTypeNames.size());
-        for (QName qname : featureTypeNames) {
-            final String prefixedName = wfs.getSimpleTypeName(qname);
-            names.add(new NameImpl(getNamespaceURI(), prefixedName));
+        Set<QName> remoteTypeNames = client.getRemoteTypeNames();
+        List<Name> names = new ArrayList<Name>(remoteTypeNames.size());
+        for (QName remoteTypeName : remoteTypeNames) {
+            String localTypeName = remoteTypeName.getLocalPart();
+            if (!XMLConstants.DEFAULT_NS_PREFIX.equals(remoteTypeName.getPrefix())) {
+                localTypeName = remoteTypeName.getPrefix() + "_" + localTypeName;
+            }
+            Name typeName = new NameImpl(getNamespaceURI(), localTypeName);
+            names.add(typeName);
+            this.names.put(typeName, remoteTypeName);
         }
         return names;
     }
@@ -44,12 +63,11 @@ class WFSContentDataStore extends ContentDataStore {
     protected ContentFeatureSource createFeatureSource(final ContentEntry entry) throws IOException {
         ContentFeatureSource source;
 
-        source = new WFSContentFeatureSource(entry, wfs);
+        source = new WFSContentFeatureSource(entry, client);
 
-        // Do not return a FeatureStore until it's implementation is finished
-        // if (wfsImpl.supportsOperation(WFSOperationType.TRANSACTION, true)) {
-        // source = new WFSContentFeatureStore((WFSContentFeatureSource) source);
-        // }
+        if (client.supportsTransaction(entry.getTypeName())) {
+            source = new WFSContentFeatureStore((WFSContentFeatureSource) source);
+        }
 
         return source;
     }
@@ -59,7 +77,7 @@ class WFSContentDataStore extends ContentDataStore {
      */
     @Override
     public WFSServiceInfo getInfo() {
-        return new CapabilitiesServiceInfo(wfs);
+        return client.getInfo();
     }
 
 }

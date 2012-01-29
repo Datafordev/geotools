@@ -33,8 +33,8 @@ import org.geotools.data.Transaction;
 import org.geotools.data.Transaction.State;
 import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.TransactionRequest.Insert;
-import org.geotools.data.wfs.internal.TransactionResult;
-import org.geotools.data.wfs.internal.WFSStrategy;
+import org.geotools.data.wfs.internal.TransactionResponse;
+import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.GeometryAttribute;
 import org.opengis.feature.IllegalAttributeException;
@@ -62,7 +62,7 @@ class TransactionStateDiff implements State {
      * 
      * @see TransactionStateDiff.commit();
      */
-    WFSStrategy wfs;
+    WFSClient wfs;
 
     /** Tranasction this State is opperating against. */
     Transaction transaction;
@@ -77,8 +77,8 @@ class TransactionStateDiff implements State {
      */
     Map<String, Diff> typeNameDiff = new HashMap<String, Diff>();
 
-    public TransactionStateDiff(WFSStrategy wfsImpl) {
-        wfs = wfsImpl;
+    public TransactionStateDiff(WFSClient wfsClient) {
+        wfs = wfsClient;
     }
 
     public synchronized void setTransaction(Transaction transaction) {
@@ -150,7 +150,7 @@ class TransactionStateDiff implements State {
             applyDiff(localTypeName, diff, transactionRequest);
         }
 
-        TransactionResult transactionResult = wfs.issueTransaction(transactionRequest);
+        TransactionResponse transactionResult = wfs.issueTransaction(transactionRequest);
 
         // TODO: update fids.
     }

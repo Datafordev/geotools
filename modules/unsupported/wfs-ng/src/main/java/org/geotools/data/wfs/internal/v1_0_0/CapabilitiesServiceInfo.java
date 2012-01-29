@@ -14,40 +14,45 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal;
+package org.geotools.data.wfs.internal.v1_0_0;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.Icon;
 
+import net.opengis.ows10.OnlineResourceType;
+import net.opengis.ows10.ServiceIdentificationType;
+import net.opengis.ows10.ServiceProviderType;
+import net.opengis.wfs.WFSCapabilitiesType;
+
 import org.geotools.data.ServiceInfo;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
-import org.geotools.util.logging.Logging;
 
 /**
  * Adapts a WFS capabilities document to {@link ServiceInfo}
  */
 public final class CapabilitiesServiceInfo implements WFSServiceInfo {
-    private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
 
-    private static URI WFS_1_1_0_SCHEMA_URI;
-    static {
+    private final WFSCapabilitiesType capabilities;
+
+    private final URI schemaUri;
+
+    private final URI getCapsUrl;
+
+    public CapabilitiesServiceInfo(String schemaUri, URL getCapsUrl,
+            WFSCapabilitiesType capabilities) {
         try {
-            WFS_1_1_0_SCHEMA_URI = new URI("http://schemas.opengis.net/wfs/1.1.0/wfs.xsd");
+            this.getCapsUrl = getCapsUrl.toURI();
+            this.schemaUri = new URI(schemaUri);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private WFSStrategy wfs;
-
-    public CapabilitiesServiceInfo(WFSStrategy service) {
-        this.wfs = service;
+        this.capabilities = capabilities;
     }
 
     /**
@@ -56,7 +61,8 @@ public final class CapabilitiesServiceInfo implements WFSServiceInfo {
      * @see ServiceInfo#getDescription()
      */
     public String getDescription() {
-        return wfs.getServiceAbstract();
+        ServiceIdentificationType serviceIdentification = capabilities.getServiceIdentification();
+        return serviceIdentification == null ? null : serviceIdentification.getAbstract();
     }
 
     /**
@@ -73,14 +79,37 @@ public final class CapabilitiesServiceInfo implements WFSServiceInfo {
      * @see ServiceInfo#getDescription()
      */
     public Set<String> getKeywords() {
-        return wfs.getServiceKeywords();
+        Set<String> kws = new HashSet<String>();
+        ServiceIdentificationType serviceIdentification = capabilities.getServiceIdentification();
+        if (serviceIdentification != null) {
+            @SuppressWarnings("unchecked")
+            List<String> keywords = serviceIdentification.getKeywords();
+            if (keywords != null) {
+                kws.addAll(keywords);
+                kws.remove(null);
+            }
+        }
+        return kws;
     }
 
     /**
      * @see ServiceInfo#getPublisher()
      */
     public URI getPublisher() {
-        return wfs.getServiceProviderUri();
+        ServiceProviderType serviceProvider = capabilities.getServiceProvider();
+        if (null == serviceProvider) {
+            return null;
+        }
+        OnlineResourceType providerSite = serviceProvider.getProviderSite();
+        if (null == providerSite) {
+            return null;
+        }
+        String href = providerSite.getHref();
+        try {
+            return href == null ? null : new URI(href);
+        } catch (URISyntaxException e) {
+            return null;
+        }
     }
 
     /**
@@ -89,7 +118,7 @@ public final class CapabilitiesServiceInfo implements WFSServiceInfo {
      * @see ServiceInfo#getSchema()
      */
     public URI getSchema() {
-        return WFS_1_1_0_SCHEMA_URI;
+        return schemaUri;
     }
 
     /**
@@ -98,26 +127,21 @@ public final class CapabilitiesServiceInfo implements WFSServiceInfo {
      * @see ServiceInfo#getSource()
      */
     public URI getSource() {
-        URL url = wfs.getOperationURL(WFSOperationType.GET_CAPABILITIES, false);
-        try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            LOGGER.log(Level.WARNING, "converting to URI: " + url.toExternalForm());
-            return null;
-        }
+        return getCapsUrl;
     }
 
     /**
      * @see ServiceInfo#getTitle()
      */
     public String getTitle() {
-        return wfs.getServiceTitle();
+        ServiceIdentificationType serviceIdentification = capabilities.getServiceIdentification();
+        return serviceIdentification == null ? null : serviceIdentification.getTitle();
     }
 
     /**
      * @see WFSServiceInfo#getVersion()
      */
     public String getVersion() {
-        return wfs.getServiceVersion().toString();
+        return capabilities.getVersion();
     }
 }

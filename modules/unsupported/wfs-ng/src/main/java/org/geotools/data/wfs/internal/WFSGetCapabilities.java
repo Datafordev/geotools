@@ -28,6 +28,10 @@ public class WFSGetCapabilities extends Capabilities {
         return rawDocument;
     }
 
+    public EObject getParsedCapabilities() {
+        return capabilities;
+    }
+
     public static WFSGetCapabilities create(EObject capabilities, Document rawDocument) {
         if (capabilities instanceof WFSCapabilitiesType) {
 

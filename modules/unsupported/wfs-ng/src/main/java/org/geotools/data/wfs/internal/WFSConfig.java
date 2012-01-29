@@ -10,7 +10,6 @@ import static org.geotools.data.wfs.impl.WFSDataStoreFactory.PASSWORD;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.PROTOCOL;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.TIMEOUT;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.TRY_GZIP;
-import static org.geotools.data.wfs.impl.WFSDataStoreFactory.URL;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.USERNAME;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.WFS_STRATEGY;
 
@@ -18,8 +17,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
-
-import org.w3c.dom.Document;
 
 /**
  * @see WFSStrategy#setConfig(WFSConfig)
@@ -50,10 +47,6 @@ public class WFSConfig {
 
     private String namespaceOverride;
 
-    private URL capabilitiesURL;
-
-    private Document getCapabilities;
-
     public WFSConfig() {
         protocol = (Boolean) PROTOCOL.getDefaultValue();
         timeoutMillis = (Integer) TIMEOUT.getDefaultValue();
@@ -72,7 +65,6 @@ public class WFSConfig {
 
         WFSConfig config = new WFSConfig();
 
-        config.capabilitiesURL = (URL) URL.lookUp(params);
         config.protocol = (Boolean) PROTOCOL.lookUp(params);
         config.user = (String) USERNAME.lookUp(params);
         config.pass = (String) PASSWORD.lookUp(params);
@@ -174,20 +166,5 @@ public class WFSConfig {
      */
     public String getNamespaceOverride() {
         return namespaceOverride;
-    }
-
-    /**
-     * @return the capabilities URL
-     */
-    public URL getCapabilitiesURL() {
-        return capabilitiesURL;
-    }
-
-    public void setGetCapabilities(Document getCapabilities) {
-        this.getCapabilities = getCapabilities;
-    }
-
-    public Document getGetCapabilities() {
-        return getCapabilities;
     }
 }

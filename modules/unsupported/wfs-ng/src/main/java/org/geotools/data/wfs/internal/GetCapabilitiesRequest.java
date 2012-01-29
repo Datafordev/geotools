@@ -4,21 +4,15 @@ import java.io.IOException;
 import java.net.URL;
 
 import org.geotools.data.ows.AbstractGetCapabilitiesRequest;
-import org.geotools.data.ows.GetCapabilitiesRequest;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
 import org.geotools.ows.ServiceException;
 
-public class WFSGetCapabilitiesRequest extends AbstractGetCapabilitiesRequest implements
-        GetCapabilitiesRequest {
+public class GetCapabilitiesRequest extends AbstractGetCapabilitiesRequest {
 
-    private final WFSStrategy wfsStrategy;
-
-    public WFSGetCapabilitiesRequest(WFSStrategy wfsStrategy, URL serverURL) {
+    public GetCapabilitiesRequest(URL serverURL) {
         super(serverURL);
-        this.wfsStrategy = wfsStrategy;
-        setProperty(VERSION, wfsStrategy.getVersion());
     }
 
     @Override
@@ -38,7 +32,7 @@ public class WFSGetCapabilitiesRequest extends AbstractGetCapabilitiesRequest im
 
     @Override
     public Response createResponse(HTTPResponse response) throws ServiceException, IOException {
-        return new WFSGetCapabilitiesResponse(response);
+        return new GetCapabilitiesResponse(response);
     }
 
 }

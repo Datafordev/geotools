@@ -70,8 +70,8 @@ public class CubeWerxStrategy extends StrictWFS_1_1_0_Strategy {
      * </p>
      */
     @Override
-    public RequestComponents createGetFeatureRequest(GetFeatureRequest query) throws IOException {
-        RequestComponents parts = super.createGetFeatureRequest(query);
+    public RequestComponents buildGetFeatureRequest(GetFeatureRequest query) throws IOException {
+        RequestComponents parts = super.buildGetFeatureRequest(query);
 
         GetFeatureType serverRequest = parts.getServerRequest();
         serverRequest.setResultType(null);

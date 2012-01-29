@@ -16,6 +16,7 @@
  */
 package org.geotools.data.wfs.internal;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
@@ -23,7 +24,9 @@ import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
 
-import org.eclipse.emf.ecore.EObject;
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.ows.Response;
+import org.geotools.ows.ServiceException;
 import org.geotools.util.logging.Logging;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -40,7 +43,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
  * @source $URL$
  */
 @SuppressWarnings("nls")
-public class WFSResponse {
+public class WFSResponse extends Response {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs.protocol.wfs");
 
@@ -50,32 +53,35 @@ public class WFSResponse {
 
     private InputStream inputStream;
 
-    private EObject request;
-
-    private String targetUrl;
+    private WFSRequest request;
 
     private SimpleFeatureType queryType;
 
     private QName remoteTypeName;
 
     /**
-     * @param charset
-     *            the response charset, {@code null} if unknown, utf-8 will be assumed then
-     * @param contentType
-     *            the response content type
-     * @param in
-     *            the response input stream ready to be consumed
+     * @throws IOException
+     * @throws ServiceException
      */
-    public WFSResponse(String targetUrl, EObject originatingRequest, Charset charset,
-            String contentType, InputStream in) {
-        this.targetUrl = targetUrl;
+    public WFSResponse(WFSRequest originatingRequest, final HTTPResponse httpResponse,
+            InputStream in) throws ServiceException, IOException {
+
+        super(httpResponse);
+
         this.request = originatingRequest;
+
+        String charset = httpResponse.getResponseHeader("Charset");
         if (charset == null) {
             this.charset = Charset.forName("UTF-8");
         } else {
-            this.charset = charset;
+            try {
+                this.charset = Charset.forName(charset);
+            } catch (Exception e) {
+                // TODO log
+                this.charset = Charset.forName("UTF-8");
+            }
         }
-        this.contentType = contentType;
+        this.contentType = httpResponse.getContentType();
         this.inputStream = in;
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest("WFS response: charset=" + charset + ", contentType=" + contentType);
@@ -119,12 +125,8 @@ public class WFSResponse {
         this.inputStream = in;
     }
 
-    public EObject getOriginatingRequest() {
+    public WFSRequest getOriginatingRequest() {
         return request;
-    }
-
-    public String getTargetUrl() {
-        return targetUrl;
     }
 
     @Override

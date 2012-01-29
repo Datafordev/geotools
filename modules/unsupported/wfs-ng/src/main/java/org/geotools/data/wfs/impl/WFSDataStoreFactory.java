@@ -16,7 +16,6 @@
  */
 package org.geotools.data.wfs.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,21 +48,14 @@ import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.internal.URIs;
 import org.geotools.data.wfs.internal.Versions;
+import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.ArcGISServerStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.CubeWerxStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.GeoServerPre200Strategy;
-import org.geotools.data.wfs.internal.v1_1_0.IonicStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.StrictWFS_1_1_0_Strategy;
+import org.geotools.ows.ServiceException;
 import org.geotools.util.Version;
 import org.geotools.util.logging.Logging;
-import org.geotools.wfs.WFS;
 import org.geotools.xml.XMLHandlerHints;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 /**
@@ -399,155 +391,19 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         http.setPassword(config.getPassword());
         http.setConnectTimeout(config.getTimeoutMillis() / 1000);
 
-        final java.net.URL capabilitiesURL = config.getCapabilitiesURL();
-        final byte[] wfsCapabilitiesRawData = loadCapabilities(capabilitiesURL, http);
-        final Document capsDoc = parseCapabilities(new ByteArrayInputStream(wfsCapabilitiesRawData));
-        final Element rootElement = capsDoc.getDocumentElement();
+        final URL capabilitiesURL = URL.lookUp(params);
 
-        final String capsVersion = rootElement.getAttribute("version");
-        final Version version = Versions.find(capsVersion);
-        if (null == version) {
-            // TODO: implement version negotiation
-            throw new IllegalArgumentException("WFS version " + capsVersion + " is not supported");
+        // WFSClient performs version negotiation and selects the correct strategy
+        WFSClient wfsClient;
+        try {
+            wfsClient = new WFSClient(capabilitiesURL, http, config);
+        } catch (ServiceException e) {
+            throw new IOException(e);
         }
 
-        config.setGetCapabilities(capsDoc);
-        WFSStrategy wfsStrategy = determineCorrectStrategy(version, config, capsDoc);
-        wfsStrategy.setConfig(config);
-
-        WFSContentDataStore dataStore = new WFSContentDataStore(wfsStrategy);
+        WFSContentDataStore dataStore = new WFSContentDataStore(wfsClient);
 
         return dataStore;
-    }
-
-    public static Document parseCapabilities(final InputStream inputStream) throws IOException,
-            DataSourceException {
-        Document capsDoc;
-        {
-            capsDoc = parseDocument(inputStream);
-            Element root = capsDoc.getDocumentElement();
-            String localName = root.getLocalName();
-            String namespace = root.getNamespaceURI();
-            if (!WFS.NAMESPACE.equals(namespace)
-                    || !WFS.WFS_Capabilities.getLocalPart().equals(localName)) {
-                if ("http://www.opengis.net/ows".equals(namespace)
-                        && "ExceptionReport".equals(localName)) {
-                    StringBuffer message = new StringBuffer();
-                    Element exception = (Element) capsDoc.getElementsByTagNameNS("*", "Exception")
-                            .item(0);
-                    if (exception == null) {
-                        throw new DataSourceException(
-                                "Exception Report when requesting capabilities");
-                    }
-                    Node exceptionCode = exception.getAttributes().getNamedItem("exceptionCode");
-                    Node locator = exception.getAttributes().getNamedItem("locator");
-                    Node exceptionText = exception.getElementsByTagNameNS("*", "ExceptionText")
-                            .item(0);
-
-                    message.append("Exception Report ");
-                    String text = exceptionText.getTextContent();
-                    if (text != null) {
-                        message.append(text.trim());
-                    }
-                    message.append(" Exception Code:");
-                    message.append(exceptionCode == null ? "" : exceptionCode.getTextContent());
-                    message.append(" Locator: ");
-                    message.append(locator == null ? "" : locator.getTextContent());
-                    throw new DataSourceException(message.toString());
-                }
-                throw new DataSourceException("Expected " + WFS.WFS_Capabilities + " but was "
-                        + namespace + "#" + localName);
-            }
-        }
-        return capsDoc;
-    }
-
-    /**
-     * Determine correct WFSStrategy based on capabilities document.
-     * 
-     * @param getCapabilitiesRequest
-     * @param capabilitiesDoc
-     * @param override
-     *            optional override provided by user
-     * @return WFSStrategy to use
-     */
-    static WFSStrategy determineCorrectStrategy(final Version version, final WFSConfig config,
-            final Document capabilitiesDoc) {
-
-        final String override = config.getWfsStrategy();
-
-        WFSStrategy strategy = null;
-        // override
-        if (override != null) {
-            if (override.equalsIgnoreCase("geoserver")) {
-                strategy = new GeoServerPre200Strategy();
-            } else if (override.equalsIgnoreCase("arcgis")) {
-                strategy = new ArcGISServerStrategy();
-            } else if (override.equalsIgnoreCase("cubewerx")) {
-                strategy = new CubeWerxStrategy();
-            } else if (override.equalsIgnoreCase("ionic")) {
-                strategy = new IonicStrategy();
-            } else {
-                logger.warning("Could not handle wfs strategy override " + override
-                        + " proceeding with autodetection");
-            }
-        }
-
-        // auto detection
-        if (strategy == null) {
-            // look in comments for indication of CubeWerx server
-            NodeList childNodes = capabilitiesDoc.getChildNodes();
-            for (int i = 0; i < childNodes.getLength(); i++) {
-                Node child = childNodes.item(i);
-                if (child.getNodeType() == Node.COMMENT_NODE) {
-                    String nodeValue = child.getNodeValue();
-                    nodeValue = nodeValue.toLowerCase();
-                    if (nodeValue.contains("cubewerx")) {
-                        strategy = new CubeWerxStrategy();
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (strategy == null) {
-            // Ionic declares its own namespace so that's our hook
-            Element root = capabilitiesDoc.getDocumentElement();
-            String ionicNs = root.getAttribute("xmlns:ionic");
-            if (ionicNs != null) {
-                if (ionicNs.equals("http://www.ionicsoft.com/versions/4")) {
-                    strategy = new IonicStrategy();
-                } else if (ionicNs.startsWith("http://www.ionicsoft.com/versions")) {
-                    logger.warning("Found a Ionic server but the version may not match the strategy "
-                            + "we have (v.4). Ionic namespace url: " + ionicNs);
-                    strategy = new IonicStrategy();
-                }
-            }
-        }
-
-        if (strategy == null) {
-            java.net.URL capabilitiesURL = config.getCapabilitiesURL();
-            // guess server implementation from capabilities URI
-            String uri = capabilitiesURL.toExternalForm();
-            if (uri.contains("geoserver")) {
-                strategy = new GeoServerPre200Strategy();
-            } else if (uri.contains("/ArcGIS/services/")) {
-                strategy = new ArcGISServerStrategy();
-            }
-        }
-
-        if (strategy == null) {
-            // use fallback strategy
-            if (Versions.v1_0_0.equals(version)) {
-                strategy = new StrictWFS_1_1_0_Strategy();
-            } else if (Versions.v1_1_0.equals(version)) {
-                strategy = new StrictWFS_1_1_0_Strategy();
-            } else {
-                throw new IllegalArgumentException("Unsupported version: " + version);
-            }
-        }
-        logger.info("Using WFS Strategy: " + strategy.getClass().getName());
-        return strategy;
     }
 
     /**

@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -23,19 +24,19 @@ import net.opengis.wfs.WFSCapabilitiesType;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.DataSourceException;
-import org.geotools.data.ows.GetCapabilitiesResponse;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.geotools.util.Version;
 import org.geotools.xml.Configuration;
 import org.geotools.xml.Parser;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-public class WFSGetCapabilitiesResponse extends GetCapabilitiesResponse {
+public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabilitiesResponse {
 
     private WFSGetCapabilities capabilities;
 
-    public WFSGetCapabilitiesResponse(HTTPResponse response) throws ServiceException, IOException {
+    public GetCapabilitiesResponse(HTTPResponse response) throws ServiceException, IOException {
         super(response);
         MODULE.finer("Parsing GetCapabilities response");
         try {
@@ -67,6 +68,18 @@ public class WFSGetCapabilitiesResponse extends GetCapabilitiesResponse {
             List<Configuration> tryConfigs = Arrays.asList(WFS_2_0_0_CONFIGURATION,
                     WFS_1_1_0_CONFIGURATION, WFS_1_0_0_CONFIGURATION);
 
+            final String versionAtt = rawDocument.getDocumentElement().getAttribute("version");
+            Version version = null;
+            if (null != versionAtt) {
+                version = new Version(versionAtt);
+                if (Versions.v1_0_0.equals(version)) {
+                    tryConfigs = Collections.singletonList(WFS_1_0_0_CONFIGURATION);
+                } else if (Versions.v1_1_0.equals(version)) {
+                    tryConfigs = Collections.singletonList(WFS_1_1_0_CONFIGURATION);
+                } else if (Versions.v2_0_0.equals(version)) {
+                    tryConfigs = Collections.singletonList(WFS_2_0_0_CONFIGURATION);
+                }
+            }
             EObject parsedCapabilities = null;
 
             for (Configuration wfsConfig : tryConfigs) {

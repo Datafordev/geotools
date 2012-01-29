@@ -77,7 +77,7 @@ public class CubeWerxStrategyTest extends DataTestSupport {
                 new Query(CUBEWERX_GOVUNITCE.FEATURETYPENAME), "GML2", "EPSG:4326",
                 ResultType.RESULTS);
 
-        RequestComponents getFeatureRequest = strategy.createGetFeatureRequest(query);
+        RequestComponents getFeatureRequest = strategy.buildGetFeatureRequest(query);
 
         GetFeatureType serverRequest = getFeatureRequest.getServerRequest();
         ResultTypeType resultType = serverRequest.getResultType();

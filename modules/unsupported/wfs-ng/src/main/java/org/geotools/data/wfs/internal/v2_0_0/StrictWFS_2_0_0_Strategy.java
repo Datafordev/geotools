@@ -16,19 +16,34 @@
  */
 package org.geotools.data.wfs.internal.v2_0_0;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import javax.xml.namespace.QName;
+
+import net.opengis.fes20.FilterCapabilitiesType;
+import net.opengis.wfs20.FeatureTypeListType;
+import net.opengis.wfs20.FeatureTypeType;
+import net.opengis.wfs20.WFSCapabilitiesType;
+
+import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
+import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.Versions;
+import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.geotools.data.wfs.internal.WFSOperationType;
-import org.geotools.filter.v2_0.FESConfiguration;
+import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.util.Version;
-import org.geotools.wfs.v2_0.WFSConfiguration;
 import org.geotools.xml.Configuration;
+import org.opengis.filter.capability.FilterCapabilities;
 
 /**
  * 
@@ -39,8 +54,13 @@ public class StrictWFS_2_0_0_Strategy extends AbstractWFSStrategy {
             .asList("text/xml; subtype=gml/3.2", "application/gml+xml; version=3.2", "gml32",
                     "text/xml; subtype=gml/3.1.1", "gml3", "text/xml; subtype=gml/2.1.2", "GML2"));
 
+    private net.opengis.wfs20.WFSCapabilitiesType capabilities;
+
+    private final Map<QName, FeatureTypeType> typeInfos;
+
     public StrictWFS_2_0_0_Strategy() {
         super();
+        typeInfos = new HashMap<QName, FeatureTypeType>();
     }
 
     /*---------------------------------------------------------------------
@@ -59,6 +79,31 @@ public class StrictWFS_2_0_0_Strategy extends AbstractWFSStrategy {
     /*---------------------------------------------------------------------
      * WFSStrategy methods
      * ---------------------------------------------------------------------*/
+
+    @Override
+    public void setCapabilities(WFSGetCapabilities capabilities) {
+        net.opengis.wfs20.WFSCapabilitiesType caps = (WFSCapabilitiesType) capabilities
+                .getParsedCapabilities();
+        this.capabilities = caps;
+
+        typeInfos.clear();
+        FeatureTypeListType featureTypeList = this.capabilities.getFeatureTypeList();
+
+        @SuppressWarnings("unchecked")
+        List<FeatureTypeType> featureTypes = featureTypeList.getFeatureType();
+
+        for (FeatureTypeType typeInfo : featureTypes) {
+            QName name = typeInfo.getName();
+            typeInfos.put(name, typeInfo);
+        }
+    }
+
+    @Override
+    public WFSServiceInfo getServiceInfo() {
+        URL getCapsUrl = getOperationURL(WFSOperationType.GET_CAPABILITIES, false);
+        return new Capabilities200ServiceInfo("http://schemas.opengis.net/wfs/2.0/wfs.xsd",
+                getCapsUrl, capabilities);
+    }
 
     @Override
     public boolean supports(ResultType resultType) {
@@ -124,5 +169,32 @@ public class StrictWFS_2_0_0_Strategy extends AbstractWFSStrategy {
             }
         }
         return null;
+    }
+
+    /**
+     * @see WFSStrategy#getFeatureTypeNames()
+     */
+    @Override
+    public Set<QName> getFeatureTypeNames() {
+        return new HashSet<QName>(typeInfos.keySet());
+    }
+
+    /**
+     * @see org.geotools.data.wfs.internal.WFSStrategy#getFeatureTypeInfo(javax.xml.namespace.QName)
+     */
+    @Override
+    public FeatureTypeInfo getFeatureTypeInfo(QName typeName) {
+        FeatureTypeType eType = typeInfos.get(typeName);
+        if (null == eType) {
+            throw new IllegalArgumentException("Type name not found: " + typeName);
+        }
+        return new FeatureTypeInfoImpl(eType);
+    }
+
+    @Override
+    public FilterCapabilities getFilterCapabilities() {
+        FilterCapabilitiesType filterCapabilities = capabilities.getFilterCapabilities();
+        //TODO
+        throw new UnsupportedOperationException();
     }
 }

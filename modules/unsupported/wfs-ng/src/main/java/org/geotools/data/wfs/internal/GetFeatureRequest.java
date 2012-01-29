@@ -16,17 +16,27 @@
  */
 package org.geotools.data.wfs.internal;
 
-import org.geotools.data.Query;
+import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
+
+import java.io.IOException;
+import java.net.URL;
+
+import javax.xml.namespace.QName;
+
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.ows.ServiceException;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
 
 /**
  */
-public class GetFeatureRequest {
+public class GetFeatureRequest extends WFSRequest {
 
     public enum ResultType {
         RESULTS, HITS;
     }
+
+    private QName typeName;
 
     private String[] propertyNames;
 
@@ -42,28 +52,34 @@ public class GetFeatureRequest {
 
     private SortBy[] sortBy;;
 
-    public GetFeatureRequest(Query query, String outputFormat, String srsName, ResultType resultType) {
-        this.outputFormat = outputFormat;
-        this.srsName = srsName;
-        this.resultType = resultType;
-        setFilter(query.getFilter());
-        setMaxFeatures(query.getMaxFeatures());
-        setPropertyNames(query.getPropertyNames());
-        setSortBy(query.getSortBy());
+    GetFeatureRequest(WFSConfig config, WFSStrategy strategy) {
+        super(GET_FEATURE, config, strategy);
     }
 
-    public GetFeatureRequest(GetFeatureRequest query) {
-        setFilter(query.getFilter());
-        setMaxFeatures(query.getMaxFeatures());
-        setOutputFormat(query.getOutputFormat());
-        setPropertyNames(query.getPropertyNames());
-        setResultType(query.getResultType());
-        setSortBy(query.getSortBy());
-        setSrsName(query.getSrsName());
+    //
+    // public GetFeatureRequest(GetFeatureRequest query) {
+    // setFilter(query.getFilter());
+    // setMaxFeatures(query.getMaxFeatures());
+    // setOutputFormat(query.getOutputFormat());
+    // setPropertyNames(query.getPropertyNames());
+    // setResultType(query.getResultType());
+    // setSortBy(query.getSortBy());
+    // setSrsName(query.getSrsName());
+    // }
+
+    /**
+     * @return the typeName
+     */
+    public QName getTypeName() {
+        return typeName;
     }
 
-    public String getTypeName() {
-        return null;
+    /**
+     * @param typeName
+     *            the typeName to set
+     */
+    public void setTypeName(QName typeName) {
+        this.typeName = typeName;
     }
 
     public String[] getPropertyNames() {

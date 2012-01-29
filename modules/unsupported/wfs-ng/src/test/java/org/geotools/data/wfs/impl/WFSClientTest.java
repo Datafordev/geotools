@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.internal.Loggers;
+import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.junit.After;

@@ -1,11 +1,16 @@
 package org.geotools.data.wfs.internal;
 
+import static org.geotools.data.wfs.internal.WFSOperationType.*;
 import java.util.List;
 
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-public interface TransactionRequest {
+public class TransactionRequest extends WFSRequest {
+
+    public TransactionRequest(WFSConfig config, WFSStrategy strategy) {
+        super(TRANSACTION, config, strategy);
+    }
 
     public void add(TransactionElement txElem);
 

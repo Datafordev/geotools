@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.imageio.spi.ServiceRegistry;
 
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.factory.FactoryNotFoundException;
 
@@ -138,6 +139,11 @@ public class WFSExtensions {
             }
         }
         return registry.iterator();
+    }
+
+    public static WFSResponse process(WFSRequest request, HTTPResponse response) throws IOException{
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

@@ -40,11 +40,11 @@ public class MapServerWFSStrategy extends StrictWFS_1_0_0_Strategy {
     }
 
     @Override
-    protected RequestComponents createGetFeatureRequest(final GetFeatureRequest query) throws IOException {
+    protected RequestComponents buildGetFeatureRequest(final GetFeatureRequest query) throws IOException {
         Filter filter = query.getFilter();
 
         if (filter != Filter.INCLUDE) {
-            return super.createGetFeatureRequest(query);
+            return super.buildGetFeatureRequest(query);
         }
 
         ReferencedEnvelope wgs84Bounds = super.getFeatureTypeWGS84Bounds(query.getTypeName());
@@ -53,6 +53,6 @@ public class MapServerWFSStrategy extends StrictWFS_1_0_0_Strategy {
 
         GetFeatureRequest query2 = new GetFeatureRequest(query);
         query2.setFilter(newFilter);
-        return super.createGetFeatureRequest(query2);
+        return super.buildGetFeatureRequest(query2);
     }
 }
