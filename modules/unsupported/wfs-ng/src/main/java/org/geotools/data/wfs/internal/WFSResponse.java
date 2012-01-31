@@ -51,8 +51,6 @@ public class WFSResponse extends Response {
 
     private String contentType;
 
-    private InputStream inputStream;
-
     private WFSRequest request;
 
     private SimpleFeatureType queryType;
@@ -63,8 +61,8 @@ public class WFSResponse extends Response {
      * @throws IOException
      * @throws ServiceException
      */
-    public WFSResponse(WFSRequest originatingRequest, final HTTPResponse httpResponse,
-            InputStream in) throws ServiceException, IOException {
+    public WFSResponse(WFSRequest originatingRequest, final HTTPResponse httpResponse)
+            throws ServiceException, IOException {
 
         super(httpResponse);
 
@@ -82,7 +80,6 @@ public class WFSResponse extends Response {
             }
         }
         this.contentType = httpResponse.getContentType();
-        this.inputStream = in;
         if (LOGGER.isLoggable(Level.FINEST)) {
             LOGGER.finest("WFS response: charset=" + charset + ", contentType=" + contentType);
         }
@@ -105,24 +102,6 @@ public class WFSResponse extends Response {
      */
     public String getContentType() {
         return contentType;
-    }
-
-    /**
-     * The open input stream for the response contents
-     * 
-     * @return the input stream for the response
-     */
-    public InputStream getInputStream() {
-        return inputStream;
-    }
-
-    /**
-     * Allows to replace the input stream
-     * 
-     * @param in
-     */
-    public void setInputStream(InputStream in) {
-        this.inputStream = in;
     }
 
     public WFSRequest getOriginatingRequest() {

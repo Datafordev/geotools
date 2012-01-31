@@ -114,9 +114,13 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     @Override
     public WFSResponse createResponse(HTTPResponse response) throws IOException {
 
-        WFSResponse parsedResponse = WFSExtensions.process(this, response);
+        final String contentType = response.getContentType();
 
-        return parsedResponse;
+        WFSResponseFactory responseFactory = WFSExtensions.findResponseFactory(this, contentType);
+
+        WFSResponse wfsResponse = responseFactory.createResponse(this, response);
+
+        return wfsResponse;
     }
 
 }

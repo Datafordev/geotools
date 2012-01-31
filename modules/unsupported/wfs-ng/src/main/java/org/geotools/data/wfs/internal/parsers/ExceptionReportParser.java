@@ -34,7 +34,7 @@ import org.geotools.data.wfs.internal.WFSException;
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSResponseParser;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.StrictWFS_1_1_0_Strategy;
+import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
 import org.geotools.util.logging.Logging;
 import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Parser;
@@ -87,7 +87,7 @@ public class ExceptionReportParser implements WFSResponseParser {
         if (originatingRequest != null) {
             try {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                StrictWFS_1_1_0_Strategy.encode(originatingRequest, configuration, out,
+                StrictWFS_1_1_Strategy.encode(originatingRequest, configuration, out,
                         Charset.forName("UTF-8"));
                 String requestStr = out.toString("UTF-8");
 

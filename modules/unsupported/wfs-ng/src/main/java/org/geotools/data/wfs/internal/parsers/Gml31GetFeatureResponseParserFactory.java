@@ -19,35 +19,35 @@ package org.geotools.data.wfs.internal.parsers;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
+import java.nio.charset.Charset;
 import java.util.logging.Logger;
+
+import javax.xml.namespace.QName;
 
 import net.opengis.wfs.GetFeatureType;
 
-import org.eclipse.emf.ecore.EObject;
+import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.wfs.internal.GetFeatureParser;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
+import org.geotools.data.wfs.internal.GetFeatureResponse;
 import org.geotools.data.wfs.internal.WFSOperationType;
+import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.data.wfs.internal.WFSResponse;
-import org.geotools.data.wfs.internal.WFSResponseParser;
-import org.geotools.data.wfs.internal.WFSResponseParserFactory;
+import org.geotools.data.wfs.internal.WFSResponseFactory;
+import org.geotools.ows.ServiceException;
 import org.geotools.util.logging.Logging;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.FeatureType;
 
 /**
  * A WFS response parser factory for GetFeature requests in {@code text/xml; subtype=gml/3.1.1}
  * output format.
- * 
- * @author Gabriel Roldan (OpenGeo)
- * @version $Id$
- * @since 2.6
- * 
- * 
- * 
- * @source $URL$
- *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
- *         /wfs/v1_1_0/parsers/Gml31GetFeatureResponseParserFactory.java $
  */
 @SuppressWarnings("nls")
-public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFactory {
+public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory {
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
 
@@ -56,7 +56,7 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
     private static final String SUPPORTED_OUTPUT_FORMAT2 = "GML3";
 
     /**
-     * @see WFSResponseParserFactory#isAvailable()
+     * @see WFSResponseFactory#isAvailable()
      */
     public boolean isAvailable() {
         return true;
@@ -71,13 +71,13 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
      * {@code "text/xml; subtype=gml/3.1.1"}.
      * </p>
      * 
-     * @see WFSResponseParserFactory#canProcess(WFSOperationType, String)
+     * @see WFSResponseFactory#canProcess(WFSOperationType, String)
      */
-    public boolean canProcess(EObject request) {
-        if (!(request instanceof GetFeatureType)) {
+    public boolean canProcess(final WFSRequest request, final String contentType) {
+        if (!WFSOperationType.GET_FEATURE.equals(request.getOperation())) {
             return false;
         }
-        String outputFormat = ((GetFeatureType) request).getOutputFormat();
+        String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
         boolean matches = isSupportedOutputFormat(outputFormat);
         return matches;
     }
@@ -97,22 +97,25 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
      * of an heuristic may be needed in order to identify the actual response.
      * </p>
      * 
-     * @see WFSResponseParserFactory#createParser(WFSResponse)
+     * @see WFSResponseFactory#createParser(WFSResponse)
      * @see FeatureCollectionParser
      * @see ExceptionReportParser
      */
-    public WFSResponseParser createParser(WFSResponse response) throws IOException {
-        final WFSResponseParser parser;
+    public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws IOException {
+
+        final GetFeatureRequest getFeature = (GetFeatureRequest) request;
+
+        final GetFeatureParser parser;
         final String contentType = response.getContentType();
         if (isSupportedOutputFormat(contentType)) {
-            parser = new FeatureCollectionParser();
+            parser = parser(getFeature, response.getResponseStream());
         } else {
             // We can't rely on the server returning the correct output format. Some, for example
             // CubeWerx, upon a successful GetFeature request, set the response's content-type
             // header to plain "text/xml" instead of "text/xml;subtype=gml/3.1.1". So we'll do a bit
             // of heuristics to find out what it actually returned
             final int buffSize = 256;
-            PushbackInputStream pushbackIn = new PushbackInputStream(response.getInputStream(),
+            PushbackInputStream pushbackIn = new PushbackInputStream(response.getResponseStream(),
                     buffSize);
             byte[] buff = new byte[buffSize];
             int readCount = 0;
@@ -124,8 +127,15 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
                 }
             }
 
+            String charset = response.getResponseHeader("Charset");
+            try {
+                Charset.forName(charset);
+            } catch (Exception e) {
+                charset = "UTF-8";
+            }
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    new ByteArrayInputStream(buff), response.getCharacterEncoding()));
+                    new ByteArrayInputStream(buff), charset));
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -135,16 +145,38 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseParserFa
             LOGGER.fine("response head: " + head);
 
             pushbackIn.unread(buff, 0, readCount);
-            response.setInputStream(pushbackIn);
 
             if (head.contains("FeatureCollection")) {
-                parser = new FeatureCollectionParser();
+                parser = parser(getFeature, pushbackIn);
             } else if (head.contains("ExceptionReport")) {
-                parser = new ExceptionReportParser();
+                // parser = new ExceptionReportParser();
+                // TODO: return ExceptionResponse or so
+                throw new UnsupportedOperationException("implement!");
             } else {
                 throw new IllegalStateException("Unkown server response: " + head);
             }
         }
-        return parser;
+
+        try {
+            return new GetFeatureResponse(request, response, parser);
+        } catch (ServiceException e) {
+            throw new IOException(e);
+        }
+
+    }
+
+    private GetFeatureParser parser(GetFeatureRequest request, InputStream in) throws IOException {
+
+        final QName remoteFeatureName = request.getTypeName();
+
+        FeatureType queryType = request.getQueryType();
+        if (!(queryType instanceof SimpleFeatureType)) {
+            throw new UnsupportedOperationException();
+        }
+
+        SimpleFeatureType schema = (SimpleFeatureType) queryType;
+
+        GetFeatureParser featureReader = new XmlSimpleFeatureParser(in, schema, remoteFeatureName);
+        return featureReader;
     }
 }

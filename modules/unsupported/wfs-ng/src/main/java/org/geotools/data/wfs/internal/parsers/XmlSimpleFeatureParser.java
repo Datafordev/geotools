@@ -28,19 +28,18 @@ import javax.xml.namespace.QName;
 
 import org.geotools.data.DataSourceException;
 import org.geotools.data.wfs.internal.GetFeatureParser;
-import org.geotools.data.wfs.internal.WFSResponse;
-import org.geotools.data.wfs.internal.WFSStrategy;
+import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.gml3.GML;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.util.Converters;
-import org.geotools.util.logging.Logging;
 import org.geotools.wfs.WFS;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
+import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.GeometryType;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
@@ -76,9 +75,9 @@ import com.vividsolutions.jts.geom.Polygon;
 @SuppressWarnings("nls")
 public class XmlSimpleFeatureParser implements GetFeatureParser {
 
-    private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
+    private static final Logger LOGGER = Loggers.RESPONSES;
 
-    private static final GeometryFactory geomFac = new GeometryFactory();
+    private GeometryFactory geomFac = new GeometryFactory();
 
     private InputStream inputStream;
 
@@ -98,6 +97,7 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
 
     public XmlSimpleFeatureParser(final InputStream getFeatureResponseStream,
             final SimpleFeatureType targetType, QName featureDescriptorName) throws IOException {
+
         this.inputStream = getFeatureResponseStream;
         this.featureNamespace = featureDescriptorName.getNamespaceURI();
         this.featureName = featureDescriptorName.getLocalPart();
@@ -139,10 +139,24 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
         }
     }
 
+    @Override
+    public void setGeometryFactory(GeometryFactory geometryFactory) {
+        if (null != geometryFactory) {
+            this.geomFac = geometryFactory;
+        }
+    }
+
+    @Override
+    public FeatureType getFeatureType() {
+        return targetType;
+    }
+
+    @Override
     public int getNumberOfFeatures() {
         return numberOfFeatures;
     }
 
+    @Override
     public void close() throws IOException {
         if (this.inputStream != null) {
             try {
@@ -156,6 +170,7 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
         }
     }
 
+    @Override
     public SimpleFeature parse() throws IOException {
         final String fid;
         try {
@@ -685,10 +700,6 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 }
             }
         }
-    }
-
-    public Object parse(WFSStrategy wfs, WFSResponse response) {
-        return null;
     }
 
 }

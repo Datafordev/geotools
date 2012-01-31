@@ -1,8 +1,8 @@
 package org.geotools.data.wfs.internal;
 
-import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_1_0_0_CONFIGURATION;
-import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_1_1_0_CONFIGURATION;
-import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_2_0_0_CONFIGURATION;
+import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_1_0_CAPABILITIES_CONFIGURATION;
+import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_1_1_CONFIGURATION;
+import static org.geotools.data.wfs.internal.AbstractWFSStrategy.WFS_2_0_CONFIGURATION;
 import static org.geotools.data.wfs.internal.Loggers.MODULE;
 import static org.geotools.data.wfs.internal.Loggers.RESPONSES;
 
@@ -17,7 +17,6 @@ import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import net.opengis.wfs.WFSCapabilitiesType;
 
@@ -28,9 +27,8 @@ import org.geotools.data.ows.HTTPResponse;
 import org.geotools.ows.ServiceException;
 import org.geotools.util.Version;
 import org.geotools.xml.Configuration;
-import org.geotools.xml.Parser;
+import org.geotools.xml.DOMParser;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabilitiesResponse {
 
@@ -52,8 +50,8 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
                 }
                 rawResponse = buff.toByteArray();
             }
-            if (RESPONSES.isLoggable(Level.FINER)) {
-                RESPONSES.finer("Full GetCapabilities response: " + new String(rawResponse));
+            if (RESPONSES.isLoggable(Level.FINE)) {
+                RESPONSES.fine("Full GetCapabilities response: " + new String(rawResponse));
             }
             try {
                 DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
@@ -65,27 +63,26 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
                 throw new IOException("Error parsing capabilities document: " + e.getMessage(), e);
             }
 
-            List<Configuration> tryConfigs = Arrays.asList(WFS_2_0_0_CONFIGURATION,
-                    WFS_1_1_0_CONFIGURATION, WFS_1_0_0_CONFIGURATION);
+            List<Configuration> tryConfigs = Arrays.asList(WFS_2_0_CONFIGURATION,
+                    WFS_1_1_CONFIGURATION, WFS_1_0_CAPABILITIES_CONFIGURATION);
 
             final String versionAtt = rawDocument.getDocumentElement().getAttribute("version");
             Version version = null;
             if (null != versionAtt) {
                 version = new Version(versionAtt);
                 if (Versions.v1_0_0.equals(version)) {
-                    tryConfigs = Collections.singletonList(WFS_1_0_0_CONFIGURATION);
+                    tryConfigs = Collections.singletonList(WFS_1_0_CAPABILITIES_CONFIGURATION);
                 } else if (Versions.v1_1_0.equals(version)) {
-                    tryConfigs = Collections.singletonList(WFS_1_1_0_CONFIGURATION);
+                    tryConfigs = Collections.singletonList(WFS_1_1_CONFIGURATION);
                 } else if (Versions.v2_0_0.equals(version)) {
-                    tryConfigs = Collections.singletonList(WFS_2_0_0_CONFIGURATION);
+                    tryConfigs = Collections.singletonList(WFS_2_0_CONFIGURATION);
                 }
             }
             EObject parsedCapabilities = null;
 
             for (Configuration wfsConfig : tryConfigs) {
                 try {
-                    ByteArrayInputStream capabilitiesReader = new ByteArrayInputStream(rawResponse);
-                    parsedCapabilities = parseCapabilities(capabilitiesReader, wfsConfig);
+                    parsedCapabilities = parseCapabilities(rawDocument, wfsConfig);
                     if (parsedCapabilities != null) {
                         break;
                     }
@@ -104,17 +101,16 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
         }
     }
 
-    private EObject parseCapabilities(InputStream capabilitiesReader, final Configuration wfsConfig)
+    private EObject parseCapabilities(final Document document, final Configuration wfsConfig)
             throws IOException {
 
-        final Parser parser = new Parser(wfsConfig);
+        // final Parser parser = new Parser(wfsConfig);
+        DOMParser parser = new DOMParser(wfsConfig, document);
         final Object parsed;
         try {
-            parsed = parser.parse(capabilitiesReader);
-        } catch (SAXException e) {
+            parsed = parser.parse();
+        } catch (Exception e) {
             throw new DataSourceException("Exception parsing WFS capabilities", e);
-        } catch (ParserConfigurationException e) {
-            throw new DataSourceException("WFS parsing configuration error", e);
         }
         if (parsed == null) {
             throw new DataSourceException("WFS capabilities was not parsed");

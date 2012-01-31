@@ -20,7 +20,7 @@ import java.io.InputStream;
 
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSResponseParser;
-import org.geotools.data.wfs.internal.WFSResponseParserFactory;
+import org.geotools.data.wfs.internal.WFSResponseFactory;
 import org.geotools.gml3.ApplicationSchemaConfiguration;
 import org.geotools.xml.Parser;
 
@@ -28,7 +28,7 @@ import org.geotools.xml.Parser;
  * This class is meant to parse a WFS DescribeFeatureType response but is not yet engaged.
  * <p>
  * NOTE there are currently technical limitations to engage the DescribeFeatureType request/response
- * to the {@link WFSResponseParserFactory}/{@link WFSResponseParser} architecture. This technical
+ * to the {@link WFSResponseFactory}/{@link WFSResponseParser} architecture. This technical
  * limitations have to be with the fact that the {@link Parser} and
  * {@link ApplicationSchemaConfiguration configuration} used to parse a response need a direct
  * handle to the DescribeFeatureType request URL and have no way to directly parse from the plain

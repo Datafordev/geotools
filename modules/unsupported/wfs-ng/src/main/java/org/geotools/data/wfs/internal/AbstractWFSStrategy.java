@@ -73,17 +73,19 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
     private static final Logger LOGGER = Loggers.MODULE;
 
-    public static final Configuration FILTER_1_0_0_CONFIGURATION = new org.geotools.filter.v1_0.OGCConfiguration();
+    public static final Configuration FILTER_1_0_CONFIGURATION = new org.geotools.filter.v1_0.OGCConfiguration();
 
-    public static final Configuration WFS_1_0_0_CONFIGURATION = new org.geotools.wfs.v1_0.WFSConfiguration();
+    public static final Configuration WFS_1_0_CAPABILITIES_CONFIGURATION = new org.geotools.wfs.v1_0.WFSCapabilitiesConfiguration();
 
-    public static final Configuration FILTER_1_1_0_CONFIGURATION = new org.geotools.filter.v1_1.OGCConfiguration();
+    public static final Configuration WFS_1_0_CONFIGURATION = new org.geotools.wfs.v1_0.WFSConfiguration();
 
-    public static final Configuration WFS_1_1_0_CONFIGURATION = new org.geotools.wfs.v1_1.WFSConfiguration();
+    public static final Configuration FILTER_1_1_CONFIGURATION = new org.geotools.filter.v1_1.OGCConfiguration();
 
-    public static final Configuration FILTER_2_0_0_CONFIGURATION = new org.geotools.filter.v2_0.FESConfiguration();
+    public static final Configuration WFS_1_1_CONFIGURATION = new org.geotools.wfs.v1_1.WFSConfiguration();
 
-    public static final Configuration WFS_2_0_0_CONFIGURATION = new org.geotools.wfs.v2_0.WFSConfiguration();
+    public static final Configuration FILTER_2_0_CONFIGURATION = new org.geotools.filter.v2_0.FESConfiguration();
+
+    public static final Configuration WFS_2_0_CONFIGURATION = new org.geotools.wfs.v2_0.WFSConfiguration();
 
     protected WFSConfig config;
 

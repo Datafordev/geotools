@@ -21,7 +21,7 @@ import java.io.IOException;
 /**
  * A simple interface to parse the response of a WFS request.
  * 
- * @see WFSResponseParserFactory
+ * @see WFSResponseFactory
  * @see WFSResponse
  */
 public interface WFSResponseParser {

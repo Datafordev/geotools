@@ -36,7 +36,7 @@ public class WFSGetCapabilities extends Capabilities {
         if (capabilities instanceof WFSCapabilitiesType) {
 
             WFSCapabilitiesType caps = (WFSCapabilitiesType) capabilities;
-            String version = caps.getVersion();
+            String version = rawDocument.getDocumentElement().getAttribute("version");
             if ("1.0.0".equals(version)) {
                 return new WFS_1_0_0(caps, rawDocument);
             }

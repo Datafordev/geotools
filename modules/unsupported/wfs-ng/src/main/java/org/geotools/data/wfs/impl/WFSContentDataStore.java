@@ -14,8 +14,14 @@ import javax.xml.namespace.QName;
 import org.geotools.data.store.ContentDataStore;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
+import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
+import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
 import org.geotools.data.wfs.internal.WFSClient;
+import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.feature.NameImpl;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.Name;
 
 class WFSContentDataStore extends ContentDataStore {
@@ -24,9 +30,12 @@ class WFSContentDataStore extends ContentDataStore {
 
     private final Map<Name, QName> names;
 
+    private final Map<QName, FeatureType> remoteFeatureTypes;
+
     public WFSContentDataStore(final WFSClient client) {
         this.client = client;
         this.names = new ConcurrentHashMap<Name, QName>();
+        this.remoteFeatureTypes = new ConcurrentHashMap<QName, FeatureType>();
     }
 
     public QName getRemoteTypeName(Name localTypeName) {
@@ -35,6 +44,43 @@ class WFSContentDataStore extends ContentDataStore {
             throw new NoSuchElementException(localTypeName.toString());
         }
         return qName;
+    }
+
+    public FeatureType getRemoteFeatureType(final QName remoteTypeName) throws IOException {
+
+        FeatureType remoteFeatureType;
+
+        final String lockObj = remoteTypeName.toString().intern();
+
+        synchronized (lockObj) {
+            remoteFeatureType = remoteFeatureTypes.get(remoteTypeName);
+            if (remoteFeatureType == null) {
+
+                DescribeFeatureTypeRequest request = client.createDescribeFeatureTypeRequest();
+                request.setTypeName(remoteTypeName);
+
+                DescribeFeatureTypeResponse response = client.issueRequest(request);
+
+                remoteFeatureType = response.getFeatureType();
+                remoteFeatureTypes.put(remoteTypeName, remoteFeatureType);
+            }
+        }
+
+        return remoteFeatureType;
+    }
+
+    public SimpleFeatureType getRemoteSimpleFeatureType(final QName remoteTypeName)
+            throws IOException {
+
+        final FeatureType remoteFeatureType = getRemoteFeatureType(remoteTypeName);
+        final SimpleFeatureType remoteSimpleFeatureType;
+        if (remoteFeatureType instanceof SimpleFeature) {
+            remoteSimpleFeatureType = (SimpleFeatureType) remoteFeatureType;
+        } else {
+            remoteSimpleFeatureType = EmfAppSchemaParser.toSimpleFeatureType(remoteFeatureType);
+        }
+
+        return remoteSimpleFeatureType;
     }
 
     /**

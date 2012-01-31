@@ -27,12 +27,12 @@ public class WFSExtensionsTest {
     public void testFindParserFactory() {
         GetFeatureType request = WfsFactory.eINSTANCE.createGetFeatureType();
         request.setOutputFormat("application/fakeFormat");
-        WFSResponseParserFactory factory = WFSExtensions.findParserFactory(request);
+        WFSResponseFactory factory = WFSExtensions.findParserFactory(request);
         assertNotNull(factory);
         assertTrue(factory instanceof TestParserFactory);
     }
 
-    public static class TestParserFactory implements WFSResponseParserFactory {
+    public static class TestParserFactory implements WFSResponseFactory {
 
         public boolean canProcess(EObject request) {
             return request instanceof GetFeatureType

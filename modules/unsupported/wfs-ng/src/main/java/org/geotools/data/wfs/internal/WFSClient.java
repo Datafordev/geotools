@@ -15,22 +15,18 @@ import org.geotools.data.ows.Response;
 import org.geotools.data.ows.Specification;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
-import org.geotools.data.wfs.internal.v1_0_0.StrictWFS_1_0_0_Strategy;
-import org.geotools.data.wfs.internal.v1_1_0.ArcGISServerStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.CubeWerxStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.GeoServerPre200Strategy;
-import org.geotools.data.wfs.internal.v1_1_0.IonicStrategy;
-import org.geotools.data.wfs.internal.v1_1_0.StrictWFS_1_1_0_Strategy;
-import org.geotools.data.wfs.internal.v2_0_0.StrictWFS_2_0_0_Strategy;
+import org.geotools.data.wfs.internal.v1_0.StrictWFS_1_0_Strategy;
+import org.geotools.data.wfs.internal.v1_1.ArcGISServerStrategy;
+import org.geotools.data.wfs.internal.v1_1.CubeWerxStrategy;
+import org.geotools.data.wfs.internal.v1_1.GeoServerPre200Strategy;
+import org.geotools.data.wfs.internal.v1_1.IonicStrategy;
+import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
+import org.geotools.data.wfs.internal.v2_0.StrictWFS_2_0_Strategy;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.ServiceException;
-import org.geotools.referencing.CRS;
-import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.geotools.util.Version;
 import org.geotools.util.logging.Logging;
-import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -56,7 +52,7 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         ((WFSStrategy) specification).setCapabilities(super.capabilities);
     }
 
-    private WFSStrategy getStrategy() {
+    WFSStrategy getStrategy() {
         return (WFSStrategy) super.specification;
     }
 
@@ -83,9 +79,9 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
     @Override
     protected void setupSpecifications() {
         specs = new Specification[3];
-        WFSStrategy strictWFS_1_0_0_Strategy = new StrictWFS_1_0_0_Strategy();
-        WFSStrategy strictWFS_1_1_0_Strategy = new StrictWFS_1_1_0_Strategy();
-        WFSStrategy strictWFS_2_0_0_Strategy = new StrictWFS_2_0_0_Strategy();
+        WFSStrategy strictWFS_1_0_0_Strategy = new StrictWFS_1_0_Strategy();
+        WFSStrategy strictWFS_1_1_0_Strategy = new StrictWFS_1_1_Strategy();
+        WFSStrategy strictWFS_2_0_0_Strategy = new StrictWFS_2_0_Strategy();
 
         strictWFS_1_0_0_Strategy.setConfig(config);
         strictWFS_1_1_0_Strategy.setConfig(config);
@@ -176,9 +172,9 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         if (strategy == null) {
             // use fallback strategy
             if (Versions.v1_0_0.equals(version)) {
-                strategy = new StrictWFS_1_1_0_Strategy();
+                strategy = new StrictWFS_1_0_Strategy();
             } else if (Versions.v1_1_0.equals(version)) {
-                strategy = new StrictWFS_1_1_0_Strategy();
+                strategy = new StrictWFS_1_1_Strategy();
             } else {
                 throw new IllegalArgumentException("Unsupported version: " + version);
             }

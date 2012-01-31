@@ -2,36 +2,47 @@ package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.FeatureType;
 
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class GetFeatureResponse extends WFSResponse {
 
-    public GetFeatureResponse(HTTPResponse httpResponse, String targetUrl,
-            WFSRequest originatingRequest, Charset charset, String contentType, InputStream in)
-            throws ServiceException, IOException {
+    private final GetFeatureParser features;
 
-        super(httpResponse, targetUrl, originatingRequest, charset, contentType, in);
+    private boolean featuresReturned;
+
+    public GetFeatureResponse(WFSRequest originatingRequest, HTTPResponse httpResponse,
+            GetFeatureParser features) throws ServiceException, IOException {
+
+        super(originatingRequest, httpResponse);
+        this.features = features;
+
     }
-
-    public Integer getNumberOfFeatures() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 
     public GetFeatureParser getFeatures(GeometryFactory geometryFactory) {
-        // TODO Auto-generated method stub
-        return null;
+        if (featuresReturned) {
+            throw new IllegalStateException("getFeatures can be called only once");
+        }
+        if (geometryFactory != null) {
+            features.setGeometryFactory(geometryFactory);
+        }
+        featuresReturned = true;
+        return features;
     }
 
     public GetFeatureParser getSimpleFeatures(GeometryFactory geometryFactory) {
-        // TODO Auto-generated method stub
-        return null;
+        GetFeatureParser rawFeatures = getFeatures(geometryFactory);
+        FeatureType featureType = rawFeatures.getFeatureType();
+        if (featureType instanceof SimpleFeatureType) {
+            return rawFeatures;
+        }
+
+        throw new UnsupportedOperationException("implementa adapting to SimpleFeature");
     }
 
 }

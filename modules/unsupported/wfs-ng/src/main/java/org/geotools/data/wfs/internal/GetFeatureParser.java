@@ -19,6 +19,9 @@ package org.geotools.data.wfs.internal;
 import java.io.IOException;
 
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.type.FeatureType;
+
+import com.vividsolutions.jts.geom.GeometryFactory;
 
 /**
  * Interface to abstract out the parsing of features coming from a GetFeature request from the
@@ -52,4 +55,8 @@ public interface GetFeatureParser {
     SimpleFeature parse() throws IOException;
 
     void close() throws IOException;
+
+    public FeatureType getFeatureType();
+
+    public void setGeometryFactory(GeometryFactory geometryFactory);
 }

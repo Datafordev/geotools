@@ -32,9 +32,8 @@ import org.geotools.factory.FactoryNotFoundException;
  * Utility class to look up for a parser that can deal with a given WFS response and process it.
  * <p>
  * This class uses the usual GeoTools SPI (Service Provider Interface) mechanism to find out a
- * {@link WFSResponseParserFactory} for a given {@link WFSResponse}. As such,
- * {@link WFSResponseParserFactory} implementation may live outside this plugin as long as they're
- * declared in it's own {code
+ * {@link WFSResponseFactory} for a given {@link WFSResponse}. As such, {@link WFSResponseFactory}
+ * implementation may live outside this plugin as long as they're declared in it's own {code
  * /META-INF/services/org.geotools.data.wfs.protocol.wfs.WFSResponseParserFactory} text file.
  * </p>
  * 
@@ -53,7 +52,7 @@ public class WFSExtensions {
     /**
      * The service registry for this manager. Will be initialized only when first needed.
      */
-    private static Set<WFSResponseParserFactory> registry;
+    private static Set<WFSResponseFactory> registry;
 
     /**
      * Processes the result of a WFS operation and returns the parsed object.
@@ -71,40 +70,44 @@ public class WFSExtensions {
      * @return
      * @throws IOException
      */
-    public static Object process(WFSResponse response) throws IOException {
-
-        EObject originatingRequest = response.getOriginatingRequest();
-        WFSResponseParserFactory pf = findParserFactory(originatingRequest);
-
-        WFSResponseParser parser = pf.createParser(response);
-
-        Object result = parser.parse(response);
-        return result;
-    }
+//    public static Object process(WFSResponse response) throws IOException {
+//
+//        WFSRequest originatingRequest = response.getOriginatingRequest();
+//        WFSResponseFactory pf = findParserFactory(originatingRequest);
+//
+//        WFSResponseParser parser = pf.createParser(response);
+//
+//        Object result = parser.parse(response);
+//        return result;
+//    }
 
     /**
+     * @param contentType
      * @param requestType
      * @param outputFormat
      * @return
      * @throws FactoryNotFoundException
      */
-    public static WFSResponseParserFactory findParserFactory(EObject request) {
-        Iterator<WFSResponseParserFactory> serviceProviders;
+    public static WFSResponseFactory findResponseFactory(final WFSRequest originatingRequest,
+            final String contentType) {
+
+        Iterator<WFSResponseFactory> serviceProviders;
         serviceProviders = getServiceProviders();
 
-        WFSResponseParserFactory factory;
+        WFSResponseFactory factory;
         while (serviceProviders.hasNext()) {
             factory = serviceProviders.next();
             if (factory.isAvailable()) {
-                if (factory.canProcess(request)) {
+                if (factory.canProcess(originatingRequest, contentType)) {
                     return factory;
                 }
             }
         }
-        throw new FactoryNotFoundException("Can't find a response parser factory for " + request);
+        throw new FactoryNotFoundException("Can't find a response parser factory for "
+                + originatingRequest);
     }
 
-    private static Iterator<WFSResponseParserFactory> getServiceProviders() {
+    private static Iterator<WFSResponseFactory> getServiceProviders() {
         if (registry == null) {
             synchronized (WFSExtensions.class) {
                 if (registry == null) {
@@ -122,11 +125,11 @@ public class WFSExtensions {
                         /*
                          * Now that we're on the correct classloader lets perform the lookup
                          */
-                        Iterator<WFSResponseParserFactory> providers;
-                        providers = ServiceRegistry.lookupProviders(WFSResponseParserFactory.class);
-                        registry = new HashSet<WFSResponseParserFactory>();
+                        Iterator<WFSResponseFactory> providers;
+                        providers = ServiceRegistry.lookupProviders(WFSResponseFactory.class);
+                        registry = new HashSet<WFSResponseFactory>();
                         while (providers.hasNext()) {
-                            WFSResponseParserFactory provider = providers.next();
+                            WFSResponseFactory provider = providers.next();
                             registry.add(provider);
                         }
                     } finally {
@@ -139,11 +142,6 @@ public class WFSExtensions {
             }
         }
         return registry.iterator();
-    }
-
-    public static WFSResponse process(WFSRequest request, HTTPResponse response) throws IOException{
-        // TODO Auto-generated method stub
-        return null;
     }
 
 }

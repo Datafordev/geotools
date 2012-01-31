@@ -25,6 +25,8 @@ import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.ows.ServiceException;
+import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
 
@@ -50,7 +52,11 @@ public class GetFeatureRequest extends WFSRequest {
 
     private ResultType resultType;
 
-    private SortBy[] sortBy;;
+    private SortBy[] sortBy;
+
+    private FeatureType fullType;
+
+    private FeatureType queryType;;
 
     GetFeatureRequest(WFSConfig config, WFSStrategy strategy) {
         super(GET_FEATURE, config, strategy);
@@ -164,6 +170,22 @@ public class GetFeatureRequest extends WFSRequest {
      */
     public void setSortBy(SortBy[] sortBy) {
         this.sortBy = sortBy;
+    }
+
+    public void setFullType(FeatureType fullType) {
+        this.fullType = fullType;
+    }
+
+    public FeatureType getFullType() {
+        return fullType;
+    }
+
+    public void setQueryType(FeatureType queryType) {
+        this.queryType = queryType;
+    }
+
+    public FeatureType getQueryType() {
+        return queryType;
     }
 
 }
