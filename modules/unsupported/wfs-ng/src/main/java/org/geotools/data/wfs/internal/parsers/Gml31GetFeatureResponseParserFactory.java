@@ -23,6 +23,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -51,9 +54,13 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
 
-    private static final String SUPPORTED_OUTPUT_FORMAT1 = "text/xml; subtype=gml/3.1.1";
-
-    private static final String SUPPORTED_OUTPUT_FORMAT2 = "GML3";
+    private static final List<String> SUPPORTED_FORMATS = Collections.unmodifiableList(Arrays
+            .asList("text/xml; subtype=gml/3.1.1",//
+                    "text/xml; subtype=gml/3.1.1/profiles/gmlsf/0",//
+                    "application/gml+xml; subtype=gml/3.1.1",//
+                    "application/gml+xml; subtype=gml/3.1.1/profiles/gmlsf/0",//
+                    "GML3", //
+                    "GML3L0"));
 
     /**
      * @see WFSResponseFactory#isAvailable()
@@ -78,13 +85,7 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
             return false;
         }
         String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
-        boolean matches = isSupportedOutputFormat(outputFormat);
-        return matches;
-    }
-
-    protected boolean isSupportedOutputFormat(String outputFormat) {
-        boolean matches = SUPPORTED_OUTPUT_FORMAT1.equals(outputFormat)
-                || SUPPORTED_OUTPUT_FORMAT2.equals(outputFormat);
+        boolean matches = SUPPORTED_FORMATS.contains(outputFormat);
         return matches;
     }
 
@@ -107,7 +108,7 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
 
         final GetFeatureParser parser;
         final String contentType = response.getContentType();
-        if (isSupportedOutputFormat(contentType)) {
+        if (SUPPORTED_FORMATS.contains(contentType)) {
             parser = parser(getFeature, response.getResponseStream());
         } else {
             // We can't rely on the server returning the correct output format. Some, for example
@@ -178,5 +179,15 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
 
         GetFeatureParser featureReader = new XmlSimpleFeatureParser(in, schema, remoteFeatureName);
         return featureReader;
+    }
+
+    @Override
+    public boolean canProcess(WFSOperationType operation) {
+        return WFSOperationType.GET_FEATURE.equals(operation);
+    }
+
+    @Override
+    public List<String> getSupportedOutputFormats() {
+        return SUPPORTED_FORMATS;
     }
 }

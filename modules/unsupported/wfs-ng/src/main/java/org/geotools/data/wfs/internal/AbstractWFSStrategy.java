@@ -71,7 +71,7 @@ import org.opengis.filter.identity.Identifier;
  */
 public abstract class AbstractWFSStrategy extends WFSStrategy {
 
-    private static final Logger LOGGER = Loggers.MODULE;
+    protected static final Logger LOGGER = Loggers.MODULE;
 
     public static final Configuration FILTER_1_0_CONFIGURATION = new org.geotools.filter.v1_0.OGCConfiguration();
 
@@ -188,33 +188,41 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
                 map.put("SRSNAME", srsName.toString());
             }
         }
-        final Filter filter = request.getFilter();
 
-        if (filter != null && Filter.INCLUDE != filter) {
-            if (filter instanceof Id) {
-                final Set<Identifier> identifiers = ((Id) filter).getIdentifiers();
-                StringBuffer idValues = new StringBuffer();
-                for (Iterator<Identifier> it = identifiers.iterator(); it.hasNext();) {
-                    Object id = it.next().getID();
-                    if (id instanceof FeatureId) {
-                        idValues.append(((FeatureId) id).getRid());
-                    } else {
-                        idValues.append(String.valueOf(id));
-                    }
-                    if (it.hasNext()) {
-                        idValues.append(",");
-                    }
+        final Filter supportedFilter;
+        final Filter unsupportedFilter;
+        {
+            final Filter filter = request.getFilter();
+            Filter[] splitFilters = splitFilters(typeName, filter);
+            supportedFilter = splitFilters[0];
+            unsupportedFilter = splitFilters[1];
+        }
+
+        request.setUnsupportedFilter(unsupportedFilter);
+
+        if (supportedFilter instanceof Id) {
+            final Set<Identifier> identifiers = ((Id) supportedFilter).getIdentifiers();
+            StringBuffer idValues = new StringBuffer();
+            for (Iterator<Identifier> it = identifiers.iterator(); it.hasNext();) {
+                Object id = it.next().getID();
+                if (id instanceof FeatureId) {
+                    idValues.append(((FeatureId) id).getRid());
+                } else {
+                    idValues.append(String.valueOf(id));
                 }
-                map.put("FEATUREID", idValues.toString());
-            } else {
-                String xmlEncodedFilter;
-                try {
-                    xmlEncodedFilter = encodeGetFeatureGetFilter(filter);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                if (it.hasNext()) {
+                    idValues.append(",");
                 }
-                map.put("FILTER", xmlEncodedFilter);
             }
+            map.put("FEATUREID", idValues.toString());
+        } else if (Filter.INCLUDE != supportedFilter) {
+            String xmlEncodedFilter;
+            try {
+                xmlEncodedFilter = encodeGetFeatureGetFilter(supportedFilter);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            map.put("FILTER", xmlEncodedFilter);
         }
 
         return map;
@@ -299,15 +307,31 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     @Override
     public Set<String> getSupportedCRSIdentifiers(QName typeName) {
         FeatureTypeInfo featureTypeInfo = getFeatureTypeInfo(typeName);
-        // TODO: another wrong emf mapping: getOtherSRS():String? should be a list
+
         String defaultSRS = featureTypeInfo.getDefaultSRS();
-        @SuppressWarnings("unchecked")
+
         List<String> otherSRS = featureTypeInfo.getOtherSRS();
 
         Set<String> ftypeCrss = new HashSet<String>();
         ftypeCrss.add(defaultSRS);
         ftypeCrss.addAll(otherSRS);
         return ftypeCrss;
+    }
+
+    @Override
+    public String getDefaultOutputFormat(WFSOperationType operation) {
+        List<String> clientSupportedFormats = getClientSupportedOutputFormats(operation);
+        Set<String> supportedOutputFormats = getServerSupportedOutputFormats(operation);
+        for (String clientSupported : clientSupportedFormats) {
+            if (supportedOutputFormats.contains(clientSupported)) {
+                return clientSupported;
+            }
+        }
+
+        throw new IllegalArgumentException(
+                "Client does not support any of the server supported output formats for "
+                        + operation);
+
     }
 
     // /**
@@ -347,21 +371,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     public void dispose() {
         // do nothing
     }
-
-    // private OperationType getOperationMetadata(WFSOperationType operation) {
-    // final OperationsMetadataType operationsMetadata = capabilities.getOperationsMetadata();
-    // @SuppressWarnings("unchecked")
-    // final List<OperationType> operations = operationsMetadata.getOperation();
-    // final String expectedOperationName = operation.getName();
-    // for (OperationType operationType : operations) {
-    // String operationName = operationType.getName();
-    // if (expectedOperationName.equalsIgnoreCase(operationName)) {
-    // return operationType;
-    // }
-    // }
-    // throw new NoSuchElementException("Operation metadata not found for "
-    // + expectedOperationName + " in the capabilities document");
-    // }
 
     protected Map<String, String> buildDescribeFeatureTypeURLGet(
             final DescribeFeatureTypeRequest request) {
@@ -503,11 +512,13 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      * Splits the filter provided by the geotools query into the server supported and unsupported
      * ones.
      * 
+     * @param typeName
+     * 
      * @return a two-element array where the first element is the supported filter and the second
      *         the one to post-process
+     * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
      */
-    @Override
-    public Filter[] splitFilters(final Filter filter) {
+    protected Filter[] splitFilters(QName typeName, final Filter filter) {
         FilterCapabilities filterCapabilities = getFilterCapabilities();
         Capabilities filterCaps = new Capabilities();
         if (filterCapabilities != null) {

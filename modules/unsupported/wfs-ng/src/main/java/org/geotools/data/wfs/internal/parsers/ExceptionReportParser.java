@@ -34,7 +34,6 @@ import org.geotools.data.wfs.internal.WFSException;
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSResponseParser;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
 import org.geotools.util.logging.Logging;
 import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Parser;

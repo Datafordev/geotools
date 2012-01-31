@@ -14,12 +14,11 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.v1_x;
 
 import java.util.Set;
 
 import org.geotools.data.wfs.internal.WFSOperationType;
-import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.xml.Configuration;
 
 /**
@@ -31,12 +30,8 @@ import org.geotools.xml.Configuration;
  * default output format.
  * <li>Can only reliably parse Filter 1.0
  * </p>
- * 
- * @source $URL$
  */
-public class GeoServerPre200Strategy extends StrictWFS_1_1_Strategy {
-
-    private static Configuration filter_1_0_0_Configuration = new OGCConfiguration();
+public class GeoServerPre200Strategy extends StrictWFS_1_x_Strategy {
 
     private static final String GEOSERVER_WRONG_FORMAT_NAME = "text/gml; subtype=gml/3.1.1";
 
@@ -49,21 +44,24 @@ public class GeoServerPre200Strategy extends StrictWFS_1_1_Strategy {
         try {
             return super.getDefaultOutputFormat(op);
         } catch (IllegalArgumentException e) {
-            Set<String> supportedOutputFormats = getSupportedGetFeatureOutputFormats();
+            Set<String> supportedOutputFormats = getServerSupportedOutputFormats(op);
             if (supportedOutputFormats.contains(GEOSERVER_WRONG_FORMAT_NAME)) {
-                return StrictWFS_1_1_Strategy.DEFAULT_OUTPUT_FORMAT;
+                return "text/xml; subtype=gml/3.1.1";
             }
-            throw new IllegalArgumentException("Server does not support '" + DEFAULT_OUTPUT_FORMAT
-                    + "' output format: " + supportedOutputFormats);
+            throw new IllegalArgumentException(
+                    "Server does not support 'text/gml; subtype=gml/3.1.1' output format: "
+                            + supportedOutputFormats);
         }
     }
 
     /**
-     * GeoServer versions lower than 2.0 can only parse Filter 1.0
+     * GeoServer versions lower than 2.0 can only reliably parse Filter 1.0.
+     * <p>
+     * TODO: find a way to figure out whether the geoserver instance is actuall that old
      */
     @Override
     protected Configuration getFilterConfiguration() {
-        return filter_1_0_0_Configuration;
+        return FILTER_1_0_CONFIGURATION;
     }
 
 }

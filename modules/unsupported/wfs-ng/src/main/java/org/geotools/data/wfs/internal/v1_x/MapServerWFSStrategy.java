@@ -14,12 +14,10 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_0;
+package org.geotools.data.wfs.internal.v1_x;
 
-import java.io.IOException;
+import javax.xml.namespace.QName;
 
-import org.geotools.data.wfs.internal.GetFeatureRequest;
-import org.geotools.data.wfs.internal.RequestComponents;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.filter.Filter;
@@ -31,7 +29,7 @@ import org.opengis.filter.spatial.BBOX;
  * order for all the features to be returned. So if the Filter is Filter.NONE or Query.ALL then a
  * BBox Filter is constructed that is the entire layer.
  */
-public class MapServerWFSStrategy extends StrictWFS_1_0_Strategy {
+public class MapServerWFSStrategy extends StrictWFS_1_x_Strategy {
 
     private static final FilterFactory fac = CommonFactoryFinder.getFilterFactory(null);
 
@@ -40,19 +38,27 @@ public class MapServerWFSStrategy extends StrictWFS_1_0_Strategy {
     }
 
     @Override
-    protected RequestComponents buildGetFeatureRequest(final GetFeatureRequest query) throws IOException {
-        Filter filter = query.getFilter();
+    public Filter[] splitFilters(final QName typeName, final Filter filter) {
 
-        if (filter != Filter.INCLUDE) {
-            return super.buildGetFeatureRequest(query);
+        Filter[] splitFilters = super.splitFilters(typeName, filter);
+
+        Filter supported = splitFilters[0];
+
+        if (Filter.INCLUDE.equals(supported)) {
+
+            ReferencedEnvelope wgs84Bounds = super.getFeatureTypeInfo(typeName)
+                    .getWGS84BoundingBox();
+
+            BBOX newFilter;
+            if (wgs84Bounds == null) {
+                newFilter = fac.bbox(null, -180, -90, 180, 90, "EPSG:4326");
+            } else {
+                newFilter = fac.bbox(null, wgs84Bounds.getMinX(), wgs84Bounds.getMinY(),
+                        wgs84Bounds.getMaxX(), wgs84Bounds.getMaxY(), "EPSG:4326");
+            }
+
+            splitFilters[0] = newFilter;
         }
-
-        ReferencedEnvelope wgs84Bounds = super.getFeatureTypeWGS84Bounds(query.getTypeName());
-        BBOX newFilter = fac.bbox(null, wgs84Bounds.getMinX(), wgs84Bounds.getMinY(),
-                wgs84Bounds.getMaxX(), wgs84Bounds.getMaxY(), "EPSG:4326");
-
-        GetFeatureRequest query2 = new GetFeatureRequest(query);
-        query2.setFilter(newFilter);
-        return super.buildGetFeatureRequest(query2);
+        return splitFilters;
     }
 }

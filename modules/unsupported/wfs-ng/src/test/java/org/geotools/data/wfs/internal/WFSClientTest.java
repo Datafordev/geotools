@@ -1,6 +1,7 @@
 package org.geotools.data.wfs.internal;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -8,14 +9,9 @@ import java.util.logging.Level;
 
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.SimpleHttpClient;
-import org.geotools.data.wfs.internal.Loggers;
-import org.geotools.data.wfs.internal.WFSClient;
-import org.geotools.data.wfs.internal.WFSConfig;
-import org.geotools.data.wfs.internal.WFSGetCapabilities;
-import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_0.StrictWFS_1_0_Strategy;
-import org.geotools.data.wfs.internal.v1_1.IonicStrategy;
-import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
+import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
+import org.geotools.data.wfs.internal.v1_x.IonicStrategy;
+import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy;
 import org.geotools.ows.ServiceException;
 import org.junit.After;
 import org.junit.Assert;
@@ -102,24 +98,24 @@ public class WFSClientTest {
 
     @Test
     public void testAutoDetermineStrategy() throws Exception {
-        Class<StrictWFS_1_0_Strategy> strict10 = StrictWFS_1_0_Strategy.class;
+        Class<StrictWFS_1_x_Strategy> strict10 = StrictWFS_1_x_Strategy.class;
 
         checkStrategy("GeoServer_2.2.x/1.0.0/GetCapabilities.xml", "1.0.0", strict10);
         checkStrategy("PCIGeoMatics_unknown/1.0.0/GetCapabilities.xml", "1.0.0", strict10);
         checkStrategy("MapServer_5.6.5/1.0.0/GetCapabilities.xml", "1.0.0", strict10);
         checkStrategy("Ionic_unknown/1.0.0/GetCapabilities.xml", "1.0.0", IonicStrategy.class);
         checkStrategy("Galdos_unknown/1.0.0/GetCapabilities.xml", "1.0.0", strict10);
-        checkStrategy("CubeWerx_4.12.6/1.0.0/GetCapabilities.xml", "1.0.0", strict10);
+        checkStrategy("CubeWerx_4.12.6/1.0.0/GetCapabilities.xml", "1.0.0", CubeWerxStrategy.class);
 
-        Class<StrictWFS_1_1_Strategy> strict11 = StrictWFS_1_1_Strategy.class;
+        Class<StrictWFS_1_x_Strategy> strict11 = StrictWFS_1_x_Strategy.class;
         checkStrategy("GeoServer_1.7.x/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
         checkStrategy("GeoServer_2.0/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
-        checkStrategy("CubeWerx_4.12.6/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
-        checkStrategy("CubeWerx_4.7.5/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
-        checkStrategy("CubeWerx_5.6.3/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
+        checkStrategy("CubeWerx_4.12.6/1.1.0/GetCapabilities.xml", "1.1.0", CubeWerxStrategy.class);
+        checkStrategy("CubeWerx_4.7.5/1.1.0/GetCapabilities.xml", "1.1.0", CubeWerxStrategy.class);
+        checkStrategy("CubeWerx_5.6.3/1.1.0/GetCapabilities.xml", "1.1.0", CubeWerxStrategy.class);
         checkStrategy("Deegree_unknown/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
-        checkStrategy("Ionic_unknown/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
+        checkStrategy("Ionic_unknown/1.1.0/GetCapabilities.xml", "1.1.0", IonicStrategy.class);
         checkStrategy("MapServer_5.6.5/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
-        checkStrategy("CubeWerx_nsdi/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
+        checkStrategy("CubeWerx_nsdi/1.1.0/GetCapabilities.xml", "1.1.0", CubeWerxStrategy.class);
     }
 }

@@ -17,8 +17,10 @@
 package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.imageio.spi.ServiceRegistry;
@@ -70,16 +72,16 @@ public class WFSExtensions {
      * @return
      * @throws IOException
      */
-//    public static Object process(WFSResponse response) throws IOException {
-//
-//        WFSRequest originatingRequest = response.getOriginatingRequest();
-//        WFSResponseFactory pf = findParserFactory(originatingRequest);
-//
-//        WFSResponseParser parser = pf.createParser(response);
-//
-//        Object result = parser.parse(response);
-//        return result;
-//    }
+    // public static Object process(WFSResponse response) throws IOException {
+    //
+    // WFSRequest originatingRequest = response.getOriginatingRequest();
+    // WFSResponseFactory pf = findParserFactory(originatingRequest);
+    //
+    // WFSResponseParser parser = pf.createParser(response);
+    //
+    // Object result = parser.parse(response);
+    // return result;
+    // }
 
     /**
      * @param contentType
@@ -105,6 +107,24 @@ public class WFSExtensions {
         }
         throw new FactoryNotFoundException("Can't find a response parser factory for "
                 + originatingRequest);
+    }
+
+    public static List<WFSResponseFactory> findResponseFactories(final WFSOperationType operation) {
+
+        Iterator<WFSResponseFactory> serviceProviders = getServiceProviders();
+
+        List<WFSResponseFactory> matches = new ArrayList<WFSResponseFactory>(5);
+
+        while (serviceProviders.hasNext()) {
+            WFSResponseFactory factory = serviceProviders.next();
+            if (factory.isAvailable()) {
+                if (factory.canProcess(operation)) {
+                    matches.add(factory);
+                }
+            }
+        }
+
+        return matches;
     }
 
     private static Iterator<WFSResponseFactory> getServiceProviders() {

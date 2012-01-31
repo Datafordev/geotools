@@ -1,8 +1,7 @@
-package org.geotools.data.wfs.internal.v1_0;
+package org.geotools.data.wfs.internal.v1_x;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -13,15 +12,14 @@ import javax.xml.XMLConstants;
 
 import net.opengis.ows10.WGS84BoundingBoxType;
 import net.opengis.wfs.FeatureTypeType;
+import net.opengis.wfs.OutputFormatListType;
 
-import org.eclipse.emf.common.util.EList;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.opengis.referencing.operation.TransformException;
 
@@ -142,6 +140,22 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
     @Override
     public List<String> getOtherSRS() {
         return eType.getOtherSRS();
+    }
+
+    @Override
+    public Set<String> getOutputFormats() {
+        final OutputFormatListType outputFormats = eType.getOutputFormats();
+        if (null == outputFormats) {
+            return Collections.emptySet();
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> ftypeDeclaredFormats = outputFormats.getFormat();
+        if (null == ftypeDeclaredFormats || ftypeDeclaredFormats.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return new HashSet<String>(ftypeDeclaredFormats);
     }
 
 }

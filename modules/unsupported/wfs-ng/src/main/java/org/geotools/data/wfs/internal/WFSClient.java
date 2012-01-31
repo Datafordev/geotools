@@ -15,12 +15,10 @@ import org.geotools.data.ows.Response;
 import org.geotools.data.ows.Specification;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
-import org.geotools.data.wfs.internal.v1_0.StrictWFS_1_0_Strategy;
-import org.geotools.data.wfs.internal.v1_1.ArcGISServerStrategy;
-import org.geotools.data.wfs.internal.v1_1.CubeWerxStrategy;
-import org.geotools.data.wfs.internal.v1_1.GeoServerPre200Strategy;
-import org.geotools.data.wfs.internal.v1_1.IonicStrategy;
-import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
+import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
+import org.geotools.data.wfs.internal.v1_x.GeoServerPre200Strategy;
+import org.geotools.data.wfs.internal.v1_x.IonicStrategy;
+import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy;
 import org.geotools.data.wfs.internal.v2_0.StrictWFS_2_0_Strategy;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.ServiceException;
@@ -79,8 +77,8 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
     @Override
     protected void setupSpecifications() {
         specs = new Specification[3];
-        WFSStrategy strictWFS_1_0_0_Strategy = new StrictWFS_1_0_Strategy();
-        WFSStrategy strictWFS_1_1_0_Strategy = new StrictWFS_1_1_Strategy();
+        WFSStrategy strictWFS_1_0_0_Strategy = new StrictWFS_1_x_Strategy(Versions.v1_0_0);
+        WFSStrategy strictWFS_1_1_0_Strategy = new StrictWFS_1_x_Strategy(Versions.v1_1_0);
         WFSStrategy strictWFS_2_0_0_Strategy = new StrictWFS_2_0_Strategy();
 
         strictWFS_1_0_0_Strategy.setConfig(config);
@@ -104,7 +102,7 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
      */
     private WFSStrategy determineCorrectStrategy() {
 
-        Version version = new Version(capabilities.getVersion());
+        final Version version = new Version(capabilities.getVersion());
         Document capabilitiesDoc = capabilities.getRawDocument();
 
         final String override = config.getWfsStrategy();
@@ -114,8 +112,6 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         if (override != null) {
             if (override.equalsIgnoreCase("geoserver")) {
                 strategy = new GeoServerPre200Strategy();
-            } else if (override.equalsIgnoreCase("arcgis")) {
-                strategy = new ArcGISServerStrategy();
             } else if (override.equalsIgnoreCase("cubewerx")) {
                 strategy = new CubeWerxStrategy();
             } else if (override.equalsIgnoreCase("ionic")) {
@@ -165,16 +161,18 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
             if (uri.contains("geoserver")) {
                 strategy = new GeoServerPre200Strategy();
             } else if (uri.contains("/ArcGIS/services/")) {
-                strategy = new ArcGISServerStrategy();
+                strategy = new StrictWFS_1_x_Strategy(); // new ArcGISServerStrategy();
             }
         }
 
         if (strategy == null) {
             // use fallback strategy
             if (Versions.v1_0_0.equals(version)) {
-                strategy = new StrictWFS_1_0_Strategy();
+                strategy = new StrictWFS_1_x_Strategy(Versions.v1_0_0);
             } else if (Versions.v1_1_0.equals(version)) {
-                strategy = new StrictWFS_1_1_Strategy();
+                strategy = new StrictWFS_1_x_Strategy(Versions.v1_1_0);
+            } else if (Versions.v2_0_0.equals(version)) {
+                strategy = new StrictWFS_2_0_Strategy();
             } else {
                 throw new IllegalArgumentException("Unsupported version: " + version);
             }

@@ -24,7 +24,7 @@ import java.net.URL;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.wfs.internal.GetFeatureParser;
-import org.geotools.data.wfs.internal.v1_1.StreamingParserFeatureReader;
+import org.geotools.data.wfs.internal.v1_x.StreamingParserFeatureReader;
 import org.geotools.test.TestData;
 import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Configuration;

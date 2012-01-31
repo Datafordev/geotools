@@ -14,11 +14,14 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.v1_x;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import javax.xml.namespace.QName;
 
 import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.ResultTypeType;
@@ -26,6 +29,7 @@ import net.opengis.wfs.WfsPackage;
 import net.opengis.wfs.impl.GetFeatureTypeImpl;
 
 import org.eclipse.emf.common.notify.Notification;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.RequestComponents;
@@ -48,70 +52,43 @@ import org.opengis.filter.spatial.BinarySpatialOperator;
  * For instance, the following issues were found:
  * <ul>
  * <li>resultType parameter is not supported in GetFeature
- * <li>logically grouped spatial filters can't be handled
+ * <li>Logically grouped spatial filters can't be handled
+ * <li>CubeWerx does not support logical filters containing mixed geometry filters (eg, AND(BBOX,
+ * Intersects)), no matter what the capabilities doc says
  * </ul>
  * </p>
  * 
  * @author groldan
  */
-public class CubeWerxStrategy extends StrictWFS_1_1_Strategy {
+public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
 
-    /**
-     * Addresses the following issues with the CubeWerx WFS server:
-     * <p>
-     * <ul>
-     * <li>The request fails if the {@code resultType} parameter is set, either if the value is hits
-     * or results, so it sets {@link GetFeatureType#setResultType(net.opengis.wfs.ResultTypeType)}
-     * to {@code null}
-     * 
-     * <li>CubeWerx does not support filtering logical filters containing mixed geometry filters
-     * (eg, AND(BBOX, Intersects)), no matter what the capabilities doc says
-     * </ul>
-     * </p>
-     */
     @Override
-    public RequestComponents buildGetFeatureRequest(GetFeatureRequest query) throws IOException {
-        RequestComponents parts = super.buildGetFeatureRequest(query);
+    protected GetFeatureType createGetFeatureRequestPost(GetFeatureRequest query)
+            throws IOException {
 
-        GetFeatureType serverRequest = parts.getServerRequest();
+        GetFeatureType serverRequest = super.createGetFeatureRequestPost(query);
         serverRequest.setResultType(null);
-        parts.setServerRequest(serverRequest);
 
         GetFeatureType nonResultTypeRequest = new CubeWerxGetFeatureType();
         EMFUtils.copy(serverRequest, nonResultTypeRequest);
         // CubeWerx fails if the _mandatory_ resultType attribute is sent
         nonResultTypeRequest.setResultType(null);
-        parts.setServerRequest(nonResultTypeRequest);
 
-        parts.getKvpParameters().remove("RESULTTYPE");
-
-        return parts;
-    }
-
-    /**
-     * A {@link GetFeatureTypeImpl} that allows the {@code resultType} property to be {@code null}
-     */
-    private static class CubeWerxGetFeatureType extends GetFeatureTypeImpl {
-
-        @Override
-        public void setResultType(ResultTypeType newResultType) {
-            ResultTypeType oldResultType = resultType;
-            resultType = newResultType;// == null ? RESULT_TYPE_EDEFAULT : newResultType;
-            boolean oldResultTypeESet = resultTypeESet;
-            resultTypeESet = true;
-            if (eNotificationRequired()) {
-                eNotify(new ENotificationImpl(this, Notification.SET,
-                        WfsPackage.GET_FEATURE_TYPE__RESULT_TYPE, oldResultType, resultType,
-                        !oldResultTypeESet));
-            }
-        }
+        return serverRequest;
     }
 
     @Override
-    public Filter[] splitFilters(final Filter queryFilter) {
+    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
+        Map<String, String> params = super.buildGetFeatureParametersForGet(request);
+        params.remove("RESULTTYPE");
+        return params;
+    }
+
+    @Override
+    public Filter[] splitFilters(final QName typeName, final Filter queryFilter) {
 
         if (!(queryFilter instanceof BinaryLogicOperator)) {
-            return super.splitFilters(queryFilter);
+            return super.splitFilters(typeName, queryFilter);
         }
 
         int spatialFiltersCount = 0;
@@ -123,7 +100,7 @@ public class CubeWerxStrategy extends StrictWFS_1_1_Strategy {
             }
         }
         if (spatialFiltersCount <= 1) {
-            return super.splitFilters(queryFilter);
+            return super.splitFilters(typeName, queryFilter);
         }
 
         Filter serverFilter;
@@ -160,4 +137,22 @@ public class CubeWerxStrategy extends StrictWFS_1_1_Strategy {
         return new Filter[] { serverFilter, postFilter };
     }
 
+    /**
+     * A {@link GetFeatureTypeImpl} that allows the {@code resultType} property to be {@code null}
+     */
+    private static class CubeWerxGetFeatureType extends GetFeatureTypeImpl {
+
+        @Override
+        public void setResultType(ResultTypeType newResultType) {
+            ResultTypeType oldResultType = resultType;
+            resultType = newResultType;// == null ? RESULT_TYPE_EDEFAULT : newResultType;
+            boolean oldResultTypeESet = resultTypeESet;
+            resultTypeESet = true;
+            if (eNotificationRequired()) {
+                eNotify(new ENotificationImpl(this, Notification.SET,
+                        WfsPackage.GET_FEATURE_TYPE__RESULT_TYPE, oldResultType, resultType,
+                        !oldResultTypeESet));
+            }
+        }
+    }
 }

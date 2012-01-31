@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.v1_x;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;

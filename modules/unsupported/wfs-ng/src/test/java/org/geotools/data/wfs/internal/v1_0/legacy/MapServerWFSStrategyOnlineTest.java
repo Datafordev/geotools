@@ -29,7 +29,7 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.wfs.impl.WFSDataStoreFactory;
-import org.geotools.data.wfs.internal.v1_0.MapServerWFSStrategy;
+import org.geotools.data.wfs.internal.v1_x.MapServerWFSStrategy;
 import org.geotools.filter.Filter;
 import org.geotools.filter.FilterFactory;
 import org.geotools.filter.FilterFactoryFinder;

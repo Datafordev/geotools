@@ -17,6 +17,7 @@
 package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.geotools.data.ows.HTTPResponse;
 
@@ -59,5 +60,9 @@ public interface WFSResponseFactory {
      * @throws IOException
      */
     public WFSResponse createResponse(WFSRequest request, HTTPResponse response) throws IOException;
+
+    public boolean canProcess(WFSOperationType operation);
+
+    public List<String> getSupportedOutputFormats();
 
 }

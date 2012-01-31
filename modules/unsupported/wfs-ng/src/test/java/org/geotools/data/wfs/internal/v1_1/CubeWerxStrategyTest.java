@@ -35,7 +35,7 @@ import org.geotools.data.Query;
 import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
-import org.geotools.data.wfs.internal.v1_1.CubeWerxStrategy;
+import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
 import org.geotools.data.wfs.internal.RequestComponents;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.Capabilities;

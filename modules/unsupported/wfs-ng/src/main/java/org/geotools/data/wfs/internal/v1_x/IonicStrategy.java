@@ -14,11 +14,14 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.v1_x;
+
+import static org.geotools.data.wfs.internal.HttpMethod.GET;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -27,9 +30,12 @@ import javax.xml.namespace.QName;
 import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.QueryType;
 
+import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.RequestComponents;
+import org.geotools.data.wfs.internal.URIs;
 import org.geotools.data.wfs.internal.WFSOperationType;
+import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.gml2.GML;
@@ -48,20 +54,16 @@ import com.vividsolutions.jts.geom.CoordinateSequence;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.impl.PackedCoordinateSequence;
 
-@SuppressWarnings("nls")
 /**
- * 
- *
- * @source $URL$
  */
-public class IonicStrategy extends StrictWFS_1_1_Strategy {
+public class IonicStrategy extends StrictWFS_1_x_Strategy {
 
     private static final Logger LOGGER = Logging.getLogger(IonicStrategy.class);
 
     /**
      * A filter 1.0 configuration to encode Filters issued to Ionic
      */
-    private static final Configuration filter_1_0_0_Configuration = new OGCConfiguration() {
+    private static final Configuration Ionic_filter_1_0_0_Configuration = new OGCConfiguration() {
         @Override
         protected void registerBindings(MutablePicoContainer container) {
             super.registerBindings(container);
@@ -70,6 +72,32 @@ public class IonicStrategy extends StrictWFS_1_1_Strategy {
             container.registerComponentImplementation(GML.BoxType, IonicGML2BoxTypeBinding.class);
         }
     };
+
+    /**
+     * A gml:Box binding to override the default one to adapt to the Ionic server that recognizes
+     * {@code <gml:Box><gml:coordinates>} but not {@code <gml:Box><gml:coord>...}
+     * 
+     * @author Gabriel Roldan
+     */
+    private static class IonicGML2BoxTypeBinding extends GMLBoxTypeBinding {
+
+        /**
+         * Returns a {@link CoordinateSequence} for the {@code coordinates} property so its handled
+         * by a {@link GMLCoordinatesTypeBinding} at encoding time as {@code gml:coordinates} that
+         * Ionic understands
+         */
+        @Override
+        public Object getProperty(Object object, QName name) throws Exception {
+            Envelope e = (Envelope) object;
+            if (GML.coordinates.equals(name)) {
+                double[] seq = { e.getMinX(), e.getMinY(), e.getMaxX(), e.getMaxY() };
+                CoordinateSequence coords = new PackedCoordinateSequence.Double(seq, 2);
+                return coords;
+            }
+
+            return null;
+        }
+    }
 
     /**
      * We can't use POST at all against Ionic cause it is not a WFS 1.1 implementation and expect
@@ -89,10 +117,10 @@ public class IonicStrategy extends StrictWFS_1_1_Strategy {
      */
     @Override
     public String getDefaultOutputFormat(WFSOperationType op) {
-        if (WFSOperationType.GET_FEATURE != op) {
-            throw new UnsupportedOperationException(String.valueOf(op));
+        if (WFSOperationType.GET_FEATURE.equals(op)) {
+            return "GML3";
         }
-        return "GML3";
+        return super.getDefaultOutputFormat(op);
     }
 
     /**
@@ -100,7 +128,7 @@ public class IonicStrategy extends StrictWFS_1_1_Strategy {
      */
     @Override
     protected Configuration getFilterConfiguration() {
-        return filter_1_0_0_Configuration;
+        return Ionic_filter_1_0_0_Configuration;
     }
 
     /**
@@ -108,22 +136,16 @@ public class IonicStrategy extends StrictWFS_1_1_Strategy {
      * case, the query srsName is replaced by the kown "EPSG:4269" code
      */
     @Override
-    public RequestComponents buildGetFeatureRequest(GetFeatureRequest query) throws IOException {
-        RequestComponents req = super.buildGetFeatureRequest(query);
-        GetFeatureType getFeature = req.getServerRequest();
-        QueryType queryType = (QueryType) getFeature.getQuery().get(0);
-        URI srsNameUri = queryType.getSrsName();
+    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
+        Map<String, String> params = super.buildGetFeatureParametersForGet(request);
+
         final String overrideSrs = "urn:opengis:def:crs:ogc::83";
-        if (srsNameUri != null && srsNameUri.toString().equalsIgnoreCase(overrideSrs)) {
-            try {
-                queryType.setSrsName(new URI("EPSG:4269"));
-            } catch (URISyntaxException e) {
-                throw new RuntimeException("shouln't happen: " + e.getMessage());
-            }
-            Map<String, String> kvpParameters = req.getKvpParameters();
-            kvpParameters.put("SRSNAME", "EPSG:4269");
+        String srsName = params.get("SRSNAME");
+        if (overrideSrs.equals(srsName)) {
+            params.put("SRSNAME", "EPSG:4269");
         }
-        return req;
+
+        return params;
     }
 
     /**
@@ -151,31 +173,5 @@ public class IonicStrategy extends StrictWFS_1_1_Strategy {
         }
 
         return caps.getContents();
-    }
-
-    /**
-     * A gml:Box binding to override the default one to adapt to the Ionic server that recognizes
-     * {@code <gml:Box><gml:coordinates>} but not {@code <gml:Box><gml:coord>...}
-     * 
-     * @author Gabriel Roldan
-     */
-    public static class IonicGML2BoxTypeBinding extends GMLBoxTypeBinding {
-
-        /**
-         * Returns a {@link CoordinateSequence} for the {@code coordinates} property so its handled
-         * by a {@link GMLCoordinatesTypeBinding} at encoding time as {@code gml:coordinates} that
-         * Ionic understands
-         */
-        @Override
-        public Object getProperty(Object object, QName name) throws Exception {
-            Envelope e = (Envelope) object;
-            if (GML.coordinates.equals(name)) {
-                double[] seq = { e.getMinX(), e.getMinY(), e.getMaxX(), e.getMaxY() };
-                CoordinateSequence coords = new PackedCoordinateSequence.Double(seq, 2);
-                return coords;
-            }
-
-            return null;
-        }
     }
 }

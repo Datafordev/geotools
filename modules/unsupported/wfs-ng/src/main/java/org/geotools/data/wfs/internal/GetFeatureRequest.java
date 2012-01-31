@@ -56,7 +56,9 @@ public class GetFeatureRequest extends WFSRequest {
 
     private FeatureType fullType;
 
-    private FeatureType queryType;;
+    private FeatureType queryType;
+
+    private Filter unsupportedFilter;;
 
     GetFeatureRequest(WFSConfig config, WFSStrategy strategy) {
         super(GET_FEATURE, config, strategy);
@@ -188,4 +190,11 @@ public class GetFeatureRequest extends WFSRequest {
         return queryType;
     }
 
+    public void setUnsupportedFilter(Filter unsupportedFilter) {
+        this.unsupportedFilter = unsupportedFilter;
+    }
+
+    public Filter getUnsupportedFilter() {
+        return unsupportedFilter == null ? Filter.EXCLUDE : unsupportedFilter;
+    }
 }

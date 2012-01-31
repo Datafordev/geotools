@@ -19,6 +19,7 @@ package org.geotools.data.wfs.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.namespace.QName;
@@ -76,16 +77,23 @@ public abstract class WFSStrategy extends Specification {
     public abstract Version getServiceVersion();
 
     /**
-     * Returns the union of {@link #getSupportedGetFeatureOutputFormats()} and the output formats
-     * declared for the feature type specifically in the FeatureTypeList section of the capabilities
-     * document for the given feature type
-     * 
+     * @return the output formats the server advertises for the given operation;
+     */
+    public abstract Set<String> getServerSupportedOutputFormats(final WFSOperationType operation);
+
+    /**
      * @param typeName
      *            the feature type name for which to return the supported output formats
-     * @return the output formats supported by {@code typeName}
+     * @return the output formats the server supports for the given type name and operation
      */
-    public abstract Set<String> getSupportedOutputFormats(final QName typeName,
+    public abstract Set<String> getServerSupportedOutputFormats(final QName typeName,
             final WFSOperationType operation);
+
+    /**
+     * @return the list of output formats supported by the client for the given operation, in
+     *         preferred order.
+     */
+    public abstract List<String> getClientSupportedOutputFormats(final WFSOperationType operation);
 
     /**
      * Returns the set of type names as extracted from the capabilities document, including the
@@ -150,8 +158,6 @@ public abstract class WFSStrategy extends Specification {
     public abstract void dispose();
 
     public abstract String getDefaultOutputFormat(WFSOperationType operation);
-
-    public abstract Filter[] splitFilters(Filter filter);
 
     public abstract boolean supports(ResultType resultType);
 

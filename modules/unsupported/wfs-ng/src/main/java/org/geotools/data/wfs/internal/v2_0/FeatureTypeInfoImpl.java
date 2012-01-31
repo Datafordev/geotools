@@ -14,8 +14,8 @@ import net.opengis.ows11.KeywordsType;
 import net.opengis.ows11.LanguageStringType;
 import net.opengis.ows11.WGS84BoundingBoxType;
 import net.opengis.wfs20.FeatureTypeType;
+import net.opengis.wfs20.OutputFormatListType;
 
-import org.eclipse.emf.common.util.EList;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -151,4 +151,18 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
         return eType.getOtherCRS();
     }
 
+    @Override
+    public Set<String> getOutputFormats() {
+        final OutputFormatListType outputFormats = eType.getOutputFormats();
+        if (null == outputFormats) {
+            return Collections.emptySet();
+        }
+
+        List<String> ftypeDeclaredFormats = outputFormats.getFormat();
+        if (null == ftypeDeclaredFormats || ftypeDeclaredFormats.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        return new HashSet<String>(ftypeDeclaredFormats);
+    }
 }

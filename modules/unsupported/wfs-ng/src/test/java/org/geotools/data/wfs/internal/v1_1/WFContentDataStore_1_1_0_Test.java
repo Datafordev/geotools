@@ -36,7 +36,7 @@ import org.geotools.data.Query;
 import org.geotools.data.Transaction;
 import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_1.StrictWFS_1_1_Strategy;
+import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_1_Strategy;
 import org.geotools.test.TestData;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;

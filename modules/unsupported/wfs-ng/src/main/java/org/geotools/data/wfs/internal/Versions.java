@@ -30,6 +30,9 @@ public final class Versions {
     public static final Version v2_0_0 = new Version("2.0.0");
 
     public static Version find(String capsVersion) {
+        if (capsVersion == null) {
+            throw new IllegalArgumentException();
+        }
         Version v = new Version(capsVersion);
         if (v1_0_0.equals(v)) {
             return v1_0_0;
@@ -40,7 +43,7 @@ public final class Versions {
         if (v2_0_0.equals(v)) {
             return v2_0_0;
         }
-        return null;
+        throw new IllegalArgumentException();
     }
 
 }

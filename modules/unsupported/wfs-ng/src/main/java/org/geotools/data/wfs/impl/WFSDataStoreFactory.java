@@ -319,12 +319,12 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
     public static final WFSFactoryParam<String> WFS_STRATEGY;
     static {
         String name = "WFSDataStoreFactory:WFS_STRATEGY";
-        String description = "Override wfs stragegy with either arcgis, cubwerx, ionic, mapserver"
-                + ", geoserver, strict or nonstrict strategy.";
+        String description = "Override wfs stragegy with either cubwerx, ionic, mapserver"
+                + ", geoserver, or nonstrict strategy.";
         List<String> options = Arrays.asList(new String[] { "strict", "nonstrict", "mapserver",
-                "geoserver", "arcgis", "cubewerx", "ionix" });
+                "geoserver", "cubewerx", "ionic" });
         parametersInfo[11] = WFS_STRATEGY = new WFSFactoryParam<String>(name, String.class,
-                description, null, Parameter.OPTIONS, options);
+                description, "strict", Parameter.OPTIONS, options);
     }
 
     /**
