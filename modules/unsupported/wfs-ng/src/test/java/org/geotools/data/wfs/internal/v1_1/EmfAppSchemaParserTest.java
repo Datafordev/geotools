@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.xml.namespace.QName;
 
+import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.test.TestData;
@@ -57,8 +58,8 @@ public class EmfAppSchemaParserTest {
      */
     @Test
     public void testParseGeoServerSimpleFeatureType() throws IOException {
-        final QName featureTypeName = DataTestSupport.GEOS_STATES.TYPENAME;
-        final String schemaFileName = DataTestSupport.GEOS_STATES.SCHEMA;
+        final QName featureTypeName = WFSTestData.GEOS_STATES.TYPENAME;
+        final String schemaFileName = WFSTestData.GEOS_STATES.SCHEMA;
         final URL schemaLocation = TestData.getResource(this, schemaFileName);
         final int expectedAttributeCount = 23;
 
@@ -71,8 +72,8 @@ public class EmfAppSchemaParserTest {
 
     @Test
     public void testParseCubeWerx_GML_Level1_FeatureType() throws IOException {
-        final QName featureTypeName = DataTestSupport.CUBEWERX_GOVUNITCE.TYPENAME;
-        final String schemaFileName = DataTestSupport.CUBEWERX_GOVUNITCE.SCHEMA;
+        final QName featureTypeName = WFSTestData.CUBEWERX_GOVUNITCE.TYPENAME;
+        final String schemaFileName = WFSTestData.CUBEWERX_GOVUNITCE.SCHEMA;
         final URL schemaLocation = TestData.getResource(this, schemaFileName);
         // Expect only the subset of simple attributes:
         // {typeAbbreviation:String,instanceName:String,officialDescription:String,

@@ -27,7 +27,7 @@ public class GetCapabilitiesRequest extends AbstractGetCapabilitiesRequest {
 
     @Override
     protected void initVersion() {
-        // do nothing, wfsStrategy is not set yet, this method is called by the supe constructor
+        // do nothing, wfsStrategy is not set yet, this method is called by the super constructor
     }
 
     @Override

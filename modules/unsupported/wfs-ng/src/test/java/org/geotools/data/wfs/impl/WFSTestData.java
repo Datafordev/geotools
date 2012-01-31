@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.impl;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -31,16 +31,15 @@ import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.wfs.internal.GetCapabilitiesResponse;
+import org.geotools.data.wfs.internal.WFSConfig;
+import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.test.TestData;
 
-@SuppressWarnings("nls")
 /**
- * 
- *
- * @source $URL$
  */
-public class DataTestSupport {
+public class WFSTestData {
 
     /**
      * A class holding the type name and test data location for a feature type
@@ -49,32 +48,32 @@ public class DataTestSupport {
         /**
          * Location of a test data capabilities file
          */
-        final String CAPABILITIES;
+        public final String CAPABILITIES;
 
         /**
          * Location of a test DescribeFeatureType response for the given feature type
          */
-        final String SCHEMA;
+        public final String SCHEMA;
 
         /**
          * The type name, including namespace
          */
-        final QName TYPENAME;
+        public final QName TYPENAME;
 
         /**
          * The type name as referred in the capabilities (ej, "topp:states")
          */
-        final String FEATURETYPENAME;
+        public final String FEATURETYPENAME;
 
         /**
          * The FeatureType CRS as declared in the capabilities
          */
-        final String CRS;
+        public final String CRS;
 
         /**
          * Location of a sample GetFeature response for this feature type
          */
-        final String DATA;
+        public final String DATA;
 
         /**
          * @param folder
@@ -89,6 +88,7 @@ public class DataTestSupport {
          */
         TestDataType(final String folder, final QName qName, final String featureTypeName,
                 final String crs) {
+            
             TYPENAME = qName;
             FEATURETYPENAME = featureTypeName;
             CRS = crs;
@@ -152,10 +152,9 @@ public class DataTestSupport {
      * @param capabilitiesFileName
      *            the relative path under {@code test-data} for the file containing the
      *            WFS_Capabilities document.
-     * @throws IOException
      */
-    public <T extends WFSStrategy> T createTestProtocol(String capabilitiesFileName, T real)
-            throws IOException {
+    public static <T extends WFSStrategy> T createTestProtocol(String capabilitiesFileName, T real)
+            throws Exception {
         HTTPClient http = new SimpleHttpClient();
         return createTestProtocol(capabilitiesFileName, http, real);
     }
@@ -170,15 +169,20 @@ public class DataTestSupport {
      * @param capabilitiesFileName
      *            the relative path under {@code test-data} for the file containing the
      *            WFS_Capabilities document.
-     * @throws IOException
      */
-    public <T extends WFSStrategy> T createTestProtocol(String capabilitiesFileName,
-            HTTPClient http, T real) throws IOException {
+    public static <T extends WFSStrategy> T createTestProtocol(String capabilitiesFileName,
+            HTTPClient http, T real) throws Exception {
 
-        InputStream stream = TestData.openStream(DataTestSupport.class, capabilitiesFileName);
-        real.setHttpClient(http);
-        real.initFromCapabilities(stream);
+        InputStream stream = TestData.openStream(WFSTestData.class, capabilitiesFileName);
+        GetCapabilitiesResponse response = new GetCapabilitiesResponse(response(stream));
+        WFSGetCapabilities capabilities = response.getCapabilities();
+        real.setCapabilities(capabilities);
+        real.setConfig(new WFSConfig());
         return real;
+    }
+
+    private static HTTPResponse response(InputStream stream) throws IOException {
+        return new TestHttpResponse(null, null, stream);
     }
 
     public static class TestHTTPClient extends SimpleHttpClient {

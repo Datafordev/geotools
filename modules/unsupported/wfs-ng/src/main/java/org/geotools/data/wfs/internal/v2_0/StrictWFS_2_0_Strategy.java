@@ -15,7 +15,7 @@
  *    Lesser General Public License for more details.
  */
 package org.geotools.data.wfs.internal.v2_0;
-
+import static org.geotools.data.wfs.internal.HttpMethod.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
@@ -100,7 +100,7 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
 
     @Override
     public WFSServiceInfo getServiceInfo() {
-        URL getCapsUrl = getOperationURL(WFSOperationType.GET_CAPABILITIES, false);
+        URL getCapsUrl = getOperationURL(WFSOperationType.GET_CAPABILITIES, GET);
         return new Capabilities200ServiceInfo("http://schemas.opengis.net/wfs/2.0/wfs.xsd",
                 getCapsUrl, capabilities);
     }

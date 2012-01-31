@@ -16,47 +16,29 @@
  */
 package org.geotools.data.wfs.impl;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
 import java.net.Authenticator;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.geotools.data.AbstractDataStoreFactory;
-import org.geotools.data.DataSourceException;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFactorySpi;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Parameter;
 import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.SimpleHttpClient;
-import org.geotools.data.wfs.internal.URIs;
-import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.ows.ServiceException;
-import org.geotools.util.Version;
-import org.geotools.util.logging.Logging;
 import org.geotools.xml.XMLHandlerHints;
-import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 /**
  * A {@link DataStoreFactorySpi} to connect to a Web Feature Service.
@@ -105,7 +87,6 @@ import org.xml.sax.SAXException;
  */
 @SuppressWarnings({ "unchecked", "nls" })
 public class WFSDataStoreFactory extends AbstractDataStoreFactory {
-    private static final Logger logger = Logging.getLogger("org.geotools.data.wfs");
 
     /**
      * A {@link Param} subclass that allows to provide a default value to the lookUp method.
@@ -411,17 +392,21 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * 
      * @throws UnsupportedOperationException
      *             always, as this operation is not applicable to WFS.
-     * @see org.geotools.data.DataStoreFactorySpi#createNewDataStore(java.util.Map)
      */
+    @Override
     public DataStore createNewDataStore(final Map<String, Serializable> params) throws IOException {
         throw new UnsupportedOperationException("Operation not applicable to a WFS service");
     }
 
-    /**
-     * @see org.geotools.data.DataStoreFactorySpi#getDescription()
-     */
+    @Override
+    public String getDisplayName() {
+        return "Web Feature Server (NG)";
+    }
+
+    @Override
     public String getDescription() {
-        return "The WFSDataStore represents a connection to a Web Feature Server. This connection provides access to the Features published by the server, and the ability to perform transactions on the server (when supported / allowed).";
+        return "Provides access to the Features published a Web Feature Service, "
+                + "and the ability to perform transactions on the server (when supported / allowed).";
     }
 
     /**
@@ -429,6 +414,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * 
      * @see org.geotools.data.DataStoreFactorySpi#getParametersInfo()
      * @see #URL
+     * @see #NAMESPACE
      * @see #PROTOCOL
      * @see #USERNAME
      * @see #PASSWORD
@@ -437,7 +423,11 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * @see #TRY_GZIP
      * @see #LENIENT
      * @see #ENCODING
+     * @see #FILTER_COMPLIANCE
+     * @see #MAXFEATURES
+     * @see #WFS_STRATEGY
      */
+    @Override
     public Param[] getParametersInfo() {
         int length = parametersInfo.length;
         Param[] params = new Param[length];
@@ -450,19 +440,19 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * <p>
      * Rules are:
      * <ul>
-     * <li>the mandatory {@link #URL} is provided.
-     * <li>whether both {@link #USERNAME} and {@link #PASSWORD} are provided, or none.
+     * <li>The mandatory {@link #URL} is provided.
+     * <li>Either both {@link #USERNAME} and {@link #PASSWORD} are provided, or none.
      * </ul>
-     * Availability of the other optional parameters is not checked for existence.
      * </p>
-     * 
-     * @param params
-     *            non null map of datastore parameters.
-     * @see org.geotools.data.DataStoreFactorySpi#canProcess(java.util.Map)
      */
+    @Override
     public boolean canProcess(@SuppressWarnings("rawtypes") final Map params) {
-        if (params == null) {
-            return false; // throw new NullPointerException("params");
+        /*
+         * check required params exist and are of the correct type
+         */
+        boolean canProcess = super.canProcess(params);
+        if (!canProcess) {
+            return false;
         }
         try {
             URL url = (URL) URL.lookUp(params);
@@ -487,146 +477,4 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         return true;
     }
 
-    /**
-     * @see org.geotools.data.DataStoreFactorySpi#getDisplayName()
-     */
-    public String getDisplayName() {
-        return "Web Feature Server (NG)";
-    }
-
-    /**
-     * @return {@code true}, no extra or external requisites for datastore availability.
-     * @see org.geotools.data.DataStoreFactorySpi#isAvailable()
-     */
-    public boolean isAvailable() {
-        return true;
-    }
-
-    /**
-     * Creates a HTTP GET Method based WFS {@code GetCapabilities} request for the given protocol
-     * version.
-     * <p>
-     * If the query string in the {@code host} URL already contains a VERSION number, that version
-     * is <b>discarded</b>.
-     * </p>
-     * 
-     * @param host
-     *            non null URL from which to construct the WFS {@code GetCapabilities} request by
-     *            discarding the query string, if any, and appending the propper query string.
-     * @return
-     */
-    public static URL createGetCapabilitiesRequest(URL host, Version version) {
-        if (host == null) {
-            throw new NullPointerException("null url");
-        }
-        if (version == null) {
-            throw new NullPointerException("version");
-        }
-
-        Map<String, String> getCapsKvp = new HashMap<String, String>();
-        getCapsKvp.put("SERVICE", "WFS");
-        getCapsKvp.put("REQUEST", "GetCapabilities");
-        getCapsKvp.put("VERSION", version.toString());
-        String getcapsUrl;
-        try {
-            getcapsUrl = URIs.buildURL(host.toExternalForm(), getCapsKvp);
-            return new URL(getcapsUrl);
-        } catch (MalformedURLException e) {
-            logger.log(Level.WARNING, "Can't create GetCapabilities request from " + host, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Creates a HTTP GET Method based WFS {@code GetCapabilities} request.
-     * <p>
-     * If the query string in the {@code host} URL already contains a VERSION number, that version
-     * is used, otherwise the queried version will be 1.0.0.
-     * </p>
-     * <p>
-     * <b>NOTE</b> the default version will be 1.0.0 until the support for 1.1.0 gets stable enough
-     * for general use. If you want to use a 1.1.0 WFS you'll have to explicitly provide the
-     * VERSION=1.1.0 parameter in the GetCapabilities request meanwhile.
-     * </p>
-     * 
-     * @param host
-     *            non null URL pointing either to a base WFS service access point, or to a full
-     *            {@code GetCapabilities} request.
-     * @return
-     */
-    public static URL createGetCapabilitiesRequest(final URL host) {
-        if (host == null) {
-            throw new NullPointerException("url");
-        }
-
-        // final Version defaultVersion = Version.highest();
-
-        // We cannot use the highest vesion as the default yet
-        // since v1_1_0 does not implement a read/write datastore
-        // and is still having trouble with requests from
-        // different projections etc...
-        //
-        // this is a result of the udig code sprint QA run
-        final Version defaultVersion = Versions.v1_0_0;
-        // which version to use
-        Version requestVersion = defaultVersion;
-
-        final Map<String, String> params = URIs.parseQueryString(host.getQuery());
-
-        String request = params.get("REQUEST");
-        if ("GETCAPABILITIES".equals(request)) {
-            String version = params.get("VERSION");
-            if (version != null) {
-                requestVersion = Versions.find(version);
-                if (requestVersion == null) {
-                    requestVersion = defaultVersion;
-                }
-            }
-        }
-
-        return createGetCapabilitiesRequest(host, requestVersion);
-    }
-
-    /**
-     * Package visible to be overridden by unit test.
-     * 
-     * @param capabilitiesUrl
-     * @param tryGZIP
-     * @param auth
-     * @return
-     * @throws IOException
-     */
-    byte[] loadCapabilities(final URL capabilitiesUrl, HTTPClient http) throws IOException {
-        byte[] wfsCapabilitiesRawData;
-
-        HTTPResponse httpResponse = http.get(capabilitiesUrl);
-        InputStream inputStream = httpResponse.getResponseStream();
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buff = new byte[1024];
-        int readCount;
-        while ((readCount = inputStream.read(buff)) != -1) {
-            out.write(buff, 0, readCount);
-        }
-        wfsCapabilitiesRawData = out.toByteArray();
-        return wfsCapabilitiesRawData;
-    }
-
-    static Document parseDocument(InputStream inputStream) throws IOException, DataSourceException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setNamespaceAware(true);
-        DocumentBuilder documentBuilder;
-        try {
-            documentBuilder = dbf.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
-        }
-        Document document;
-        try {
-            document = documentBuilder.parse(inputStream);
-        } catch (SAXException e) {
-            throw new DataSourceException("Error parsing capabilities document", e);
-        }
-        return document;
-    }
 }

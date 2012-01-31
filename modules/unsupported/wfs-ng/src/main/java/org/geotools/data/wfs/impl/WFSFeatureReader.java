@@ -29,14 +29,6 @@ import org.opengis.feature.type.FeatureType;
 /**
  * Adapts a {@link GetFeatureParser} to the geotools {@link FeatureReader} interface, being the base
  * for all the data content related implementations in the WFS module.
- * 
- * @author Gabriel Roldan (TOPP)
- * @version $Id$
- * @since 2.5.x
- * @source $URL:
- *         http://gtsvn.refractions.net/trunk/modules/plugin/wfs/src/main/java/org/geotools/data
- *         /wfs/v1_1_0/WFSFeatureReader.java $
- * @see WFSDataStore#getFeatureReader(org.geotools.data.Query, org.geotools.data.Transaction)
  */
 class WFSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature> {
 
@@ -64,7 +56,6 @@ class WFSFeatureReader implements FeatureReader<SimpleFeatureType, SimpleFeature
      * @see FeatureReader#close()
      */
     public void close() throws IOException {
-        // System.err.println("Closing WFSFeatureReader for " + featureType.getName());
         final GetFeatureParser parser = this.parser;
         this.parser = null;
         this.next = null;

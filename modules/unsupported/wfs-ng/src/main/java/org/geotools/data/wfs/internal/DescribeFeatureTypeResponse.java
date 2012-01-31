@@ -16,9 +16,9 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
     private FeatureType parsed;
 
     public DescribeFeatureTypeResponse(final DescribeFeatureTypeRequest request,
-            final HTTPResponse httpResponse, InputStream in) throws ServiceException, IOException {
+            final HTTPResponse httpResponse) throws ServiceException, IOException {
 
-        super(request, httpResponse, in);
+        super(request, httpResponse);
 
         final WFSStrategy strategy = request.getStrategy();
         try {

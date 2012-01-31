@@ -145,20 +145,7 @@ public class WFSDataStoreFactoryTest {
     }
 
     private void testCreateDataStore_WFS_1_1_0(final String capabilitiesFile) throws IOException {
-        // override caps loading not to set up an http connection at all but to
-        // load the test file
-        final WFSDataStoreFactory dsf = new WFSDataStoreFactory() {
-            @Override
-            byte[] loadCapabilities(final URL capabilitiesUrl, HTTPClient htp) throws IOException {
-                InputStream in = capabilitiesUrl.openStream();
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                int aByte;
-                while ((aByte = in.read()) != -1) {
-                    out.write(aByte);
-                }
-                return out.toByteArray();
-            }
-        };
+
         Map<String, Serializable> params = new HashMap<String, Serializable>();
         final URL capabilitiesUrl = TestData.getResource(this, capabilitiesFile);
         if (capabilitiesUrl == null) {
@@ -170,25 +157,4 @@ public class WFSDataStoreFactoryTest {
         assertTrue(dataStore instanceof WFSContentDataStore);
     }
 
-    @SuppressWarnings("nls")
-    @Test
-    public void testCreateCapabilities() throws MalformedURLException, UnsupportedEncodingException {
-        final String parametrizedUrl = "https://excise.pyr.ec.gc.ca:8081/cgi-bin/mapserv.exe?map=/LocalApps/Mapsurfer/PYRWQMP.map&service=WFS&version=1.0.0&request=GetCapabilities";
-        URL url = WFSDataStoreFactory.createGetCapabilitiesRequest(new URL(parametrizedUrl));
-        assertNotNull(url);
-        assertEquals("https", url.getProtocol());
-        assertEquals("excise.pyr.ec.gc.ca", url.getHost());
-        assertEquals(8081, url.getPort());
-        assertEquals("/cgi-bin/mapserv.exe", url.getPath());
-
-        String query = url.getQuery();
-        assertNotNull(query);
-
-        Map<String, String> kvpMap = URIs.parseQueryString(url.getQuery());
-
-        assertEquals("/LocalApps/Mapsurfer/PYRWQMP.map", kvpMap.get("MAP"));
-        assertEquals("GetCapabilities", kvpMap.get("REQUEST"));
-        assertEquals("WFS", kvpMap.get("SERVICE"));
-        assertEquals("1.0.0", kvpMap.get("VERSION"));
-    }
 }

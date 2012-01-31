@@ -41,6 +41,7 @@ import org.geotools.data.ResourceInfo;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
@@ -77,7 +78,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
      */
     protected static WFSDataStore wfs = null;
 
-    protected final DataTestSupport.TestDataType testType;
+    protected final WFSTestData.TestDataType testType;
 
     protected final String defaultGeometryName;
 
@@ -91,7 +92,7 @@ public abstract class AbstractWfsDataStoreOnlineTest {
 
     private final Class geometryType;
 
-    public AbstractWfsDataStoreOnlineTest(String serverURL, DataTestSupport.TestDataType testType,
+    public AbstractWfsDataStoreOnlineTest(String serverURL, WFSTestData.TestDataType testType,
             String defaultGeometryName, Class geometryType, int featureCount, Id fidFilter) {
         this.SERVER_URL = serverURL;
         this.testType = testType;

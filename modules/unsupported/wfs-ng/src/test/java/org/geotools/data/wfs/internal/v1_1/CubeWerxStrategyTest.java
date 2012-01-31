@@ -32,6 +32,7 @@ import net.opengis.wfs.GetFeatureType;
 import net.opengis.wfs.ResultTypeType;
 
 import org.geotools.data.Query;
+import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.v1_1.CubeWerxStrategy;
@@ -62,7 +63,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
  * 
  * @source $URL$
  */
-public class CubeWerxStrategyTest extends DataTestSupport {
+public class CubeWerxStrategyTest extends WFSTestData {
 
     private static CubeWerxStrategy strategy;
 

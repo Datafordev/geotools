@@ -260,27 +260,25 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     }
 
     /**
-     * @see WFSStrategy#supportsOperation(WFSOperationType, boolean)
+     * @see WFSStrategy#supportsOperation
      */
     @Override
-    public boolean supportsOperation(WFSOperationType operation, boolean post) {
-        if (post && !supportsPost()) {
+    public boolean supportsOperation(WFSOperationType operation, HttpMethod method) {
+        if (POST == method && !supportsPost()) {
             return false;
         }
-        if (!post && !supportsGet()) {
+        if (GET == method && !supportsGet()) {
             return false;
         }
 
-        HttpMethod method = post ? POST : GET;
         return null != getOperationURI(operation, method);
     }
 
     /**
-     * @see WFSStrategy#getOperationURL(WFSOperationType, boolean)
+     * @see WFSStrategy#getOperationURL
      */
     @Override
-    public URL getOperationURL(WFSOperationType operation, boolean post) {
-        HttpMethod method = post ? POST : GET;
+    public URL getOperationURL(WFSOperationType operation, HttpMethod method) {
         String href = getOperationURI(operation, method);
         if (href != null) {
             try {
@@ -627,7 +625,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             throw new UnsupportedOperationException();
         }
 
-        URL baseUrl = getOperationURL(operation, false);
+        URL baseUrl = getOperationURL(operation, GET);
 
         URL finalURL = URIs.buildURL(baseUrl, requestParams);
 

@@ -16,6 +16,7 @@
  */
 package org.geotools.data.wfs.internal.v1_1;
 
+import static org.geotools.data.wfs.internal.HttpMethod.*;
 import static org.geotools.data.wfs.internal.GetFeatureRequest.ResultType.RESULTS;
 
 import java.io.ByteArrayInputStream;
@@ -140,7 +141,7 @@ public class StrictWFS_1_1_Strategy extends AbstractWFSStrategy {
 
     @Override
     public WFSServiceInfo getServiceInfo() {
-        URL getCapsUrl = getOperationURL(WFSOperationType.GET_CAPABILITIES, false);
+        URL getCapsUrl = getOperationURL(WFSOperationType.GET_CAPABILITIES, GET);
         return new CapabilitiesServiceInfo("http://schemas.opengis.net/wfs/1.1.0/wfs.xsd",
                 getCapsUrl, capabilities);
     }
@@ -280,8 +281,6 @@ public class StrictWFS_1_1_Strategy extends AbstractWFSStrategy {
             outputFormats.addAll(supportedByAllFeatureTypes);
         return outputFormats;
     }
-
-
 
     @SuppressWarnings("unchecked")
     @Override

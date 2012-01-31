@@ -32,6 +32,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.geotools.data.Query;
 import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.v1_1.GeoServerPre200Strategy;
@@ -75,7 +76,7 @@ import org.xml.sax.SAXException;
  * @source $URL$
  */
 @SuppressWarnings("nls")
-public class WFS_1_1_0_ProtocolTest extends DataTestSupport {
+public class WFS_1_1_0_ProtocolTest extends WFSTestData {
 
     /**
      * @throws java.lang.Exception

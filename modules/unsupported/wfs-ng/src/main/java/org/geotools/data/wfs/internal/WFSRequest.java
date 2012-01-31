@@ -1,5 +1,6 @@
 package org.geotools.data.wfs.internal;
 
+import static org.geotools.data.wfs.internal.HttpMethod.*;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
 
 import java.io.IOException;
@@ -30,9 +31,9 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         this.strategy = strategy;
 
         if (!config.isPreferPostOverGet()) {
-            this.doPost = !strategy.supportsOperation(operation, false);
+            this.doPost = !strategy.supportsOperation(operation, GET);
         } else {
-            this.doPost = strategy.supportsOperation(operation, true);
+            this.doPost = strategy.supportsOperation(operation, POST);
         }
     }
 
@@ -43,19 +44,19 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
     private static URL url(final WFSOperationType operation, final WFSConfig config,
             final WFSStrategy strategy) {
 
-        if (!strategy.supportsOperation(operation, false)
-                && !strategy.supportsOperation(operation, true)) {
+        if (!strategy.supportsOperation(operation, GET)
+                && !strategy.supportsOperation(operation, POST)) {
             throw new IllegalArgumentException("WFS doesn't support " + operation.getName());
         }
 
-        boolean post;
+        HttpMethod method;
         if (!config.isPreferPostOverGet()) {
-            post = !strategy.supportsOperation(GET_FEATURE, false);
+            method = !strategy.supportsOperation(GET_FEATURE, GET) ? POST : GET;
         } else {
-            post = strategy.supportsOperation(GET_FEATURE, true);
+            method = strategy.supportsOperation(GET_FEATURE, POST) ? POST : GET;
         }
 
-        URL targetUrl = strategy.getOperationURL(WFSOperationType.GET_FEATURE, post);
+        URL targetUrl = strategy.getOperationURL(WFSOperationType.GET_FEATURE, method);
 
         return targetUrl;
     }

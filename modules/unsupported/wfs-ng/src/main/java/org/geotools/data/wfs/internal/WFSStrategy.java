@@ -112,7 +112,8 @@ public abstract class WFSStrategy extends Specification {
      *            the HTTP method to check if the server supports for the given operation
      * @return {@code true} if the operation/method is supported as stated in the WFS capabilities
      */
-    public abstract boolean supportsOperation(final WFSOperationType operation, final boolean post);
+    public abstract boolean supportsOperation(final WFSOperationType operation,
+            final HttpMethod method);
 
     /**
      * Returns the URL for the given operation name and HTTP protocol as stated in the WFS
@@ -126,7 +127,7 @@ public abstract class WFSStrategy extends Specification {
      *         capabilities does not declare an access point for the operation/method combination
      * @see #supportsOperation(WFSOperationType, HttpMethod)
      */
-    public abstract URL getOperationURL(final WFSOperationType operation, final boolean post);
+    public abstract URL getOperationURL(final WFSOperationType operation, final HttpMethod method);
 
     /**
      * Returns the union of the default CRS and the other supported CRS's of the given feature type

@@ -63,13 +63,13 @@ public class WFSStrategyAdapter extends WFSStrategy {
     }
 
     @Override
-    public boolean supportsOperation(WFSOperationType operation, boolean post) {
-        return adaptee.supportsOperation(operation, post);
+    public boolean supportsOperation(WFSOperationType operation, HttpMethod method) {
+        return adaptee.supportsOperation(operation, method);
     }
 
     @Override
-    public URL getOperationURL(WFSOperationType operation, boolean post) {
-        return adaptee.getOperationURL(operation, post);
+    public URL getOperationURL(WFSOperationType operation, HttpMethod method) {
+        return adaptee.getOperationURL(operation, method);
     }
 
     @Override
