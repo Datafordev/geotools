@@ -28,6 +28,7 @@ import org.geotools.data.ows.Specification;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.util.Version;
+import org.geotools.xml.Configuration;
 import org.opengis.filter.Filter;
 import org.opengis.filter.capability.FilterCapabilities;
 
@@ -51,6 +52,10 @@ public abstract class WFSStrategy extends Specification {
     public abstract void setCapabilities(WFSGetCapabilities capabilities);
 
     public abstract void setConfig(WFSConfig config);
+
+    public abstract Configuration getFilterConfiguration();
+
+    public abstract Configuration getWfsConfiguration();
 
     /**
      * Returns the feature type metadata object parsed from the capabilities document for the given

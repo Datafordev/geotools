@@ -12,11 +12,4 @@ public class DescribeFeatureTypeRequest extends WFSRequest {
         super(DESCRIBE_FEATURETYPE, config, strategy);
     }
 
-    public void setTypeName(QName typeName) {
-        this.typeName = typeName;
-    }
-
-    public QName getTypeName() {
-        return typeName;
-    }
 }

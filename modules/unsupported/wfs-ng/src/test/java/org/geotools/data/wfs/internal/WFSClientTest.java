@@ -5,7 +5,10 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Set;
 import java.util.logging.Level;
+
+import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.SimpleHttpClient;
@@ -32,9 +35,9 @@ public class WFSClientTest {
     public void tearDown() throws Exception {
     }
 
-    private URL url(String resource) {
+    private URL url(String capabilitiesResource) {
 
-        String absoluteResouce = "/org/geotools/data/wfs/impl/test-data/" + resource;
+        String absoluteResouce = "/org/geotools/data/wfs/impl/test-data/" + capabilitiesResource;
 
         URL capabilitiesURL = getClass().getResource(absoluteResouce);
 
@@ -45,13 +48,18 @@ public class WFSClientTest {
     private WFSClient testInit(String resource, String expectedVersion) throws IOException,
             ServiceException {
 
+        WFSClient client = newClient(resource);
+        WFSGetCapabilities capabilities = client.getCapabilities();
+
+        Assert.assertEquals(expectedVersion, capabilities.getVersion());
+        return client;
+    }
+
+    private WFSClient newClient(String resource) throws IOException, ServiceException {
         URL capabilitiesURL = url(resource);
         HTTPClient httpClient = new SimpleHttpClient();
 
         WFSClient client = new WFSClient(capabilitiesURL, httpClient, config);
-        WFSGetCapabilities capabilities = client.getCapabilities();
-
-        Assert.assertEquals(expectedVersion, capabilities.getVersion());
         return client;
     }
 
@@ -117,5 +125,33 @@ public class WFSClientTest {
         checkStrategy("Ionic_unknown/1.1.0/GetCapabilities.xml", "1.1.0", IonicStrategy.class);
         checkStrategy("MapServer_5.6.5/1.1.0/GetCapabilities.xml", "1.1.0", strict11);
         checkStrategy("CubeWerx_nsdi/1.1.0/GetCapabilities.xml", "1.1.0", CubeWerxStrategy.class);
+    }
+
+    @Test
+    public void testGetRemoteTypeNames() throws Exception {
+        testGetRemoteTypeNames("PCIGeoMatics_unknown/1.0.0/GetCapabilities.xml", 5);
+        testGetRemoteTypeNames("MapServer_5.6.5/1.0.0/GetCapabilities.xml", 2);
+        testGetRemoteTypeNames("Ionic_unknown/1.0.0/GetCapabilities.xml", 7);
+        testGetRemoteTypeNames("Galdos_unknown/1.0.0/GetCapabilities.xml", 48);
+        testGetRemoteTypeNames("CubeWerx_4.12.6/1.0.0/GetCapabilities.xml", 15);
+
+        testGetRemoteTypeNames("GeoServer_1.7.x/1.1.0/GetCapabilities.xml", 3);
+        testGetRemoteTypeNames("CubeWerx_4.12.6/1.1.0/GetCapabilities.xml", 15);
+        testGetRemoteTypeNames("CubeWerx_4.7.5/1.1.0/GetCapabilities.xml", 1);
+        testGetRemoteTypeNames("CubeWerx_5.6.3/1.1.0/GetCapabilities.xml", 5);
+        testGetRemoteTypeNames("Deegree_unknown/1.1.0/GetCapabilities.xml", 15);
+        testGetRemoteTypeNames("Ionic_unknown/1.1.0/GetCapabilities.xml", 1);
+        testGetRemoteTypeNames("MapServer_5.6.5/1.1.0/GetCapabilities.xml", 2);
+        testGetRemoteTypeNames("CubeWerx_nsdi/1.1.0/GetCapabilities.xml", 14);
+    }
+
+    private void testGetRemoteTypeNames(String capabilitiesLocation, int typeCount)
+            throws Exception {
+
+        WFSClient client = newClient(capabilitiesLocation);
+        Set<QName> remoteTypeNames = client.getRemoteTypeNames();
+        assertNotNull(remoteTypeNames);
+        assertEquals(capabilitiesLocation, typeCount, remoteTypeNames.size());
+
     }
 }

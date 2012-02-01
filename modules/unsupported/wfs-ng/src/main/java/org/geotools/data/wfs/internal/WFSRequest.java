@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.Properties;
 
+import javax.xml.namespace.QName;
+
 import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.AbstractRequest;
 import org.geotools.data.ows.HTTPResponse;
@@ -24,7 +26,11 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     private final boolean doPost;
 
-    public WFSRequest(WFSOperationType operation, final WFSConfig config, final WFSStrategy strategy) {
+    private QName typeName;
+
+    public WFSRequest(final WFSOperationType operation, final WFSConfig config,
+            final WFSStrategy strategy) {
+
         super(url(operation, config, strategy), (Properties) null);
         this.operation = operation;
         this.config = config;
@@ -35,6 +41,19 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         } else {
             this.doPost = strategy.supportsOperation(operation, POST);
         }
+
+        setProperty(SERVICE, "WFS");
+        setProperty(VERSION, strategy.getVersion());
+        setProperty(REQUEST, operation.getName());
+
+    }
+
+    public void setTypeName(QName typeName) {
+        this.typeName = typeName;
+    }
+
+    public QName getTypeName() {
+        return typeName;
     }
 
     public WFSStrategy getStrategy() {
@@ -72,17 +91,14 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     @Override
     protected void initService() {
-        setProperty(SERVICE, "WFS");
     }
 
     @Override
     protected void initVersion() {
-        setProperty(VERSION, strategy.getVersion());
     }
 
     @Override
     protected void initRequest() {
-        setProperty(REQUEST, operation.getName());
     }
 
     @Override

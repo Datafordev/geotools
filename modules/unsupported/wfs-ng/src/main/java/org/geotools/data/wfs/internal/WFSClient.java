@@ -102,14 +102,14 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
      */
     private WFSStrategy determineCorrectStrategy() {
 
-        final Version version = new Version(capabilities.getVersion());
+        final Version capsVersion = new Version(capabilities.getVersion());
         Document capabilitiesDoc = capabilities.getRawDocument();
 
         final String override = config.getWfsStrategy();
 
         WFSStrategy strategy = null;
         // override
-        if (override != null) {
+        if (!"auto".equals(override)) {
             if (override.equalsIgnoreCase("geoserver")) {
                 strategy = new GeoServerPre200Strategy();
             } else if (override.equalsIgnoreCase("cubewerx")) {
@@ -167,14 +167,14 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
 
         if (strategy == null) {
             // use fallback strategy
-            if (Versions.v1_0_0.equals(version)) {
+            if (Versions.v1_0_0.equals(capsVersion)) {
                 strategy = new StrictWFS_1_x_Strategy(Versions.v1_0_0);
-            } else if (Versions.v1_1_0.equals(version)) {
+            } else if (Versions.v1_1_0.equals(capsVersion)) {
                 strategy = new StrictWFS_1_x_Strategy(Versions.v1_1_0);
-            } else if (Versions.v2_0_0.equals(version)) {
+            } else if (Versions.v2_0_0.equals(capsVersion)) {
                 strategy = new StrictWFS_2_0_Strategy();
             } else {
-                throw new IllegalArgumentException("Unsupported version: " + version);
+                throw new IllegalArgumentException("Unsupported version: " + capsVersion);
             }
         }
         LOGGER.info("Using WFS Strategy: " + strategy.getClass().getName());

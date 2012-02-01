@@ -166,7 +166,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
                 + "WFS functionality. Set this value to Boolean.TRUE for POST, Boolean.FALSE "
                 + "for GET or NULL for AUTO";
         parametersInfo[1] = PROTOCOL = new WFSFactoryParam<Boolean>(name, Boolean.class,
-                description, null);
+                description, Boolean.TRUE);
     }
 
     /**
@@ -321,10 +321,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         String name = "WFSDataStoreFactory:WFS_STRATEGY";
         String description = "Override wfs stragegy with either cubwerx, ionic, mapserver"
                 + ", geoserver, or nonstrict strategy.";
-        List<String> options = Arrays.asList(new String[] { "strict", "nonstrict", "mapserver",
-                "geoserver", "cubewerx", "ionic" });
+        List<String> options = Arrays.asList(new String[] { "auto", "strict", "nonstrict",
+                "mapserver", "geoserver", "cubewerx", "ionic" });
         parametersInfo[11] = WFS_STRATEGY = new WFSFactoryParam<String>(name, String.class,
-                description, "strict", Parameter.OPTIONS, options);
+                description, "auto", Parameter.OPTIONS, options);
     }
 
     /**
@@ -351,7 +351,8 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      * @see org.geotools.data.DataStoreFactorySpi#createDataStore(java.util.Map)
      */
     @Override
-    public DataStore createDataStore(final Map<String, Serializable> params) throws IOException {
+    public WFSContentDataStore createDataStore(final Map<String, Serializable> params)
+            throws IOException {
 
         final WFSConfig config = WFSConfig.fromParams(params);
 

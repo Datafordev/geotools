@@ -18,14 +18,6 @@ package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
 
-import java.io.IOException;
-import java.net.URL;
-
-import javax.xml.namespace.QName;
-
-import org.geotools.data.ows.HTTPResponse;
-import org.geotools.ows.ServiceException;
-import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.Filter;
 import org.opengis.filter.sort.SortBy;
@@ -37,8 +29,6 @@ public class GetFeatureRequest extends WFSRequest {
     public enum ResultType {
         RESULTS, HITS;
     }
-
-    private QName typeName;
 
     private String[] propertyNames;
 
@@ -74,21 +64,6 @@ public class GetFeatureRequest extends WFSRequest {
     // setSortBy(query.getSortBy());
     // setSrsName(query.getSrsName());
     // }
-
-    /**
-     * @return the typeName
-     */
-    public QName getTypeName() {
-        return typeName;
-    }
-
-    /**
-     * @param typeName
-     *            the typeName to set
-     */
-    public void setTypeName(QName typeName) {
-        this.typeName = typeName;
-    }
 
     public String[] getPropertyNames() {
         return propertyNames;

@@ -180,7 +180,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
         String srsName = null;
         CoordinateReferenceSystem crs = query.getCoordinateSystem();
         if (null != crs) {
-
+            System.err.println("TODO: don't forget to set the query CRS");
         }
         request.setSrsName(srsName);
         return request;
@@ -198,16 +198,15 @@ class WFSContentFeatureSource extends ContentFeatureSource {
             return new EmptyFeatureReader<SimpleFeatureType, SimpleFeature>(getSchema());
         }
 
-        GetFeatureRequest request = createGetFeature(query, ResultType.HITS);
+        GetFeatureRequest request = createGetFeature(localQuery, ResultType.HITS);
 
         final SimpleFeatureType contentType = getQueryType(localQuery);
         request.setQueryType(contentType);
 
         GetFeatureResponse response = client.issueRequest(request);
 
-        GeometryFactory geometryFactory = findGeometryFactory(query.getHints());
+        GeometryFactory geometryFactory = findGeometryFactory(localQuery.getHints());
         GetFeatureParser features = response.getSimpleFeatures(geometryFactory);
-
 
         FeatureReader<SimpleFeatureType, SimpleFeature> reader;
         reader = new WFSFeatureReader(features);

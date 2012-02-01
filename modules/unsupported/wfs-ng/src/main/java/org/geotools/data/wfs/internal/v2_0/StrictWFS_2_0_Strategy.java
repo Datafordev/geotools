@@ -15,6 +15,7 @@
  *    Lesser General Public License for more details.
  */
 package org.geotools.data.wfs.internal.v2_0;
+
 import static org.geotools.data.wfs.internal.HttpMethod.*;
 import java.net.URI;
 import java.net.URL;
@@ -42,6 +43,7 @@ import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.util.Version;
+import org.geotools.wfs.v2_0.WFS;
 import org.geotools.xml.Configuration;
 import org.opengis.filter.capability.FilterCapabilities;
 
@@ -74,6 +76,12 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
     @Override
     protected Configuration getWfsConfiguration() {
         return WFS_2_0_CONFIGURATION;
+    }
+
+
+    @Override
+    protected QName getOperationName(WFSOperationType operation) {
+        return new QName(WFS.NAMESPACE, operation.getName());
     }
 
     /*---------------------------------------------------------------------

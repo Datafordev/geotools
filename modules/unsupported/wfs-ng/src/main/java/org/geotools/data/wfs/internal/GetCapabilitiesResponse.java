@@ -91,6 +91,9 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
                 }
             }
 
+            if (null == parsedCapabilities) {
+                throw new IllegalStateException("Unable to parse GetCapabilities document");
+            }
             // if (object instanceof ServiceException) {
             // throw (ServiceException) object;
             // }

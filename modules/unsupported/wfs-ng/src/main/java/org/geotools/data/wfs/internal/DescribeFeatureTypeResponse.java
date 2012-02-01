@@ -1,14 +1,24 @@
 package org.geotools.data.wfs.internal;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 
+import javax.xml.namespace.QName;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.TeeOutputStream;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.ows.HTTPResponse;
-import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
+import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.ows.ServiceException;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.xml.Configuration;
 import org.opengis.feature.type.FeatureType;
-import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class DescribeFeatureTypeResponse extends WFSResponse {
@@ -21,30 +31,32 @@ public class DescribeFeatureTypeResponse extends WFSResponse {
         super(request, httpResponse);
 
         final WFSStrategy strategy = request.getStrategy();
+        final Configuration wfsConfiguration = strategy.getWfsConfiguration();
+        final QName remoteTypeName = request.getTypeName();
+        final FeatureTypeInfo featureTypeInfo = strategy.getFeatureTypeInfo(remoteTypeName);
+        final CoordinateReferenceSystem defaultCrs = featureTypeInfo.getCRS();
+
+        InputStream responseStream = httpResponse.getResponseStream();
         try {
-
-            final SimpleFeatureType featureType;
-            CoordinateReferenceSystem crs = getFeatureTypeCRS(remoteTypeName);
-            featureType = client.issueDescribeFeatureTypeGET(remoteTypeName, crs);
-
-            // adapt the feature type name
-            SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-            builder.init(featureType);
-            builder.setName(remoteTypeName);
-            String namespaceOverride = entry.getName().getNamespaceURI();
-            if (namespaceOverride != null) {
-                builder.setNamespaceURI(namespaceOverride);
+            File tmp = File.createTempFile(remoteTypeName.getLocalPart(), ".xsd");
+            OutputStream output = new BufferedOutputStream(new FileOutputStream(tmp));
+            output = new TeeOutputStream(output, System.out);
+            try {
+                IOUtils.copy(responseStream, output);
+            } finally {
+                output.flush();
+                IOUtils.closeQuietly(output);
             }
-            GeometryDescriptor defaultGeometry = featureType.getGeometryDescriptor();
-            if (defaultGeometry != null) {
-                builder.setDefaultGeometry(defaultGeometry.getLocalName());
-                builder.setCRS(defaultGeometry.getCoordinateReferenceSystem());
+            try {
+                URL schemaLocation = tmp.toURI().toURL();
+                this.parsed = EmfAppSchemaParser.parse(wfsConfiguration, remoteTypeName,
+                        schemaLocation, defaultCrs);
+            } finally {
+                tmp.delete();
             }
-            final SimpleFeatureType adaptedFeatureType = builder.buildFeatureType();
-            return adaptedFeatureType;
-
         } finally {
-            dispose();
+            responseStream.close();
+            httpResponse.dispose();
         }
 
     }

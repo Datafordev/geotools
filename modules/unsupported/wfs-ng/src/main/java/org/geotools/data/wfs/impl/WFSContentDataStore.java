@@ -74,11 +74,8 @@ class WFSContentDataStore extends ContentDataStore {
 
         final FeatureType remoteFeatureType = getRemoteFeatureType(remoteTypeName);
         final SimpleFeatureType remoteSimpleFeatureType;
-        if (remoteFeatureType instanceof SimpleFeature) {
-            remoteSimpleFeatureType = (SimpleFeatureType) remoteFeatureType;
-        } else {
-            remoteSimpleFeatureType = EmfAppSchemaParser.toSimpleFeatureType(remoteFeatureType);
-        }
+        // remove GML properties
+        remoteSimpleFeatureType = EmfAppSchemaParser.toSimpleFeatureType(remoteFeatureType);
 
         return remoteSimpleFeatureType;
     }

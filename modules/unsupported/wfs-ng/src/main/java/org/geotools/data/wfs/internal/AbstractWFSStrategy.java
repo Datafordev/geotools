@@ -18,6 +18,7 @@ package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.HttpMethod.POST;
+import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,9 +41,9 @@ import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
+import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.filter.Capabilities;
-import org.geotools.filter.v1_1.OGC;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
 import org.geotools.util.Version;
 import org.geotools.xml.Configuration;
@@ -117,9 +118,14 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     /*
      * This class' extension points
      */
-    protected abstract Configuration getFilterConfiguration();
 
-    protected abstract Configuration getWfsConfiguration();
+    protected abstract QName getOperationName(WFSOperationType operation);
+
+    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
+            throws IOException;
+
+    protected abstract EObject createDescribeFeatureTypeRequestPost(
+            DescribeFeatureTypeRequest request);
 
     /*
      * WFSStrategy methods
@@ -233,15 +239,24 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      * appropriate for the {@code FILTER} parameter in a GetFeature request.
      */
     protected String encodeGetFeatureGetFilter(final Filter filter) throws IOException {
-        Configuration filterConfig = getFilterConfiguration();
+
+        final Configuration filterConfig = getFilterConfiguration();
+        final QName encName;
+
+        if (filterConfig instanceof org.geotools.filter.v1_0.OGCConfiguration
+                || filterConfig instanceof org.geotools.filter.v1_1.OGCConfiguration) {
+            encName = org.geotools.filter.v1_0.OGC.Filter;
+        } else {
+            encName = org.geotools.filter.v2_0.FES.Filter;
+        }
+
         Encoder encoder = new Encoder(filterConfig);
         // do not write the xml declaration
         encoder.setOmitXMLDeclaration(true);
         encoder.setEncoding(Charset.forName("UTF-8"));
 
-        OutputStream out = new ByteArrayOutputStream();
-        encoder.encode(filter, OGC.Filter, out);
-        String encoded = out.toString();
+        String encoded = encoder.encodeAsString(filter, encName);
+
         encoded = encoded.replaceAll("\n", "");
         return encoded;
     }
@@ -471,7 +486,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      * 
      * @throws IOException
      */
-    public void encode(final QName rootName, final EObject request, final OutputStream out)
+    public void encode(final WFSRequest request, final EObject requestObject, final OutputStream out)
             throws IOException {
 
         final Configuration configuration = getWfsConfiguration();
@@ -482,7 +497,20 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         Encoder encoder = new Encoder(configuration);
         encoder.setEncoding(charset);
         encoder.setIndentSize(1);
-        encoder.encode(request, rootName, out);
+
+        final QName opName = getOperationName(request.getOperation());
+
+        QName typeName = request.getTypeName();
+        if (typeName != null && !XMLConstants.NULL_NS_URI.equals(typeName.getNamespaceURI())) {
+            String prefix = typeName.getPrefix();
+            if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+                prefix = "type_ns";
+            }
+            String namespaceURI = typeName.getNamespaceURI();
+            encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
+        }
+
+        encoder.encode(requestObject, opName, new TeeOutputStream(out, System.out));
     }
 
     //
@@ -645,7 +673,16 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
     @Override
     public String getPostContentType(WFSRequest wfsRequest) {
-        throw new UnsupportedOperationException();
+
+        final WFSOperationType operation = wfsRequest.getOperation();
+
+        if (DESCRIBE_FEATURETYPE.equals(operation)) {
+            return "text/xml";
+        }
+
+        String defaultOutputFormat = getDefaultOutputFormat(operation);
+
+        return defaultOutputFormat;
     }
 
     @Override
@@ -656,18 +693,19 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         case GET_FEATURE:
             requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
             break;
+        case DESCRIBE_FEATURETYPE:
+            requestObject = createDescribeFeatureTypeRequestPost((DescribeFeatureTypeRequest) request);
+            break;
         default:
             throw new UnsupportedOperationException("not yet implemented for "
                     + request.getOperation());
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        encode(org.geotools.wfs.WFS.GetFeature, requestObject, out);
+
+        encode(request, requestObject, out);
 
         return new ByteArrayInputStream(out.toByteArray());
 
     }
-
-    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
-            throws IOException;
 }

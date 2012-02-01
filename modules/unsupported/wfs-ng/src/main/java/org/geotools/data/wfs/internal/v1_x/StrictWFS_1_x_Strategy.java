@@ -43,6 +43,7 @@ import net.opengis.ows10.DomainType;
 import net.opengis.ows10.OperationType;
 import net.opengis.ows10.OperationsMetadataType;
 import net.opengis.ows10.RequestMethodType;
+import net.opengis.wfs.DescribeFeatureTypeType;
 import net.opengis.wfs.FeatureTypeListType;
 import net.opengis.wfs.FeatureTypeType;
 import net.opengis.wfs.GetFeatureType;
@@ -51,11 +52,14 @@ import net.opengis.wfs.ResultTypeType;
 import net.opengis.wfs.WFSCapabilitiesType;
 import net.opengis.wfs.WfsFactory;
 
+import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
+import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.HttpMethod;
 import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSExtensions;
@@ -65,6 +69,7 @@ import org.geotools.data.wfs.internal.WFSResponseFactory;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.factory.GeoTools;
 import org.geotools.util.Version;
+import org.geotools.wfs.v1_0.WFS;
 import org.geotools.xml.Configuration;
 import org.opengis.filter.Filter;
 import org.opengis.filter.capability.FilterCapabilities;
@@ -103,21 +108,128 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
     /*---------------------------------------------------------------------
      * AbstractWFSStrategy methods
      * ---------------------------------------------------------------------*/
+
     @Override
-    protected Configuration getFilterConfiguration() {
-        return Versions.v1_0_0.equals(getServiceVersion()) ? FILTER_1_0_CONFIGURATION
-                : FILTER_1_1_CONFIGURATION;
+    protected QName getOperationName(WFSOperationType operation) {
+        return new QName(WFS.NAMESPACE, operation.getName());
+    }
+
+    /**
+     * @see org.geotools.data.wfs.internal.AbstractWFSStrategy#createGetFeatureRequestPost(org.geotools.data.wfs.internal.GetFeatureRequest)
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    protected GetFeatureType createGetFeatureRequestPost(GetFeatureRequest query)
+            throws IOException {
+
+        final QName typeName = query.getTypeName();
+        final FeatureTypeInfo featureTypeInfo = getFeatureTypeInfo(typeName);
+
+        final WfsFactory factory = WfsFactory.eINSTANCE;
+
+        GetFeatureType getFeature = factory.createGetFeatureType();
+        getFeature.setService("WFS");
+        getFeature.setVersion(getVersion());
+        getFeature.setOutputFormat(query.getOutputFormat());
+
+        getFeature
+                .setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());
+        Integer maxFeatures = query.getMaxFeatures();
+        if (maxFeatures != null) {
+            getFeature.setMaxFeatures(BigInteger.valueOf(maxFeatures.intValue()));
+        }
+
+        ResultType resultType = query.getResultType();
+        getFeature.setResultType(RESULTS == resultType ? ResultTypeType.RESULTS_LITERAL
+                : ResultTypeType.HITS_LITERAL);
+
+        QueryType wfsQuery = factory.createQueryType();
+        wfsQuery.setTypeName(Collections.singletonList(typeName));
+
+        final Filter supportedFilter;
+        final Filter unsupportedFilter;
+        {
+            final Filter filter = query.getFilter();
+            Filter[] splitFilters = splitFilters(typeName, filter);
+            supportedFilter = splitFilters[0];
+            unsupportedFilter = splitFilters[1];
+        }
+
+        query.setUnsupportedFilter(unsupportedFilter);
+
+        if (!Filter.INCLUDE.equals(supportedFilter)) {
+            wfsQuery.setFilter(supportedFilter);
+        }
+
+        String srsName = query.getSrsName();
+        if (null == srsName) {
+            srsName = featureTypeInfo.getDefaultSRS();
+        }
+        try {
+            wfsQuery.setSrsName(new URI(srsName));
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Can't create a URI from the query CRS: " + srsName, e);
+        }
+        String[] propertyNames = query.getPropertyNames();
+        boolean retrieveAllProperties = propertyNames == null;
+        if (!retrieveAllProperties) {
+            List<String> propertyName = wfsQuery.getPropertyName();
+            for (String propName : propertyNames) {
+                propertyName.add(propName);
+            }
+        }
+        SortBy[] sortByList = query.getSortBy();
+        if (sortByList != null) {
+            for (SortBy sortBy : sortByList) {
+                wfsQuery.getSortBy().add(sortBy);
+            }
+        }
+
+        getFeature.getQuery().add(wfsQuery);
+
+        return getFeature;
     }
 
     @Override
-    protected Configuration getWfsConfiguration() {
-        return Versions.v1_0_0.equals(getServiceVersion()) ? WFS_1_0_CONFIGURATION
-                : WFS_1_1_CONFIGURATION;
+    protected DescribeFeatureTypeType createDescribeFeatureTypeRequestPost(
+            DescribeFeatureTypeRequest request) {
+
+        final WfsFactory factory = WfsFactory.eINSTANCE;
+
+        DescribeFeatureTypeType dft = factory.createDescribeFeatureTypeType();
+
+        Version version = getServiceVersion();
+        dft.setService("WFS");
+        dft.setVersion(version.toString());
+        dft.setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());
+
+        if (Versions.v1_0_0.equals(version)) {
+            dft.setOutputFormat(null);
+        }
+
+        QName typeName = request.getTypeName();
+        @SuppressWarnings("unchecked")
+        List<QName> typeNames = dft.getTypeName();
+        typeNames.add(typeName);
+
+        return dft;
     }
 
     /*---------------------------------------------------------------------
      * WFSStrategy methods
      * ---------------------------------------------------------------------*/
+
+    @Override
+    public Configuration getFilterConfiguration() {
+        return Versions.v1_0_0.equals(getServiceVersion()) ? FILTER_1_0_CONFIGURATION
+                : FILTER_1_1_CONFIGURATION;
+    }
+
+    @Override
+    public Configuration getWfsConfiguration() {
+        return Versions.v1_0_0.equals(getServiceVersion()) ? WFS_1_0_CONFIGURATION
+                : WFS_1_1_CONFIGURATION;
+    }
 
     @Override
     public void setCapabilities(WFSGetCapabilities capabilities) {
@@ -204,76 +316,6 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         return wfsFilterCapabilities;
     }
 
-    /**
-     * @see org.geotools.data.wfs.internal.AbstractWFSStrategy#createGetFeatureRequestPost(org.geotools.data.wfs.internal.GetFeatureRequest)
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    protected GetFeatureType createGetFeatureRequestPost(GetFeatureRequest query)
-            throws IOException {
-        final WfsFactory factory = WfsFactory.eINSTANCE;
-
-        GetFeatureType getFeature = factory.createGetFeatureType();
-        getFeature.setService("WFS");
-        getFeature.setVersion(getVersion());
-        getFeature.setOutputFormat(query.getOutputFormat());
-
-        getFeature
-                .setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());
-        Integer maxFeatures = query.getMaxFeatures();
-        if (maxFeatures != null) {
-            getFeature.setMaxFeatures(BigInteger.valueOf(maxFeatures.intValue()));
-        }
-
-        ResultType resultType = query.getResultType();
-        getFeature.setResultType(RESULTS == resultType ? ResultTypeType.RESULTS_LITERAL
-                : ResultTypeType.HITS_LITERAL);
-
-        QueryType wfsQuery = factory.createQueryType();
-        final QName typeName = query.getTypeName();
-        wfsQuery.setTypeName(Collections.singletonList(typeName));
-
-        final Filter supportedFilter;
-        final Filter unsupportedFilter;
-        {
-            final Filter filter = query.getFilter();
-            Filter[] splitFilters = splitFilters(typeName, filter);
-            supportedFilter = splitFilters[0];
-            unsupportedFilter = splitFilters[1];
-        }
-
-        query.setUnsupportedFilter(unsupportedFilter);
-
-        if (!Filter.INCLUDE.equals(supportedFilter)) {
-            wfsQuery.setFilter(supportedFilter);
-        }
-
-        String srsName = query.getSrsName();
-        try {
-            wfsQuery.setSrsName(new URI(srsName));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException("Can't create a URI from the query CRS: " + srsName, e);
-        }
-        String[] propertyNames = query.getPropertyNames();
-        boolean retrieveAllProperties = propertyNames == null;
-        if (!retrieveAllProperties) {
-            List<String> propertyName = wfsQuery.getPropertyName();
-            for (String propName : propertyNames) {
-                propertyName.add(propName);
-            }
-        }
-        SortBy[] sortByList = query.getSortBy();
-        if (sortByList != null) {
-            for (SortBy sortBy : sortByList) {
-                wfsQuery.getSortBy().add(sortBy);
-            }
-        }
-
-        getFeature.getQuery().add(wfsQuery);
-
-        return getFeature;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     protected String getOperationURI(WFSOperationType operation, HttpMethod method) {
@@ -332,17 +374,29 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
     @Override
     public Set<String> getServerSupportedOutputFormats(final WFSOperationType operation) {
         final OperationType operationMetadata = getOperationMetadata(operation);
-        Set<String> serverSupportedFormats;
+
+        String parameterName;
+
+        final Version serviceVersion = getServiceVersion();
+        final boolean wfs1_0 = Versions.v1_0_0.equals(serviceVersion);
         switch (operation) {
         case GET_FEATURE:
-            String parameterName = Versions.v1_0_0.equals(getServiceVersion()) ? "ResultFormat"
-                    : "outputFormat";
-            serverSupportedFormats = findParameters(operationMetadata, parameterName);
+            parameterName = wfs1_0 ? "ResultFormat" : "outputFormat";
             break;
-
+        case DESCRIBE_FEATURETYPE:
+            parameterName = wfs1_0 ? "SchemaDescriptionLanguage" : "outputFormat";
+            break;
+        case GET_FEATURE_WITH_LOCK:
+            parameterName = wfs1_0 ? "ResultFormat" : "outputFormat";
+            break;
+        case TRANSACTION:
+            parameterName = wfs1_0 ? "" : "inputFormat";
         default:
             throw new UnsupportedOperationException("not yet implemented for " + operation);
         }
+
+        Set<String> serverSupportedFormats;
+        serverSupportedFormats = findParameters(operationMetadata, parameterName);
         return serverSupportedFormats;
     }
 
@@ -408,5 +462,4 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         throw new NoSuchElementException("Operation metadata not found for "
                 + expectedOperationName + " in the capabilities document");
     }
-
 }

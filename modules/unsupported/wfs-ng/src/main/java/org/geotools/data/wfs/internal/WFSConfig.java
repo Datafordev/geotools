@@ -29,7 +29,7 @@ public class WFSConfig {
 
     private int timeoutMillis;
 
-    private Boolean protocol;
+    private Boolean preferPost;
 
     private int buffer;
 
@@ -48,7 +48,7 @@ public class WFSConfig {
     private String namespaceOverride;
 
     public WFSConfig() {
-        protocol = (Boolean) PROTOCOL.getDefaultValue();
+        preferPost = (Boolean) PROTOCOL.getDefaultValue();
         timeoutMillis = (Integer) TIMEOUT.getDefaultValue();
         buffer = (Integer) BUFFER_SIZE.getDefaultValue();
         tryGZIP = (Boolean) TRY_GZIP.getDefaultValue();
@@ -65,7 +65,7 @@ public class WFSConfig {
 
         WFSConfig config = new WFSConfig();
 
-        config.protocol = (Boolean) PROTOCOL.lookUp(params);
+        config.preferPost = (Boolean) PROTOCOL.lookUp(params);
         config.user = (String) USERNAME.lookUp(params);
         config.pass = (String) PASSWORD.lookUp(params);
         config.timeoutMillis = (Integer) TIMEOUT.lookUp(params);
@@ -109,7 +109,7 @@ public class WFSConfig {
      * @return the protocol
      */
     public boolean isPreferPostOverGet() {
-        return protocol;
+        return preferPost;
     }
 
     /**
