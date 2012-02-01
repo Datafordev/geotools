@@ -32,8 +32,6 @@ public class GetFeatureRequest extends WFSRequest {
 
     private String[] propertyNames;
 
-    private String outputFormat;
-
     private String srsName;
 
     private Filter filter;
@@ -69,10 +67,6 @@ public class GetFeatureRequest extends WFSRequest {
         return propertyNames;
     }
 
-    public String getOutputFormat() {
-        return outputFormat;
-    }
-
     public String getSrsName() {
         return srsName;
     }
@@ -99,14 +93,6 @@ public class GetFeatureRequest extends WFSRequest {
      */
     public void setPropertyNames(String[] propertyNames) {
         this.propertyNames = propertyNames;
-    }
-
-    /**
-     * @param outputFormat
-     *            the outputFormat to set
-     */
-    public void setOutputFormat(String outputFormat) {
-        this.outputFormat = outputFormat;
     }
 
     /**

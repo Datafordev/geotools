@@ -106,7 +106,7 @@ public class WFSExtensions {
             }
         }
         throw new FactoryNotFoundException("Can't find a response parser factory for "
-                + originatingRequest);
+                + originatingRequest.getOperation() + "/'" + contentType + "'");
     }
 
     public static List<WFSResponseFactory> findResponseFactories(final WFSOperationType operation) {

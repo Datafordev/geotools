@@ -130,7 +130,9 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         GetFeatureType getFeature = factory.createGetFeatureType();
         getFeature.setService("WFS");
         getFeature.setVersion(getVersion());
-        getFeature.setOutputFormat(query.getOutputFormat());
+        
+        String outputFormat = query.getOutputFormat();
+        getFeature.setOutputFormat(outputFormat);
 
         getFeature
                 .setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());

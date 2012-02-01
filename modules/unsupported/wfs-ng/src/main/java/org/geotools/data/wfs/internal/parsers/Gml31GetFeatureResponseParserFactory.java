@@ -55,12 +55,18 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
     private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
 
     private static final List<String> SUPPORTED_FORMATS = Collections.unmodifiableList(Arrays
-            .asList("text/xml; subtype=gml/3.1.1",//
+            .asList(//
+            "text/xml; subtype=gml/3.1.1",//
+                    "text/xml;subtype=gml/3.1.1",//
                     "text/xml; subtype=gml/3.1.1/profiles/gmlsf/0",//
+                    "text/xml;subtype=gml/3.1.1/profiles/gmlsf/0",//
                     "application/gml+xml; subtype=gml/3.1.1",//
+                    "application/gml+xml;subtype=gml/3.1.1",//
                     "application/gml+xml; subtype=gml/3.1.1/profiles/gmlsf/0",//
+                    "application/gml+xml;subtype=gml/3.1.1/profiles/gmlsf/0",//
                     "GML3", //
-                    "GML3L0"));
+                    "GML3L0"//
+            ));
 
     /**
      * @see WFSResponseFactory#isAvailable()
@@ -84,8 +90,8 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
         if (!WFSOperationType.GET_FEATURE.equals(request.getOperation())) {
             return false;
         }
-        String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
-        boolean matches = SUPPORTED_FORMATS.contains(outputFormat);
+        // String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
+        boolean matches = SUPPORTED_FORMATS.contains(contentType);
         return matches;
     }
 

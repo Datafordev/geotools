@@ -28,6 +28,8 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     private QName typeName;
 
+    private String outputFormat;
+
     public WFSRequest(final WFSOperationType operation, final WFSConfig config,
             final WFSStrategy strategy) {
 
@@ -42,10 +44,24 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
             this.doPost = strategy.supportsOperation(operation, POST);
         }
 
+        this.outputFormat = strategy.getDefaultOutputFormat(operation);
+
         setProperty(SERVICE, "WFS");
         setProperty(VERSION, strategy.getVersion());
         setProperty(REQUEST, operation.getName());
 
+    }
+
+    public String getOutputFormat() {
+        return outputFormat;
+    }
+
+    /**
+     * @param outputFormat
+     *            the outputFormat to set
+     */
+    public void setOutputFormat(String outputFormat) {
+        this.outputFormat = outputFormat;
     }
 
     public void setTypeName(QName typeName) {
@@ -113,8 +129,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     @Override
     public String getPostContentType() {
-        String postContentType = strategy.getPostContentType(this);
-        return postContentType;
+        return getOutputFormat();
     }
 
     @Override
