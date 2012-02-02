@@ -17,30 +17,34 @@
 package org.geotools.data.wfs.internal.v1_x;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
+import javax.xml.transform.TransformerException;
 
-import net.opengis.wfs.GetFeatureType;
-import net.opengis.wfs.ResultTypeType;
-import net.opengis.wfs.WfsPackage;
-import net.opengis.wfs.impl.GetFeatureTypeImpl;
-
-import org.eclipse.emf.common.notify.Notification;
 import org.eclipse.emf.ecore.EObject;
-import org.eclipse.emf.ecore.impl.ENotificationImpl;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
-import org.geotools.data.wfs.internal.RequestComponents;
+import org.geotools.data.wfs.internal.WFSRequest;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
-import org.geotools.xml.EMFUtils;
+import org.geotools.xml.Configuration;
+import org.geotools.xml.Encoder;
 import org.opengis.filter.BinaryLogicOperator;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.Or;
 import org.opengis.filter.spatial.BinarySpatialOperator;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
+import org.xml.sax.SAXException;
 
 /**
  * A strategy object to aid in querying a CubeWerx WFS 1.1 server
@@ -62,19 +66,15 @@ import org.opengis.filter.spatial.BinarySpatialOperator;
  */
 public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
 
+    /**
+     * @return {@code true} only if resultType == results, CubeWerx throws a service exception if
+     *         the resultType parameter is set on a POST request, no matter it's value, and on a GET
+     *         request it's just ignored; also the returned feature collection does not contain the
+     *         number of features matched.
+     */
     @Override
-    protected GetFeatureType createGetFeatureRequestPost(GetFeatureRequest query)
-            throws IOException {
-
-        GetFeatureType serverRequest = super.createGetFeatureRequestPost(query);
-        serverRequest.setResultType(null);
-
-        GetFeatureType nonResultTypeRequest = new CubeWerxGetFeatureType();
-        EMFUtils.copy(serverRequest, nonResultTypeRequest);
-        // CubeWerx fails if the _mandatory_ resultType attribute is sent
-        nonResultTypeRequest.setResultType(null);
-
-        return serverRequest;
+    public boolean supports(ResultType resultType) {
+        return ResultType.RESULTS.equals(resultType);
     }
 
     @Override
@@ -82,6 +82,45 @@ public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
         Map<String, String> params = super.buildGetFeatureParametersForGet(request);
         params.remove("RESULTTYPE");
         return params;
+    }
+
+    @Override
+    public void encode(final WFSRequest request, final EObject requestObject, final OutputStream out)
+            throws IOException {
+        if (!(request instanceof GetFeatureRequest)) {
+            super.encode(request, requestObject, out);
+            return;
+        }
+
+        final Configuration configuration = getWfsConfiguration();
+        Encoder encoder = new Encoder(configuration);
+
+        final QName opName = getOperationName(request.getOperation());
+        QName typeName = request.getTypeName();
+        if (typeName != null && !XMLConstants.NULL_NS_URI.equals(typeName.getNamespaceURI())) {
+            String prefix = typeName.getPrefix();
+            if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+                prefix = "type_ns";
+            }
+            String namespaceURI = typeName.getNamespaceURI();
+            encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
+        }
+
+        Document dom;
+        try {
+            dom = encoder.encodeAsDOM(requestObject, opName);
+        } catch (SAXException e) {
+            throw new IOException(e);
+        } catch (TransformerException e) {
+            throw new IOException(e);
+        }
+
+        dom.getDocumentElement().removeAttribute("resultType");
+        DOMImplementationLS domImpl = (DOMImplementationLS) dom.getImplementation();//safe cast as long as we're on Java6
+
+        LSOutput destination = domImpl.createLSOutput();
+        destination.setByteStream(out);
+        domImpl.createLSSerializer().write(dom, destination);
     }
 
     @Override
@@ -135,24 +174,5 @@ public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
         }
 
         return new Filter[] { serverFilter, postFilter };
-    }
-
-    /**
-     * A {@link GetFeatureTypeImpl} that allows the {@code resultType} property to be {@code null}
-     */
-    private static class CubeWerxGetFeatureType extends GetFeatureTypeImpl {
-
-        @Override
-        public void setResultType(ResultTypeType newResultType) {
-            ResultTypeType oldResultType = resultType;
-            resultType = newResultType;// == null ? RESULT_TYPE_EDEFAULT : newResultType;
-            boolean oldResultTypeESet = resultTypeESet;
-            resultTypeESet = true;
-            if (eNotificationRequired()) {
-                eNotify(new ENotificationImpl(this, Notification.SET,
-                        WfsPackage.GET_FEATURE_TYPE__RESULT_TYPE, oldResultType, resultType,
-                        !oldResultTypeESet));
-            }
-        }
     }
 }

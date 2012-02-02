@@ -198,7 +198,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
             return new EmptyFeatureReader<SimpleFeatureType, SimpleFeature>(getSchema());
         }
 
-        GetFeatureRequest request = createGetFeature(localQuery, ResultType.HITS);
+        GetFeatureRequest request = createGetFeature(localQuery, ResultType.RESULTS);
 
         final SimpleFeatureType contentType = getQueryType(localQuery);
         request.setQueryType(contentType);

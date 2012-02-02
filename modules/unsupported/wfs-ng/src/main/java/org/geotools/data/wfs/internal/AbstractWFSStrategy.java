@@ -18,6 +18,7 @@ package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.HttpMethod.POST;
+import static org.geotools.data.wfs.internal.Loggers.requestTrace;
 import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.ByteArrayInputStream;
@@ -41,13 +42,15 @@ import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
-import org.apache.commons.io.output.TeeOutputStream;
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
+import org.geotools.filter.visitor.SimplifyingFilterVisitor;
 import org.geotools.util.Version;
 import org.geotools.xml.Configuration;
 import org.geotools.xml.Encoder;
+import org.geotools.xml.XMLHandlerHints;
+import org.geotools.xml.filter.FilterCompliancePreProcessor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.Id;
 import org.opengis.filter.capability.FilterCapabilities;
@@ -316,23 +319,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
     protected abstract String getOperationURI(WFSOperationType operation, HttpMethod method);
 
-    /**
-     * @see WFSStrategy#getSupportedCRSIdentifiers
-     */
-    @Override
-    public Set<String> getSupportedCRSIdentifiers(QName typeName) {
-        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfo(typeName);
-
-        String defaultSRS = featureTypeInfo.getDefaultSRS();
-
-        List<String> otherSRS = featureTypeInfo.getOtherSRS();
-
-        Set<String> ftypeCrss = new HashSet<String>();
-        ftypeCrss.add(defaultSRS);
-        ftypeCrss.addAll(otherSRS);
-        return ftypeCrss;
-    }
-
     @Override
     public String getDefaultOutputFormat(WFSOperationType operation) {
         List<String> clientSupportedFormats = getClientSupportedOutputFormats(operation);
@@ -510,7 +496,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
         }
 
-        encoder.encode(requestObject, opName, new TeeOutputStream(out, System.out));
+        encoder.encode(requestObject, opName, out);
     }
 
     //
@@ -546,20 +532,56 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      *         the one to post-process
      * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
      */
-    protected Filter[] splitFilters(QName typeName, final Filter filter) {
+    protected Filter[] splitFilters(QName typeName, Filter filter) {
+
+        final Set<String> supportedCRSIdentifiers = getSupportedCRSIdentifiers(typeName);
+
         FilterCapabilities filterCapabilities = getFilterCapabilities();
         Capabilities filterCaps = new Capabilities();
         if (filterCapabilities != null) {
             filterCaps.addAll(filterCapabilities);
         }
-        CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(filterCaps, null, null);
+        filter = simplify(filter);
 
-        filter.accept(splitter, null);
+        Filter server;
+        Filter post;
 
-        Filter server = splitter.getFilterPre();
-        Filter post = splitter.getFilterPost();
+        Integer complianceLevel = getConfig().getFilterCompliance();
+        if (null == complianceLevel) {
+            complianceLevel = XMLHandlerHints.VALUE_FILTER_COMPLIANCE_HIGH;
+        }
+        // TODO: modify FilterCompliancePreProcessor so that it preservers original FeatureID
+        // instead re creating them from the FeautreId.getID()
+        FilterCompliancePreProcessor compliancePreProcessor = new FilterCompliancePreProcessor(
+                complianceLevel);
+        filter.accept(compliancePreProcessor, null);
 
+        filter = compliancePreProcessor.getFilter();
+        Id fidFilter = compliancePreProcessor.getFidFilter();
+        if (!fidFilter.getIdentifiers().isEmpty()) {
+            server = fidFilter;
+            post = filter;
+        } else {
+
+            CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(filterCaps, null,
+                    null);
+
+            filter.accept(splitter, null);
+            server = splitter.getFilterPre();
+            post = splitter.getFilterPost();
+
+        }
         return new Filter[] { server, post };
+    }
+
+    protected Filter simplify(Filter filter) {
+        if (Filter.INCLUDE.equals(filter) || Filter.EXCLUDE.equals(filter)) {
+            return filter;
+        }
+
+        SimplifyingFilterVisitor simplifier = new SimplifyingFilterVisitor();
+        filter = (Filter) filter.accept(simplifier, null);
+        return filter;
     }
 
     // /**
@@ -704,6 +726,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         encode(request, requestObject, out);
+        requestTrace("Encoded ", request.getOperation(), " request: ", out);
 
         return new ByteArrayInputStream(out.toByteArray());
 

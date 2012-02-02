@@ -65,7 +65,10 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
                     "application/gml+xml; subtype=gml/3.1.1/profiles/gmlsf/0",//
                     "application/gml+xml;subtype=gml/3.1.1/profiles/gmlsf/0",//
                     "GML3", //
-                    "GML3L0"//
+                    "GML3L0", //
+                    "text/xml" // oddly, GeoServer returns plain 'text/xml' instead of the propper
+                               // subtype when resultType=hits. Guess we should make this something
+                               // the specific strategy can hanlde?
             ));
 
     /**
@@ -92,6 +95,15 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
         }
         // String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
         boolean matches = SUPPORTED_FORMATS.contains(contentType);
+//        if (!matches) {
+//            // fuzy search, "
+//            for (String supported : SUPPORTED_FORMATS) {
+//                if (supported.startsWith(contentType) || contentType.startsWith(supported)) {
+//                    matches = true;
+//                    break;
+//                }
+//            }
+//        }
         return matches;
     }
 
@@ -177,6 +189,9 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
         final QName remoteFeatureName = request.getTypeName();
 
         FeatureType queryType = request.getQueryType();
+        if (queryType == null) {
+            queryType = request.getFullType();
+        }
         if (!(queryType instanceof SimpleFeatureType)) {
             throw new UnsupportedOperationException();
         }

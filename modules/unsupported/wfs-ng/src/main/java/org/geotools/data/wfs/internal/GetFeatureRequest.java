@@ -50,6 +50,7 @@ public class GetFeatureRequest extends WFSRequest {
 
     GetFeatureRequest(WFSConfig config, WFSStrategy strategy) {
         super(GET_FEATURE, config, strategy);
+        resultType = ResultType.RESULTS;
     }
 
     //
@@ -156,6 +157,6 @@ public class GetFeatureRequest extends WFSRequest {
     }
 
     public Filter getUnsupportedFilter() {
-        return unsupportedFilter == null ? Filter.EXCLUDE : unsupportedFilter;
+        return unsupportedFilter == null ? Filter.INCLUDE : unsupportedFilter;
     }
 }

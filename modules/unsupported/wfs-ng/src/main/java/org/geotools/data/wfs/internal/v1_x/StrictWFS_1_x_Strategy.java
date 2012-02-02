@@ -16,6 +16,7 @@
  */
 package org.geotools.data.wfs.internal.v1_x;
 
+import static org.geotools.data.wfs.internal.Loggers.*;
 import static org.geotools.data.wfs.internal.GetFeatureRequest.ResultType.RESULTS;
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_CAPABILITIES;
@@ -23,6 +24,7 @@ import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -130,12 +132,20 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         GetFeatureType getFeature = factory.createGetFeatureType();
         getFeature.setService("WFS");
         getFeature.setVersion(getVersion());
-        
+
         String outputFormat = query.getOutputFormat();
         getFeature.setOutputFormat(outputFormat);
 
-        getFeature
-                .setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());
+        StringBuilder handle = new StringBuilder("GeoTools ").append(GeoTools.getVersion())
+                .append("(").append(GeoTools.getBuildRevision()).append(") WFS ")
+                .append(getVersion()).append(" DataStore @");
+        try {
+            handle.append(InetAddress.getLocalHost().getHostName());
+        } catch (Exception ignore) {
+            handle.append("<uknown host>");
+        }
+        getFeature.setHandle(handle.toString());
+
         Integer maxFeatures = query.getMaxFeatures();
         if (maxFeatures != null) {
             getFeature.setMaxFeatures(BigInteger.valueOf(maxFeatures.intValue()));
@@ -322,6 +332,8 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
     @Override
     protected String getOperationURI(WFSOperationType operation, HttpMethod method) {
 
+        trace("Looking operation URI for ", operation, "/", method);
+
         List<OperationType> operations = capabilities.getOperationsMetadata().getOperation();
         for (OperationType op : operations) {
             if (!operation.getName().equals(op.getName())) {
@@ -342,10 +354,13 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
                     continue;
                 }
 
-                return methods.get(0).getHref();
+                String href = methods.get(0).getHref();
+                debug("Returning operation URI for ", operation, "/", method, ": ", href);
+                return href;
             }
         }
 
+        debug("No operation URI found for ", operation, "/", method);
         return null;
     }
 
@@ -400,6 +415,31 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         Set<String> serverSupportedFormats;
         serverSupportedFormats = findParameters(operationMetadata, parameterName);
         return serverSupportedFormats;
+    }
+
+    /**
+     * @see WFSStrategy#getSupportedCRSIdentifiers
+     */
+    @Override
+    public Set<String> getSupportedCRSIdentifiers(QName typeName) {
+        FeatureTypeInfo featureTypeInfo = getFeatureTypeInfo(typeName);
+
+        String defaultSRS = featureTypeInfo.getDefaultSRS();
+
+        List<String> otherSRS = featureTypeInfo.getOtherSRS();
+
+        Set<String> ftypeCrss = new HashSet<String>();
+        ftypeCrss.add(defaultSRS);
+        ftypeCrss.addAll(otherSRS);
+
+        final boolean wfs1_1 = Versions.v1_1_0.equals(getServiceVersion());
+        if (wfs1_1) {
+            OperationType operationMetadata = getOperationMetadata(GET_FEATURE);
+            final String operationParameter = "SrsName";
+            Set<String> globalSrsNames = findParameters(operationMetadata, operationParameter);
+            ftypeCrss.addAll(globalSrsNames);
+        }
+        return ftypeCrss;
     }
 
     @SuppressWarnings("unchecked")

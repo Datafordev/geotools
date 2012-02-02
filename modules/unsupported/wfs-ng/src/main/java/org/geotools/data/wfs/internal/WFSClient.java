@@ -1,5 +1,6 @@
 package org.geotools.data.wfs.internal;
 
+import static org.geotools.data.wfs.internal.Loggers.*;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
@@ -325,6 +326,9 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
     }
 
     public GetFeatureResponse issueRequest(GetFeatureRequest request) throws IOException {
+
+        requestDebug("Sending GetFeature request to ", request.getFinalURL());
+
         Response response = internalIssueRequest(request);
         return (GetFeatureResponse) response;
     }
@@ -335,6 +339,9 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
 
     public DescribeFeatureTypeResponse issueRequest(DescribeFeatureTypeRequest request)
             throws IOException {
+        
+        requestDebug("Sending DFT request to ", request.getFinalURL());
+        
         Response response = internalIssueRequest(request);
         return (DescribeFeatureTypeResponse) response;
     }

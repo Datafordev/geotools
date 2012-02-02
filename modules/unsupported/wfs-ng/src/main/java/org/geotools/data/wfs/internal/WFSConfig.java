@@ -14,7 +14,6 @@ import static org.geotools.data.wfs.impl.WFSDataStoreFactory.USERNAME;
 import static org.geotools.data.wfs.impl.WFSDataStoreFactory.WFS_STRATEGY;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Map;
 
@@ -29,7 +28,7 @@ public class WFSConfig {
 
     private int timeoutMillis;
 
-    private Boolean preferPost;
+    private PreferredHttpMethod preferredMethod;
 
     private int buffer;
 
@@ -47,14 +46,18 @@ public class WFSConfig {
 
     private String namespaceOverride;
 
+    public static enum PreferredHttpMethod {
+        AUTO, HTTP_GET, HTTP_POST
+    }
+
     public WFSConfig() {
-        preferPost = (Boolean) PROTOCOL.getDefaultValue();
+        preferredMethod = PreferredHttpMethod.AUTO;
         timeoutMillis = (Integer) TIMEOUT.getDefaultValue();
         buffer = (Integer) BUFFER_SIZE.getDefaultValue();
         tryGZIP = (Boolean) TRY_GZIP.getDefaultValue();
         lenient = (Boolean) LENIENT.getDefaultValue();
         String encoding = (String) ENCODING.getDefaultValue();
-        defaultEncoding = Charset.forName((String) ENCODING.getDefaultValue());
+        defaultEncoding = Charset.forName(encoding);
         maxFeatures = (Integer) MAXFEATURES.getDefaultValue();
         wfsStrategy = (String) WFS_STRATEGY.getDefaultValue();
         filterCompliance = (Integer) FILTER_COMPLIANCE.getDefaultValue();
@@ -65,7 +68,11 @@ public class WFSConfig {
 
         WFSConfig config = new WFSConfig();
 
-        config.preferPost = (Boolean) PROTOCOL.lookUp(params);
+        Boolean preferPost = (Boolean) PROTOCOL.lookUp(params);
+
+        config.preferredMethod = preferPost == null ? PreferredHttpMethod.AUTO : (preferPost
+                .booleanValue() ? PreferredHttpMethod.HTTP_POST : PreferredHttpMethod.HTTP_GET);
+
         config.user = (String) USERNAME.lookUp(params);
         config.pass = (String) PASSWORD.lookUp(params);
         config.timeoutMillis = (Integer) TIMEOUT.lookUp(params);
@@ -106,10 +113,10 @@ public class WFSConfig {
     }
 
     /**
-     * @return the protocol
+     * @return the preferredMethod
      */
-    public boolean isPreferPostOverGet() {
-        return preferPost;
+    public PreferredHttpMethod getPreferredMethod() {
+        return preferredMethod;
     }
 
     /**

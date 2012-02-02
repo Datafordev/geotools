@@ -166,7 +166,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
                 + "WFS functionality. Set this value to Boolean.TRUE for POST, Boolean.FALSE "
                 + "for GET or NULL for AUTO";
         parametersInfo[1] = PROTOCOL = new WFSFactoryParam<Boolean>(name, Boolean.class,
-                description, Boolean.TRUE);
+                description, null);
     }
 
     /**
@@ -366,12 +366,13 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             }
         }
 
-        final HTTPClient http = new SimpleHttpClient();
+        final HTTPClient http = new MultithreadedHttpClient();
         // TODO: let HTTPClient be configured for gzip
         // http.setTryGzip(tryGZIP);
         http.setUser(config.getUser());
         http.setPassword(config.getPassword());
-        http.setConnectTimeout(config.getTimeoutMillis() / 1000);
+        int timeoutMillis = config.getTimeoutMillis();
+        http.setConnectTimeout(timeoutMillis / 1000);
 
         final URL capabilitiesURL = URL.lookUp(params);
 

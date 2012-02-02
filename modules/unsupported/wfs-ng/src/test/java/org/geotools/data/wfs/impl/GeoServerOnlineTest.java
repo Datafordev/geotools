@@ -17,7 +17,7 @@
  */
 package org.geotools.data.wfs.impl;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
@@ -54,6 +54,8 @@ import org.geotools.feature.IllegalAttributeException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.filter.IllegalFilterException;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.CRS.AxisOrder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -69,6 +71,7 @@ import org.opengis.filter.expression.Expression;
 import org.opengis.filter.expression.PropertyName;
 import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.spatial.BBOX;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.xml.sax.SAXException;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -85,9 +88,14 @@ import com.vividsolutions.jts.geom.Polygon;
  */
 public class GeoServerOnlineTest {
 
-    public static final String SERVER_URL = "http://localhost:8080/geoserver/wfs?service=WFS&request=GetCapabilities&version=1.0.0";
+    private static final FilterFactory2 FF = CommonFactoryFinder.getFilterFactory2(GeoTools
+            .getDefaultHints());
 
-    public static final String TO_EDIT_TYPE = "topp:states";
+    public static final String SERVER_URL_100 = "http://localhost:8080/geoserver/wfs?service=WFS&request=GetCapabilities&version=1.0.0";
+
+    public static final String SERVER_URL_110 = "http://localhost:8080/geoserver/wfs?service=WFS&request=GetCapabilities&version=1.1.0";
+
+    public static final String TO_EDIT_TYPE = "topp_states";
 
     public static final String ATTRIBUTE_TO_EDIT = "STATE_FIPS";
 
@@ -95,48 +103,74 @@ public class GeoServerOnlineTest {
 
     private static final int EPSG_CODE = 4326;
 
-    private URL url = null;
+    private URL url_100;
 
-    private WFSContentDataStore wfs;
+    private URL url_110;
+
+    private WFSContentDataStore wfs100;
+
+    private WFSContentDataStore wfs110;
 
     @Before
     public void setUp() throws Exception {
-        url = new URL(SERVER_URL);
-        if (url != null && url.toString().indexOf("localhost") != -1) {
+        url_100 = new URL(SERVER_URL_100);
+        url_110 = new URL(SERVER_URL_110);
+        if (url_100 != null && url_100.toString().indexOf("localhost") != -1) {
             InputStream stream = null;
             try {
-                stream = url.openStream();
+                stream = url_100.openStream();
             } catch (Throwable t) {
                 System.err.println("Warning you local geoserver is not available. test disabled ");
-                url = null;
+                url_100 = null;
+                url_110 = null;
             } finally {
                 IOUtils.closeQuietly(stream);
             }
         }
-        if (url != null) {
-            Map<String, Serializable> params = new HashMap<String, Serializable>();
-            params.put(WFSDataStoreFactory.URL.key, url);
-            wfs = new WFSDataStoreFactory().createDataStore(params);
+        if (url_100 != null) {
+            Map<String, Serializable> params;
+
+            params = new HashMap<String, Serializable>();
+            params.put(WFSDataStoreFactory.URL.key, url_100);
+
+            wfs100 = new WFSDataStoreFactory().createDataStore(params);
+
+            params = new HashMap<String, Serializable>();
+            params.put(WFSDataStoreFactory.URL.key, url_110);
+            wfs110 = new WFSDataStoreFactory().createDataStore(params);
+
+            assertEquals("1.0.0", wfs100.getInfo().getVersion());
+            assertEquals("1.1.0", wfs110.getInfo().getVersion());
         }
     }
 
     @After
     public void tearDown() throws Exception {
-        if (url != null) {
-            wfs.dispose();
+        if (url_100 != null) {
+            wfs100.dispose();
+            wfs110.dispose();
         }
     }
 
     @Test
-    public void testTypes() throws IOException, NoSuchElementException {
-        if (url == null)
+    public void testTypesWFS_1_0_0() throws IOException, NoSuchElementException {
+        testTypes(wfs100);
+    }
+
+    @Test
+    public void testTypesWFS_1_1_0() throws IOException, NoSuchElementException {
+        testTypes(wfs110);
+    }
+
+    private void testTypes(DataStore wfs) throws IOException, NoSuchElementException {
+        if (url_100 == null)
             return;
 
         String types[] = wfs.getTypeNames();
         String typeName = "unknown";
         for (int i = 0; i < types.length; i++) {
             typeName = types[i];
-            if (typeName.equals("topp:geometrytype"))
+            if (typeName.equals("topp_geometrytype"))
                 continue;
             SimpleFeatureType type = wfs.getSchema(typeName);
             type.getTypeName();
@@ -168,11 +202,20 @@ public class GeoServerOnlineTest {
     }
 
     @Test
-    public void testSingleType() throws IOException, NoSuchElementException {
-        if (url == null)
+    public void testSingleType_WFS_1_0() throws IOException, NoSuchElementException {
+        testSingleType(wfs100);
+    }
+
+    @Test
+    public void testSingleType_WFS_1_1() throws IOException, NoSuchElementException {
+        testSingleType(wfs110);
+    }
+
+    private void testSingleType(DataStore wfs) throws IOException, NoSuchElementException {
+        if (url_100 == null)
             return;
 
-        String typeName = "tiger:poi";
+        String typeName = "tiger_poi";
         SimpleFeatureType type = wfs.getSchema(typeName);
         type.getTypeName();
         type.getName().getNamespaceURI();
@@ -204,41 +247,52 @@ public class GeoServerOnlineTest {
     }
 
     public void XtestFeatureType() throws NoSuchElementException, IOException, SAXException {
-        WFSDataStoreReadTest.doFeatureType(url, true, true, 0);
+        WFSDataStoreReadTest.doFeatureType(url_100, true, true, 0);
     }
 
     @Test
     public void testFeatureReader() throws NoSuchElementException, IOException,
             IllegalAttributeException, SAXException {
-        WFSDataStoreReadTest.doFeatureReader(url, true, true, 0);
+        WFSDataStoreReadTest.doFeatureReader(url_100, true, true, 0);
     }
 
     @Test
     public void testFeatureReaderWithFilter() throws NoSuchElementException,
             IllegalAttributeException, IOException, SAXException {
-        WFSDataStoreReadTest.doFeatureReaderWithQuery(url, true, true, 0);
+        WFSDataStoreReadTest.doFeatureReaderWithQuery(url_100, true, true, 0);
     }
 
     @Test
     public void testFeatureReaderWithFilterGET() throws NoSuchElementException,
             IllegalAttributeException, IOException, SAXException {
-        WFSDataStoreReadTest.doFeatureReaderWithQuery(url, true, false, 0);
+        WFSDataStoreReadTest.doFeatureReaderWithQuery(url_100, true, false, 0);
+    }
+
+    @Test
+    public void testSupportsPlainBBOXInterface_100() throws Exception {
+        testDataStoreSupportsPlainBBOXInterface(wfs100);
+    }
+
+    @Test
+    public void testSupportsPlainBBOXInterface_110() throws Exception {
+        testDataStoreSupportsPlainBBOXInterface(wfs110);
     }
 
     /**
      * {@link BBOX} support?
      */
-    @Test
-    public void testDataStoreSupportsPlainBBOXInterface() throws Exception {
-        if (url == null)
+    private void testDataStoreSupportsPlainBBOXInterface(final DataStore wfs) throws Exception {
+        if (url_100 == null)
             return;
 
         final SimpleFeatureType ft = wfs.getSchema(TO_EDIT_TYPE);
-        final ReferencedEnvelope bounds = wfs.getFeatureSource(TO_EDIT_TYPE).getBounds();
+        SimpleFeatureSource featureSource = wfs.getFeatureSource(TO_EDIT_TYPE);
+        final ReferencedEnvelope bounds = featureSource.getBounds();
 
-        final FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
-        final BBOX bbox = ff.bbox("the_geom", bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
-                bounds.getMaxY(), null);
+        String srsName = CRS.toSRS(bounds.getCoordinateReferenceSystem());
+
+        final BBOX bbox = FF.bbox("the_geom", bounds.getMinX(), bounds.getMinY(), bounds.getMaxX(),
+                bounds.getMaxY(), srsName);
 
         /**
          * This one does not implement the deprecated geotools filter interfaces
@@ -291,6 +345,7 @@ public class GeoServerOnlineTest {
         };
 
         final Query query = new Query(ft.getTypeName());
+        query.setPropertyNames(new String[] { "the_geom" });
         query.setFilter(strictBBox);
 
         FeatureReader<SimpleFeatureType, SimpleFeature> reader;
@@ -303,20 +358,92 @@ public class GeoServerOnlineTest {
     }
 
     @Test
-    public void testFeatureReaderWithFilterPOST() throws Exception {
-        WFSDataStoreReadTest.doFeatureReaderWithQuery(url, false, true, 0);
+    public void testDataStoreHandlesAxisFlipping_1_0_0() throws Exception {
+        testDataStoreHandlesAxisFlipping(wfs100);
     }
 
-    // RR change the data?
-    // NOPE, it's in Lat-Long for the Env, BCAlbers for the data
+    @Test
+    public void testDataStoreHandlesAxisFlipping_1_1_0() throws Exception {
+        testDataStoreHandlesAxisFlipping(wfs110);
+    }
+
+    private void testDataStoreHandlesAxisFlipping(final DataStore wfs) throws Exception {
+        if (url_100 == null)
+            return;
+
+        final SimpleFeatureType ft = wfs.getSchema(TO_EDIT_TYPE);
+        final SimpleFeatureSource featureSource = wfs.getFeatureSource(TO_EDIT_TYPE);
+        final ReferencedEnvelope bounds = featureSource.getBounds();
+
+        CoordinateReferenceSystem wgs84LonLat = CRS.decode("EPSG:4326", true);
+        CoordinateReferenceSystem wgs84LatLon = CRS.decode("EPSG:4326", false);
+
+        assertEquals(AxisOrder.EAST_NORTH, CRS.getAxisOrder(wgs84LonLat));
+        assertEquals(AxisOrder.NORTH_EAST, CRS.getAxisOrder(wgs84LatLon));
+
+        ReferencedEnvelope lonLat = bounds.transform(wgs84LonLat, true);
+        ReferencedEnvelope latLon = bounds.transform(wgs84LatLon, true);
+
+        String latLonSrsName = "urn:x-ogc:def:crs:EPSG:4326";
+        String lonLatSrsName = "EPSG:4326";
+
+        final BBOX lonLatFilter = FF.bbox("the_geom", lonLat.getMinimum(0), lonLat.getMinimum(1),
+                lonLat.getMaximum(0), lonLat.getMaximum(1), lonLatSrsName);
+
+        final BBOX latLonFiler = FF.bbox("the_geom", latLon.getMinimum(0), latLon.getMinimum(1),
+                latLon.getMaximum(0), latLon.getMaximum(1), latLonSrsName);
+
+        final Query query = new Query(ft.getTypeName());
+        query.setPropertyNames(new String[] { "the_geom" });
+        query.setFilter(lonLatFilter);
+
+        final int expectedCount = wfs.getFeatureSource(query.getTypeName()).getFeatures().size();
+
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+
+        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
+        try {
+            assertTrue(reader.hasNext());
+            int count = 0;
+            while (reader.hasNext()) {
+                reader.next();
+                count++;
+            }
+            assertEquals(expectedCount, count);
+        } finally {
+            reader.close();
+        }
+
+        query.setFilter(latLonFiler);
+
+        reader = wfs.getFeatureReader(query, Transaction.AUTO_COMMIT);
+        try {
+            assertTrue(reader.hasNext());
+            int count = 0;
+            while (reader.hasNext()) {
+                reader.next();
+                count++;
+            }
+            assertEquals(expectedCount, count);
+        } finally {
+            reader.close();
+        }
+    }
+
+    @Test
+    public void testFeatureReaderWithFilterPOST() throws Exception {
+        WFSDataStoreReadTest.doFeatureReaderWithQuery(url_100, false, true, 0);
+    }
+
+    
     @Test
     public void testFeatureReaderWithFilterBBoxGET() throws Exception {
         // minx,miny,maxx,maxy
-        if (url == null)
+        if (url_100 == null)
             return;
 
         Map<String, Serializable> m = new HashMap<String, Serializable>();
-        m.put(WFSDataStoreFactory.URL.key, url);
+        m.put(WFSDataStoreFactory.URL.key, url_100);
         m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(100000));
 
         DataStore post = (WFS_1_0_0_DataStore) (new WFSDataStoreFactory()).createDataStore(m);
@@ -324,24 +451,24 @@ public class GeoServerOnlineTest {
         String typeName = post.getTypeNames()[0];
 
         Envelope bbox = post.getFeatureSource(typeName).getBounds();
-        WFSDataStoreReadTest.doFeatureReaderWithBBox(url, true, false, 0, bbox);
+        WFSDataStoreReadTest.doFeatureReaderWithBBox(url_100, true, false, 0, bbox);
     }
 
     @Test
     public void testFeatureReaderWithFilterBBoxPOST() throws NoSuchElementException,
             IllegalAttributeException, IOException, SAXException, IllegalFilterException {
-        if (url == null)
+        if (url_100 == null)
             return;
 
         Map m = new HashMap();
-        m.put(WFSDataStoreFactory.URL.key, url);
+        m.put(WFSDataStoreFactory.URL.key, url_100);
         m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(100000));
         DataStore post = (WFS_1_0_0_DataStore) (new WFSDataStoreFactory()).createDataStore(m);
 
         String typeName = post.getTypeNames()[0];
         Envelope bbox = post.getFeatureSource(typeName).getBounds();
 
-        WFSDataStoreReadTest.doFeatureReaderWithBBox(url, true, false, 0, bbox);
+        WFSDataStoreReadTest.doFeatureReaderWithBBox(url_100, true, false, 0, bbox);
     }
 
     /**
@@ -350,18 +477,17 @@ public class GeoServerOnlineTest {
      */
     @Test
     public void testFeatureReaderWithQuery() throws Exception {
-        if (url == null)
+        if (url_100 == null)
             return;
         Map m = new HashMap();
-        m.put(WFSDataStoreFactory.URL.key, url);
+        m.put(WFSDataStoreFactory.URL.key, url_100);
         m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(100000));
         WFS_1_0_0_DataStore wfs = (WFS_1_0_0_DataStore) (new WFSDataStoreFactory())
                 .createDataStore(m);
-        FilterFactory2 fac = CommonFactoryFinder.getFilterFactory2(GeoTools.getDefaultHints());
 
-        Filter filter = fac.equals(fac.property("NAME"), fac.literal("E 58th St"));
+        Filter filter = FF.equals(FF.property("NAME"), FF.literal("E 58th St"));
 
-        Query query = new Query("tiger:tiger_roads", filter);
+        Query query = new Query("tiger_tiger_roads", filter);
         FeatureReader<SimpleFeatureType, SimpleFeature> reader = wfs.getFeatureReader(query,
                 new DefaultTransaction());
         int expected = 0;
@@ -369,7 +495,7 @@ public class GeoServerOnlineTest {
             expected++;
             reader.next();
         }
-        query = new Query("tiger:tiger_roads", filter, 100, new String[] { "CFCC" }, "");
+        query = new Query("tiger_tiger_roads", filter, 100, new String[] { "CFCC" }, "");
         reader = wfs.getFeatureReader(query, new DefaultTransaction());
         int count = 0;
         while (reader.hasNext()) {
@@ -392,11 +518,11 @@ public class GeoServerOnlineTest {
     @Ignore
     public void testWrite() throws NoSuchElementException, IllegalFilterException, IOException,
             IllegalAttributeException {
-        if (url == null)
+        if (url_100 == null)
             return;
 
         Map m = new HashMap();
-        m.put(WFSDataStoreFactory.URL.key, url);
+        m.put(WFSDataStoreFactory.URL.key, url_100);
         m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(10000000));
         DataStore post = (WFS_1_0_0_DataStore) (new WFSDataStoreFactory()).createDataStore(m);
         String typename = TO_EDIT_TYPE;
