@@ -15,10 +15,10 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.impl;
+package org.geotools.data.wfs.impl.online;
 
-import static org.geotools.data.wfs.impl.WFSDataStoreTestSupport.doFeatureReader;
-import static org.geotools.data.wfs.impl.WFSDataStoreTestSupport.getDataStore;
+import static org.geotools.data.wfs.impl.online.WFSOnlineTestSupport.doFeatureReader;
+import static org.geotools.data.wfs.impl.online.WFSOnlineTestSupport.getDataStore;
 import static org.junit.Assert.assertEquals;
 
 import java.io.InputStream;
@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
+import org.geotools.data.wfs.impl.WFSContentDataStore;
 import org.geotools.data.wfs.internal.Loggers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -112,7 +113,7 @@ public class CubewerksOnlineTest {
         }
         List<String> typeNames = Arrays.asList(wfs100.getTypeNames()).subList(0, 5);
         for (String typeName : typeNames) {
-            WFSDataStoreTestSupport.doFeatureType(wfs100, typeName);
+            WFSOnlineTestSupport.doFeatureType(wfs100, typeName);
         }
     }
 
@@ -123,7 +124,7 @@ public class CubewerksOnlineTest {
         }
         List<String> typeNames = Arrays.asList(wfs110.getTypeNames()).subList(0, 5);
         for (String typeName : typeNames) {
-            WFSDataStoreTestSupport.doFeatureType(wfs110, typeName);
+            WFSOnlineTestSupport.doFeatureType(wfs110, typeName);
         }
     }
 

@@ -32,6 +32,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.geotools.data.Query;
 import org.geotools.data.ows.HTTPResponse;
+import org.geotools.data.wfs.impl.TestHttpResponse;
 import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
@@ -529,7 +530,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
     }
 
     /**
-     * Test method for {@link StrictWFS_1_1_Strategy#buildDescribeFeatureTypeURLGet(java.lang.String)}
+     * Test method for {@link StrictWFS_1_1_Strategy#buildDescribeFeatureTypeParametersForGET(java.lang.String)}
      * .
      * 
      * @throws IOException
@@ -539,14 +540,14 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
-            strategy.buildDescribeFeatureTypeURLGet("nonExistentTypeName");
+            strategy.buildDescribeFeatureTypeParametersForGET("nonExistentTypeName");
             fail("Expected IAE");
         } catch (IllegalArgumentException e) {
             assertTrue(true);
         }
 
         URL url;
-        url = strategy.buildDescribeFeatureTypeURLGet(GEOS_ARCHSITES.FEATURETYPENAME);
+        url = strategy.buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES.FEATURETYPENAME);
         assertNotNull(url);
         String externalForm = url.toExternalForm();
         externalForm = URLDecoder.decode(externalForm, "UTF-8");
@@ -784,7 +785,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         strategy = spy(createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
                 new GeoServerPre200Strategy()));
         doReturn(TestData.url(this, GEOS_ARCHSITES.SCHEMA)).when(strategy)
-                .buildDescribeFeatureTypeURLGet(GEOS_ARCHSITES.FEATURETYPENAME);
+                .buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES.FEATURETYPENAME);
         // strategy.setDescribeFeatureTypeURLOverride(TestData.url(this, GEOS_ARCHSITES.SCHEMA));
 
         GetFeatureRequest getFeature = new GetFeatureQueryAdapter(query, defaultWfs11OutputFormat,

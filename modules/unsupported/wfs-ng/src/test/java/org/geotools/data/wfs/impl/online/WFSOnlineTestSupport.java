@@ -15,7 +15,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.impl;
+package org.geotools.data.wfs.impl.online;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -33,6 +33,8 @@ import org.geotools.data.DataStore;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
+import org.geotools.data.wfs.impl.WFSContentDataStore;
+import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.IllegalAttributeException;
 import org.geotools.filter.FilterFactoryFinder;
@@ -50,7 +52,7 @@ import com.vividsolutions.jts.geom.Envelope;
 
 /**
  */
-public class WFSDataStoreTestSupport {
+public class WFSOnlineTestSupport {
 
     public void testEmpty() {/**/
     }

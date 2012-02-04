@@ -1,16 +1,14 @@
 package org.geotools.data.wfs.impl;
 
-import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
-
 import java.io.IOException;
-import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
 
 import org.geotools.data.DataSourceException;
 import org.geotools.data.DataUtilities;
+import org.geotools.data.Diff;
+import org.geotools.data.DiffFeatureReader;
 import org.geotools.data.EmptyFeatureReader;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureSource;
@@ -19,31 +17,23 @@ import org.geotools.data.ReTypeFeatureReader;
 import org.geotools.data.Transaction;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
-import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
+import org.geotools.data.store.DiffTransactionState;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.GetFeatureResponse;
 import org.geotools.data.wfs.internal.WFSClient;
-import org.geotools.data.wfs.internal.WFSResponse;
-import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
-import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.factory.Hints;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
-import org.geotools.filter.spatial.ReprojectingFilterVisitor;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.geotools.gml2.bindings.GML2EncodingUtils;
-import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
+import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory2;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.CoordinateSequenceFactory;
@@ -63,6 +53,21 @@ class WFSContentFeatureSource extends ContentFeatureSource {
 
     WFSClient getWfs() {
         return client;
+    }
+
+    @Override
+    protected boolean handleVisitor(Query query, FeatureVisitor visitor) throws IOException {
+        return false;
+    }
+
+    @Override
+    protected boolean canReproject() {
+        return true;
+    }
+
+    @Override
+    protected boolean canOffset() {
+        return false;// TODO: check with the WFS client
     }
 
     /**
@@ -221,6 +226,15 @@ class WFSContentFeatureSource extends ContentFeatureSource {
             reader = new ReTypeFeatureReader(reader, contentType, cloneContents);
         }
 
+        Transaction transaction = getTransaction();
+        if (!Transaction.AUTO_COMMIT.equals(transaction)) {
+            ContentEntry entry = getEntry();
+            DiffTransactionState state = (DiffTransactionState) transaction.getState(entry);
+            if (state != null) {
+                Diff diff = state.getDiff();
+                reader = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(reader, diff);
+            }
+        }
         return reader;
     }
 
@@ -266,7 +280,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
         return adaptedFeatureType;
     }
 
-    public QName getRemoteTypeName() {
+    public QName getRemoteTypeName() throws IOException {
         Name localTypeName = getEntry().getName();
         QName remoteTypeName = getDataStore().getRemoteTypeName(localTypeName);
         return remoteTypeName;

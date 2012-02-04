@@ -57,10 +57,12 @@ public class GeoServerPre200Strategy extends StrictWFS_1_x_Strategy {
     /**
      * GeoServer versions lower than 2.0 can only reliably parse Filter 1.0.
      * <p>
-     * TODO: find a way to figure out whether the geoserver instance is actuall that old
+     * TODO: find a way to figure out whether the geoserver instance is actually that old
+     * 
+     * @see org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy#getFilterConfiguration()
      */
     @Override
-    protected Configuration getFilterConfiguration() {
+    public Configuration getFilterConfiguration() {
         return FILTER_1_0_CONFIGURATION;
     }
 

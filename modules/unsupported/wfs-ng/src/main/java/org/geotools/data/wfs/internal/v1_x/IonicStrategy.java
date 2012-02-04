@@ -136,8 +136,8 @@ public class IonicStrategy extends StrictWFS_1_x_Strategy {
      * case, the query srsName is replaced by the kown "EPSG:4269" code
      */
     @Override
-    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
-        Map<String, String> params = super.buildGetFeatureParametersForGet(request);
+    protected Map<String, String> buildGetFeatureParametersForGET(GetFeatureRequest request) {
+        Map<String, String> params = super.buildGetFeatureParametersForGET(request);
 
         final String overrideSrs = "urn:opengis:def:crs:ogc::83";
         String srsName = params.get("SRSNAME");

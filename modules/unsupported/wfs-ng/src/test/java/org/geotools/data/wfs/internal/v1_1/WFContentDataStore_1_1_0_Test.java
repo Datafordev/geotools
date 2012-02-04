@@ -34,6 +34,7 @@ import java.util.Set;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
+import org.geotools.data.wfs.impl.TestHttpResponse;
 import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_1_Strategy;
@@ -101,7 +102,7 @@ public class WFContentDataStore_1_1_0_Test extends WFSTestData {
         wfs = spy(wfs);
         // override the describe feature type url so it loads from the test resource
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
-        when(wfs.buildDescribeFeatureTypeURLGet(CUBEWERX_GOVUNITCE.FEATURETYPENAME)).thenReturn(
+        when(wfs.buildDescribeFeatureTypeParametersForGET(CUBEWERX_GOVUNITCE.FEATURETYPENAME)).thenReturn(
                 describeUrl);
 
         WFSContentDataStore ds = new WFSContentDataStore(wfs);
@@ -130,7 +131,7 @@ public class WFContentDataStore_1_1_0_Test extends WFSTestData {
         // override the describe feature type url so it loads from the test resource
         wfs = spy(wfs);
         URL describeUrl = TestData.getResource(this, CUBEWERX_GOVUNITCE.SCHEMA);
-        when(wfs.buildDescribeFeatureTypeURLGet(CUBEWERX_GOVUNITCE.FEATURETYPENAME)).thenReturn(
+        when(wfs.buildDescribeFeatureTypeParametersForGET(CUBEWERX_GOVUNITCE.FEATURETYPENAME)).thenReturn(
                 describeUrl);
 
         WFSContentDataStore ds = new WFSContentDataStore(wfs);

@@ -104,9 +104,10 @@ public class FeatureTypeInfoImpl implements FeatureTypeInfo {
         String defaultSRS = eType.getDefaultSRS();
         if (null != defaultSRS) {
             try {
-                crs = CRS.decode(defaultSRS);
+                boolean forceLongitudFirst = defaultSRS.startsWith("EPSG:");
+                crs = CRS.decode(defaultSRS, forceLongitudFirst);
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }
         return crs;

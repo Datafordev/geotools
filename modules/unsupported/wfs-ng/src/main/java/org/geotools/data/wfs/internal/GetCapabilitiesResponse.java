@@ -34,7 +34,7 @@ public class GetCapabilitiesResponse extends org.geotools.data.ows.GetCapabiliti
 
     private WFSGetCapabilities capabilities;
 
-    public GetCapabilitiesResponse(HTTPResponse response) throws ServiceException, IOException {
+    public GetCapabilitiesResponse(HTTPResponse response) throws IOException, ServiceException {
         super(response);
         MODULE.finer("Parsing GetCapabilities response");
         try {

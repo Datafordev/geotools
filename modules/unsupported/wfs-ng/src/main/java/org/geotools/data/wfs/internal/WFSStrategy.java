@@ -53,10 +53,6 @@ public abstract class WFSStrategy extends Specification {
 
     public abstract void setConfig(WFSConfig config);
 
-    public abstract Configuration getFilterConfiguration();
-
-    public abstract Configuration getWfsConfiguration();
-
     /**
      * Returns the feature type metadata object parsed from the capabilities document for the given
      * {@code typeName}
@@ -128,6 +124,10 @@ public abstract class WFSStrategy extends Specification {
     public abstract boolean supportsOperation(final WFSOperationType operation,
             final HttpMethod method);
 
+    public abstract boolean supports(ResultType resultType);
+
+    public abstract boolean supportsTransaction(QName typeName);
+
     /**
      * Returns the URL for the given operation name and HTTP protocol as stated in the WFS
      * capabilities.
@@ -166,14 +166,17 @@ public abstract class WFSStrategy extends Specification {
 
     public abstract String getDefaultOutputFormat(WFSOperationType operation);
 
-    public abstract boolean supports(ResultType resultType);
-
     public abstract URL buildUrlGET(WFSRequest request);
 
     public abstract String getPostContentType(WFSRequest wfsRequest);
 
+    /**
+     * Returns the input stream with the POST body contents for the given request.
+     */
     public abstract InputStream getPostContents(WFSRequest wfsRequest) throws IOException;
 
     public abstract WFSServiceInfo getServiceInfo();
+
+    public abstract Configuration getWfsConfiguration();
 
 }

@@ -19,12 +19,11 @@ import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.feature.NameImpl;
-import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.Name;
 
-class WFSContentDataStore extends ContentDataStore {
+public class WFSContentDataStore extends ContentDataStore {
 
     private final WFSClient client;
 
@@ -38,7 +37,65 @@ class WFSContentDataStore extends ContentDataStore {
         this.remoteFeatureTypes = new ConcurrentHashMap<QName, FeatureType>();
     }
 
-    public QName getRemoteTypeName(Name localTypeName) {
+    /**
+     * @see WFSDataStore#getInfo()
+     */
+    @Override
+    public WFSServiceInfo getInfo() {
+        return client.getInfo();
+    }
+
+    @Override
+    protected WFSContentState createContentState(ContentEntry entry) {
+        return new WFSContentState(entry);
+    }
+
+    /**
+     * @see org.geotools.data.store.ContentDataStore#createTypeNames()
+     */
+    @Override
+    protected List<Name> createTypeNames() throws IOException {
+        String namespaceURI = getNamespaceURI();
+
+        Set<QName> remoteTypeNames = client.getRemoteTypeNames();
+        List<Name> names = new ArrayList<Name>(remoteTypeNames.size());
+        for (QName remoteTypeName : remoteTypeNames) {
+            String localTypeName = remoteTypeName.getLocalPart();
+            if (!XMLConstants.DEFAULT_NS_PREFIX.equals(remoteTypeName.getPrefix())) {
+                localTypeName = remoteTypeName.getPrefix() + "_" + localTypeName;
+            }
+            Name typeName = new NameImpl(namespaceURI, localTypeName);
+            names.add(typeName);
+            this.names.put(typeName, remoteTypeName);
+        }
+        return names;
+    }
+
+    /**
+     * @see WFSContentFeatureSource
+     * @see WFSContentFeatureStore
+     * @see WFSClient#supportsTransaction(QName)
+     * @see org.geotools.data.store.ContentDataStore#createFeatureSource(org.geotools.data.store.ContentEntry)
+     */
+    @Override
+    protected ContentFeatureSource createFeatureSource(final ContentEntry entry) throws IOException {
+        ContentFeatureSource source;
+
+        source = new WFSContentFeatureSource(entry, client);
+
+        final QName remoteTypeName = getRemoteTypeName(entry.getName());
+
+        if (client.supportsTransaction(remoteTypeName)) {
+            source = new WFSContentFeatureStore((WFSContentFeatureSource) source);
+        }
+
+        return source;
+    }
+
+    public QName getRemoteTypeName(Name localTypeName) throws IOException {
+        if(names.isEmpty()){
+            createTypeNames();
+        }
         QName qName = names.get(localTypeName);
         if (null == qName) {
             throw new NoSuchElementException(localTypeName.toString());
@@ -60,7 +117,7 @@ class WFSContentDataStore extends ContentDataStore {
                 request.setTypeName(remoteTypeName);
 
                 DescribeFeatureTypeResponse response = client.issueRequest(request);
-
+                
                 remoteFeatureType = response.getFeatureType();
                 remoteFeatureTypes.put(remoteTypeName, remoteFeatureType);
             }
@@ -78,49 +135,6 @@ class WFSContentDataStore extends ContentDataStore {
         remoteSimpleFeatureType = EmfAppSchemaParser.toSimpleFeatureType(remoteFeatureType);
 
         return remoteSimpleFeatureType;
-    }
-
-    /**
-     * @see org.geotools.data.store.ContentDataStore#createTypeNames()
-     */
-    @Override
-    protected List<Name> createTypeNames() throws IOException {
-        Set<QName> remoteTypeNames = client.getRemoteTypeNames();
-        List<Name> names = new ArrayList<Name>(remoteTypeNames.size());
-        for (QName remoteTypeName : remoteTypeNames) {
-            String localTypeName = remoteTypeName.getLocalPart();
-            if (!XMLConstants.DEFAULT_NS_PREFIX.equals(remoteTypeName.getPrefix())) {
-                localTypeName = remoteTypeName.getPrefix() + "_" + localTypeName;
-            }
-            Name typeName = new NameImpl(getNamespaceURI(), localTypeName);
-            names.add(typeName);
-            this.names.put(typeName, remoteTypeName);
-        }
-        return names;
-    }
-
-    /**
-     * @see org.geotools.data.store.ContentDataStore#createFeatureSource(org.geotools.data.store.ContentEntry)
-     */
-    @Override
-    protected ContentFeatureSource createFeatureSource(final ContentEntry entry) throws IOException {
-        ContentFeatureSource source;
-
-        source = new WFSContentFeatureSource(entry, client);
-
-        if (client.supportsTransaction(entry.getTypeName())) {
-            source = new WFSContentFeatureStore((WFSContentFeatureSource) source);
-        }
-
-        return source;
-    }
-
-    /**
-     * @see WFSDataStore#getInfo()
-     */
-    @Override
-    public WFSServiceInfo getInfo() {
-        return client.getInfo();
     }
 
 }

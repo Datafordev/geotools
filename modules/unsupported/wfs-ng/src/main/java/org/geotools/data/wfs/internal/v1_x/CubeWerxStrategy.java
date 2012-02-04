@@ -16,34 +16,38 @@
  */
 package org.geotools.data.wfs.internal.v1_x;
 
+import static org.geotools.data.wfs.internal.Loggers.requestTrace;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.transform.TransformerException;
 
-import org.eclipse.emf.ecore.EObject;
+import net.opengis.wfs.GetFeatureType;
+
 import org.geotools.data.wfs.internal.GetFeatureRequest;
-import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
+import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
-import org.geotools.xml.Configuration;
 import org.geotools.xml.Encoder;
 import org.opengis.filter.BinaryLogicOperator;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
 import org.opengis.filter.Or;
 import org.opengis.filter.spatial.BinarySpatialOperator;
-import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.DOMConfiguration;
 import org.w3c.dom.Document;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSOutput;
+import org.w3c.dom.ls.LSSerializer;
 import org.xml.sax.SAXException;
 
 /**
@@ -73,38 +77,32 @@ public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
      *         number of features matched.
      */
     @Override
-    public boolean supports(ResultType resultType) {
+    public boolean supports(final ResultType resultType) {
         return ResultType.RESULTS.equals(resultType);
     }
 
+    /**
+     * Removes the {@code RESULTTYPE}.
+     * 
+     * @see org.geotools.data.wfs.internal.AbstractWFSStrategy#buildGetFeatureParametersForGET(org.geotools.data.wfs.internal.GetFeatureRequest)
+     */
     @Override
-    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
-        Map<String, String> params = super.buildGetFeatureParametersForGet(request);
+    protected Map<String, String> buildGetFeatureParametersForGET(GetFeatureRequest request) {
+        Map<String, String> params = super.buildGetFeatureParametersForGET(request);
         params.remove("RESULTTYPE");
         return params;
     }
 
     @Override
-    public void encode(final WFSRequest request, final EObject requestObject, final OutputStream out)
-            throws IOException {
+    public InputStream getPostContents(WFSRequest request) throws IOException {
         if (!(request instanceof GetFeatureRequest)) {
-            super.encode(request, requestObject, out);
-            return;
+            return super.getPostContents(request);
         }
 
-        final Configuration configuration = getWfsConfiguration();
-        Encoder encoder = new Encoder(configuration);
+        GetFeatureType requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
 
+        final Encoder encoder = prepareEncoder(request, requestObject);
         final QName opName = getOperationName(request.getOperation());
-        QName typeName = request.getTypeName();
-        if (typeName != null && !XMLConstants.NULL_NS_URI.equals(typeName.getNamespaceURI())) {
-            String prefix = typeName.getPrefix();
-            if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
-                prefix = "type_ns";
-            }
-            String namespaceURI = typeName.getNamespaceURI();
-            encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
-        }
 
         Document dom;
         try {
@@ -116,63 +114,63 @@ public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
         }
 
         dom.getDocumentElement().removeAttribute("resultType");
-        DOMImplementationLS domImpl = (DOMImplementationLS) dom.getImplementation();//safe cast as long as we're on Java6
+        DOMImplementationLS domImpl = (DOMImplementationLS) dom.getImplementation();// safe cast as
+                                                                                    // long as we're
+                                                                                    // on Java6
 
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
         LSOutput destination = domImpl.createLSOutput();
         destination.setByteStream(out);
-        domImpl.createLSSerializer().write(dom, destination);
+        LSSerializer serializer = domImpl.createLSSerializer();
+        DOMConfiguration domConfig = serializer.getDomConfig();
+        if (domConfig.canSetParameter("format-pretty-print", Boolean.TRUE)) {
+            domConfig.setParameter("format-pretty-print", Boolean.TRUE);
+        }
+        serializer.write(dom, destination);
+
+        requestTrace("Encoded ", request.getOperation(), " request: ", out);
+
+        return new ByteArrayInputStream(out.toByteArray());
+
     }
 
     @Override
     public Filter[] splitFilters(final QName typeName, final Filter queryFilter) {
 
-        if (!(queryFilter instanceof BinaryLogicOperator)) {
-            return super.splitFilters(typeName, queryFilter);
+        Filter[] splitFilters = super.splitFilters(typeName, queryFilter);
+
+        Filter serverFilter = splitFilters[0];
+        Filter postFilter = splitFilters[1];
+
+        if (!(serverFilter instanceof BinaryLogicOperator)) {
+            return splitFilters;
         }
 
-        int spatialFiltersCount = 0;
-        // if a logical operator, check no more than one geometry filter is enclosed on it
-        List<Filter> children = ((BinaryLogicOperator) queryFilter).getChildren();
-        for (Filter f : children) {
-            if (f instanceof BinarySpatialOperator) {
-                spatialFiltersCount++;
-            }
-        }
-        if (spatialFiltersCount <= 1) {
-            return super.splitFilters(typeName, queryFilter);
-        }
+        postFilter = queryFilter;
 
-        Filter serverFilter;
-        Filter postFilter;
-        if (queryFilter instanceof Or) {
+        if (serverFilter instanceof Or) {
             // can't know...
             serverFilter = Filter.INCLUDE;
-            postFilter = queryFilter;
         } else {
-            // its an And..
-            List<Filter> serverChild = new ArrayList<Filter>();
-            List<Filter> postChild = new ArrayList<Filter>();
             boolean spatialAdded = false;
-            for (Filter f : children) {
+            // if a logical operator, check no more than one geometry filter is enclosed on it
+            List<Filter> children = new ArrayList<Filter>(
+                    ((BinaryLogicOperator) serverFilter).getChildren());
+            for (Iterator<Filter> it = children.iterator(); it.hasNext();) {
+                Filter f = it.next();
                 if (f instanceof BinarySpatialOperator) {
                     if (spatialAdded) {
-                        postChild.add(f);
+                        it.remove();
                     } else {
-                        serverChild.add(f);
                         spatialAdded = true;
                     }
-                } else {
-                    serverChild.add(f);
                 }
             }
-            FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
-            serverFilter = ff.and(serverChild);
-            postFilter = ff.and(postChild);
+            FilterFactory ff = CommonFactoryFinder.getFilterFactory();
+            serverFilter = ff.and(children);
             SimplifyingFilterVisitor sfv = new SimplifyingFilterVisitor();
             serverFilter = (Filter) serverFilter.accept(sfv, null);
-            postFilter = (Filter) postFilter.accept(sfv, null);
         }
-
         return new Filter[] { serverFilter, postFilter };
     }
 }

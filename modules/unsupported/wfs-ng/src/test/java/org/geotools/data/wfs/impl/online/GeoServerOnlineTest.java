@@ -15,7 +15,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.impl;
+package org.geotools.data.wfs.impl.online;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertFalse;
@@ -46,6 +46,8 @@ import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.data.wfs.impl.WFSContentDataStore;
+import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.data.wfs.internal.v1_0.legacy.WFSDataStoreReadTest;
 import org.geotools.data.wfs.internal.v1_0.legacy.WFSDataStoreWriteOnlineTest;
 import org.geotools.factory.CommonFactoryFinder;

@@ -1,7 +1,6 @@
 package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.ows.ServiceException;
@@ -24,10 +23,15 @@ public class GetFeatureResponse extends WFSResponse {
 
     }
 
+    public GetFeatureParser getFeatures() {
+        return features;
+    }
+
     public GetFeatureParser getFeatures(GeometryFactory geometryFactory) {
         if (featuresReturned) {
             throw new IllegalStateException("getFeatures can be called only once");
         }
+        GetFeatureParser features = getFeatures();
         if (geometryFactory != null) {
             features.setGeometryFactory(geometryFactory);
         }

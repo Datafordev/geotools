@@ -118,7 +118,7 @@ class TransactionStateDiff implements State {
 
     boolean exists(final String typeName) {
         try {
-            wfs.getFeatureTypeName(typeName);
+            wfs.get
         } catch (IllegalArgumentException e) {
             return false;
         }

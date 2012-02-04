@@ -16,11 +16,15 @@
  */
 package org.geotools.data.wfs.internal.v1_x;
 
-import static org.geotools.data.wfs.internal.Loggers.*;
 import static org.geotools.data.wfs.internal.GetFeatureRequest.ResultType.RESULTS;
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
+import static org.geotools.data.wfs.internal.HttpMethod.POST;
+import static org.geotools.data.wfs.internal.Loggers.debug;
+import static org.geotools.data.wfs.internal.Loggers.info;
+import static org.geotools.data.wfs.internal.Loggers.trace;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_CAPABILITIES;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
+import static org.geotools.data.wfs.internal.WFSOperationType.TRANSACTION;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -49,20 +53,22 @@ import net.opengis.wfs.DescribeFeatureTypeType;
 import net.opengis.wfs.FeatureTypeListType;
 import net.opengis.wfs.FeatureTypeType;
 import net.opengis.wfs.GetFeatureType;
+import net.opengis.wfs.OperationsType;
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.ResultTypeType;
 import net.opengis.wfs.WFSCapabilitiesType;
 import net.opengis.wfs.WfsFactory;
 
-import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
+import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
-import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.HttpMethod;
+import org.geotools.data.wfs.internal.Loggers;
+import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSExtensions;
 import org.geotools.data.wfs.internal.WFSGetCapabilities;
@@ -227,9 +233,43 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         return dft;
     }
 
+    @Override
+    protected EObject createTransactionRequest(TransactionRequest request) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     /*---------------------------------------------------------------------
      * WFSStrategy methods
      * ---------------------------------------------------------------------*/
+
+    @Override
+    public boolean supportsTransaction(QName typeName) {
+        try {
+            getFeatureTypeInfo(typeName);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        }
+        if (!supportsOperation(TRANSACTION, POST)) {
+            return false;
+        }
+
+        OperationsType operations = this.capabilities.getFeatureTypeList().getOperations();
+        @SuppressWarnings("unchecked")
+        List<net.opengis.wfs.OperationType> operation = operations.getOperation();
+        for (net.opengis.wfs.OperationType required : Arrays.asList(
+                net.opengis.wfs.OperationType.INSERT_LITERAL,
+                net.opengis.wfs.OperationType.UPDATE_LITERAL,
+                net.opengis.wfs.OperationType.DELETE_LITERAL)) {
+
+            if (!operation.contains(required)) {
+                info("Transactions not supported since WFS didn't declare support for "
+                        + required.getName());
+                return false;
+            }
+        }
+        return true;
+    }
 
     @Override
     public Configuration getFilterConfiguration() {
@@ -256,7 +296,14 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         }
 
         typeInfos.clear();
+
         FeatureTypeListType featureTypeList = this.capabilities.getFeatureTypeList();
+
+        if (featureTypeList == null || featureTypeList.getFeatureType().isEmpty()) {
+            Loggers.MODULE.info("WFS Server contains no FeatureTypes: "
+                    + getOperationURI(GET_CAPABILITIES, GET));
+            return;
+        }
 
         @SuppressWarnings("unchecked")
         List<FeatureTypeType> featureTypes = featureTypeList.getFeatureType();
@@ -504,4 +551,5 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         throw new NoSuchElementException("Operation metadata not found for "
                 + expectedOperationName + " in the capabilities document");
     }
+
 }

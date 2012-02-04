@@ -11,14 +11,11 @@ public final class Loggers {
         //
     }
 
-    private static final class Requests{}
-    private static final class Responses{}
-    private static final class Internal{}
-    public static final Logger MODULE = Logger.getLogger("org.geotools.data.wfs");// Logging.getLogger(Internal.class);
+    public static final Logger MODULE = Logging.getLogger("org.geotools.data.wfs");
 
-    public static final Logger REQUESTS = Logger.getLogger("org.geotools.data.wfs.requests");//Logging.getLogger(Requests.class);
+    public static final Logger REQUESTS = Logging.getLogger("org.geotools.data.wfs.requests");
 
-    public static final Logger RESPONSES = Logger.getLogger("org.geotools.data.wfs.responses");//Logging.getLogger(Responses.class);
+    public static final Logger RESPONSES = Logging.getLogger("org.geotools.data.wfs.responses");
 
     public static final Level MODULE_TRACE_LEVEL = Level.FINER;
 

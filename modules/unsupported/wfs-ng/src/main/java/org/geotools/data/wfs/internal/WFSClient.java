@@ -1,6 +1,7 @@
 package org.geotools.data.wfs.internal;
 
-import static org.geotools.data.wfs.internal.Loggers.*;
+import static org.geotools.data.wfs.internal.Loggers.requestDebug;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Set;
@@ -10,6 +11,7 @@ import java.util.logging.Logger;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.AbstractOpenWebService;
+import org.geotools.data.ows.GetCapabilitiesRequest;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
@@ -51,7 +53,7 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         ((WFSStrategy) specification).setCapabilities(super.capabilities);
     }
 
-    WFSStrategy getStrategy() {
+    protected WFSStrategy getStrategy() {
         return (WFSStrategy) super.specification;
     }
 
@@ -187,29 +189,24 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         return featureTypeNames;
     }
 
-    public boolean supportsTransaction(String simpleTypeName) {
-        // TODO Auto-generated method stub
-        return false;
+    public boolean supportsTransaction(QName typeName) {
+        return getStrategy().supportsTransaction(typeName);
     }
 
     public boolean canLimit() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     public boolean canFilter() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     public boolean canRetype() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     public boolean canSort() {
-        // TODO Auto-generated method stub
-        return false;
+        return true;
     }
 
     public ReferencedEnvelope getBounds(QName typeName, CoordinateReferenceSystem targetCrs) {
@@ -315,6 +312,12 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         return response;
     }
 
+    @Override
+    public GetCapabilitiesResponse issueRequest(GetCapabilitiesRequest request) throws IOException,
+            ServiceException {
+        return (GetCapabilitiesResponse) internalIssueRequest(request);
+    }
+
     public TransactionRequest createTransaction() {
         // TODO Auto-generated method stub
         return null;
@@ -339,9 +342,9 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
 
     public DescribeFeatureTypeResponse issueRequest(DescribeFeatureTypeRequest request)
             throws IOException {
-        
+
         requestDebug("Sending DFT request to ", request.getFinalURL());
-        
+
         Response response = internalIssueRequest(request);
         return (DescribeFeatureTypeResponse) response;
     }

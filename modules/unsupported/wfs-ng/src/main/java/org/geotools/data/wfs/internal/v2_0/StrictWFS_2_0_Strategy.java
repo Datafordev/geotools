@@ -16,8 +16,8 @@
  */
 package org.geotools.data.wfs.internal.v2_0;
 
-import static org.geotools.data.wfs.internal.HttpMethod.*;
-import java.net.URI;
+import static org.geotools.data.wfs.internal.HttpMethod.GET;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -69,15 +69,14 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
      * AbstractWFSStrategy methods
      * ---------------------------------------------------------------------*/
     @Override
-    protected Configuration getFilterConfiguration() {
+    public Configuration getFilterConfiguration() {
         return FILTER_2_0_CONFIGURATION;
     }
 
     @Override
-    protected Configuration getWfsConfiguration() {
+    public Configuration getWfsConfiguration() {
         return WFS_2_0_CONFIGURATION;
     }
-
 
     @Override
     protected QName getOperationName(WFSOperationType operation) {
@@ -202,7 +201,7 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
     @Override
     public FilterCapabilities getFilterCapabilities() {
         FilterCapabilitiesType filterCapabilities = capabilities.getFilterCapabilities();
-        //TODO
+        // TODO
         throw new UnsupportedOperationException();
     }
 }

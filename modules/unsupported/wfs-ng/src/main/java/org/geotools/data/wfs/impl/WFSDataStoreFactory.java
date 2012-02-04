@@ -145,7 +145,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
      */
     public static final WFSFactoryParam<URL> URL;
     static {
-        String name = "WFSDataStoreFactory:GET_CAPABILITIES_URL";
+        String name = "WFSDataStoreFactory:WFS_GET_CAPABILITIES_URL";
         String description = "Represents a URL to the getCapabilities document or a server instance.";
         parametersInfo[0] = URL = new WFSFactoryParam<URL>(name, URL.class, description);
     }

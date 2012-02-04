@@ -17,7 +17,6 @@
 package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
-import static org.geotools.data.wfs.internal.HttpMethod.POST;
 import static org.geotools.data.wfs.internal.Loggers.requestTrace;
 import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
 
@@ -25,13 +24,11 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +40,7 @@ import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.visitor.CapabilitiesFilterSplitter;
 import org.geotools.filter.visitor.SimplifyingFilterVisitor;
@@ -58,20 +56,40 @@ import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.identity.Identifier;
 
 /**
- * {@link WFSStrategy} implementation to talk to a WFS 1.1.0 server leveraging the GeoTools
+ * Base template-method class for {@link WFSStrategy} implementations that leverage the GeoTools
  * {@code xml-xsd} subsystem for schema assisted parsing and encoding of WFS requests and responses.
  * <p>
- * Additional extension hooks:
+ * A conformant WFS client implementation based on this abstract class should only need to implement
+ * the following methods from {@link WFSStrategy}:
  * <ul>
- * <li> {@link #supportsGet()}
- * <li> {@link #supportsPost()}
- * <li> {@link #buildGetFeatureRequest}
- * <li> {@link #buildGetFeatureParametersForGet}
- * <li> {@link #encodeGetFeatureGetFilter}
+ * <li> {@link #setCapabilities}
+ * <li> {@link #getFeatureTypeInfo}
+ * <li> {@link #getServerSupportedOutputFormats(WFSOperationType operation)}
+ * <li> {@link #getServerSupportedOutputFormats(QName typeName, WFSOperationType operation)}
+ * <li> {@link #getClientSupportedOutputFormats(WFSOperationType operation)}
+ * <li> {@link #getFeatureTypeNames()}
+ * <li> {@link #getFilterCapabilities()}
+ * <li> {@link #getSupportedCRSIdentifiers(QName typeName)}
+ * <li> {@link #supports(ResultType resultType)}
+ * <li> {@link #getServiceInfo()}
  * </ul>
- * </p>
+ * Plus the following template methods from this abstract class:
+ * <ul>
+ * <li> {@link #getFilterConfiguration}
+ * <li> {@link #getWfsConfiguration}
+ * <li> {@link #getOperationName}
+ * <li> {@link #createDescribeFeatureTypeRequestPost}
+ * <li> {@link #createGetFeatureRequestPost}
+ * <li> {@link #createTransactionRequest}
+ * </ul>
+ * <p>
+ * Additionaly, specific strategy objects may override any other method to work around specific
+ * service implementation oddities. To that end, the following methods might be of special interest:
+ * <ul>
+ * <li> {@link #buildDescribeFeatureTypeParametersForGET}
+ * <li> {@link #buildGetFeatureParametersForGET}
+ * </ul>
  * 
- * @author groldan
  */
 public abstract class AbstractWFSStrategy extends WFSStrategy {
 
@@ -98,6 +116,50 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     }
 
     /*
+     * This class' extension points
+     */
+
+    /**
+     * Used by {@link #getPostContents(WFSRequest)} to get the qualified operation name to encode;
+     * different WFS versions may use different operation names (specially namespaces).
+     */
+    protected abstract QName getOperationName(WFSOperationType operation);
+
+    /**
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
+     * configuration} when a DescribeFeatureType POST request is to be made.
+     */
+    protected abstract EObject createDescribeFeatureTypeRequestPost(
+            DescribeFeatureTypeRequest request);
+
+    /**
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
+     * configuration} when a GetFeature POST request is to be made.
+     */
+    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
+            throws IOException;
+
+    /**
+     * Creates the EMF object to be encoded with the {@link #getWfsConfiguration() WFS
+     * configuration} when a Transaction request is to be made.
+     */
+    protected abstract EObject createTransactionRequest(TransactionRequest request)
+            throws IOException;
+
+    /**
+     * Returns the xml configuration used to encode a filter at
+     * {@link #encodeGetFeatureGetFilter(Filter)}
+     */
+    protected abstract Configuration getFilterConfiguration();
+
+    /**
+     * Returns the xml configuration used to encode all POST requests.
+     * 
+     * @see #getPostContents(WFSRequest)
+     */
+    public abstract Configuration getWfsConfiguration();
+
+    /*
      * org.geotools.data.ows.Specification methods
      */
 
@@ -119,18 +181,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     }
 
     /*
-     * This class' extension points
-     */
-
-    protected abstract QName getOperationName(WFSOperationType operation);
-
-    protected abstract EObject createGetFeatureRequestPost(GetFeatureRequest query)
-            throws IOException;
-
-    protected abstract EObject createDescribeFeatureTypeRequestPost(
-            DescribeFeatureTypeRequest request);
-
-    /*
      * WFSStrategy methods
      */
     @Override
@@ -143,21 +193,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return config;
     }
 
-    /**
-     * @return {@code true}, override if the WFS doesn't support GET at all
-     */
-    protected boolean supportsGet() {
-        return true;
-    }
-
-    /**
-     * @return {@code true}, override if the WFS doesn't support POST at all
-     */
-    protected boolean supportsPost() {
-        return true;
-    }
-
-    protected Map<String, String> buildGetFeatureParametersForGet(GetFeatureRequest request) {
+    protected Map<String, String> buildGetFeatureParametersForGET(GetFeatureRequest request) {
 
         Map<String, String> map = new HashMap<String, String>();
         map.put("SERVICE", "WFS");
@@ -290,13 +326,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      */
     @Override
     public boolean supportsOperation(WFSOperationType operation, HttpMethod method) {
-        if (POST == method && !supportsPost()) {
-            return false;
-        }
-        if (GET == method && !supportsGet()) {
-            return false;
-        }
-
         return null != getOperationURI(operation, method);
     }
 
@@ -373,7 +402,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         // do nothing
     }
 
-    protected Map<String, String> buildDescribeFeatureTypeURLGet(
+    protected Map<String, String> buildDescribeFeatureTypeParametersForGET(
             final DescribeFeatureTypeRequest request) {
 
         final QName typeName = request.getTypeName();
@@ -467,14 +496,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     // return null;
     // }
 
-    /**
-     * Encodes a WFS request into {@code out}
-     * 
-     * @throws IOException
-     */
-    public void encode(final WFSRequest request, final EObject requestObject, final OutputStream out)
-            throws IOException {
-
+    protected Encoder prepareEncoder(WFSRequest request, EObject requestObject) {
         final Configuration configuration = getWfsConfiguration();
         Charset charset = getConfig().getDefaultEncoding();
         if (null == charset) {
@@ -483,8 +505,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         Encoder encoder = new Encoder(configuration);
         encoder.setEncoding(charset);
         encoder.setIndentSize(1);
-
-        final QName opName = getOperationName(request.getOperation());
 
         QName typeName = request.getTypeName();
         if (typeName != null && !XMLConstants.NULL_NS_URI.equals(typeName.getNamespaceURI())) {
@@ -495,32 +515,8 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             String namespaceURI = typeName.getNamespaceURI();
             encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
         }
-
-        encoder.encode(requestObject, opName, out);
+        return encoder;
     }
-
-    //
-    // private static QName getElementName(EObject originatingRequest) {
-    // QName encodeElementName;
-    // if (originatingRequest instanceof GetCapabilitiesType) {
-    // encodeElementName = WFS.GetCapabilities;
-    // } else if (originatingRequest instanceof GetFeatureType) {
-    // encodeElementName = WFS.GetFeature;
-    // } else if (originatingRequest instanceof DescribeFeatureTypeType) {
-    // encodeElementName = WFS.DescribeFeatureType;
-    // } else if (originatingRequest instanceof GetCapabilitiesType) {
-    // encodeElementName = WFS.GetCapabilities;
-    // } else if (originatingRequest instanceof GetGmlObjectType) {
-    // encodeElementName = WFS.GetGmlObject;
-    // } else if (originatingRequest instanceof LockFeatureType) {
-    // encodeElementName = WFS.LockFeature;
-    // } else if (originatingRequest instanceof TransactionType) {
-    // encodeElementName = WFS.Transaction;
-    // } else {
-    // throw new IllegalArgumentException("Unkown xml element name for " + originatingRequest);
-    // }
-    // return encodeElementName;
-    // }
 
     /**
      * Splits the filter provided by the geotools query into the server supported and unsupported
@@ -532,7 +528,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      *         the one to post-process
      * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
      */
-    protected Filter[] splitFilters(QName typeName, Filter filter) {
+    public Filter[] splitFilters(QName typeName, Filter filter) {
 
         final Set<String> supportedCRSIdentifiers = getSupportedCRSIdentifiers(typeName);
 
@@ -677,10 +673,10 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         switch (operation) {
         case GET_FEATURE:
-            requestParams = buildGetFeatureParametersForGet((GetFeatureRequest) request);
+            requestParams = buildGetFeatureParametersForGET((GetFeatureRequest) request);
             break;
         case DESCRIBE_FEATURETYPE:
-            requestParams = buildDescribeFeatureTypeURLGet((DescribeFeatureTypeRequest) request);
+            requestParams = buildDescribeFeatureTypeParametersForGET((DescribeFeatureTypeRequest) request);
             break;
         default:
             throw new UnsupportedOperationException();
@@ -707,6 +703,15 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return defaultOutputFormat;
     }
 
+    /**
+     * Returns the input stream with the POST body contents for the given request.
+     * <p>
+     * 
+     * @see #createDescribeFeatureTypeRequestPost
+     * @see #createGetFeatureRequestPost
+     * @see #prepareEncoder
+     * @see #getOperationName
+     */
     @Override
     public InputStream getPostContents(WFSRequest request) throws IOException {
         EObject requestObject;
@@ -725,10 +730,15 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        encode(request, requestObject, out);
+        final Encoder encoder = prepareEncoder(request, requestObject);
+        final QName opName = getOperationName(request.getOperation());
+
+        encoder.encode(requestObject, opName, out);
+
         requestTrace("Encoded ", request.getOperation(), " request: ", out);
 
         return new ByteArrayInputStream(out.toByteArray());
 
     }
+
 }
