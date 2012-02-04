@@ -32,6 +32,7 @@ import org.geotools.data.DiffFeatureReader;
 import org.geotools.data.FeatureEvent;
 import org.geotools.data.FeatureListener;
 import org.geotools.data.FeatureLock;
+import org.geotools.data.FeatureLocking;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.FilteringFeatureReader;
@@ -41,7 +42,6 @@ import org.geotools.data.Query;
 import org.geotools.data.Transaction;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureLocking;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
@@ -54,6 +54,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory;
+import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.Id;
 import org.opengis.geometry.BoundingBox;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -77,8 +78,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     DataStore data;
 
-    public AbstractDataStoreTest(String arg0) {
-        super(arg0);
+    public AbstractDataStoreTest(String name) {
+        super(name);
     }
 
     /**
@@ -115,10 +116,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
      * This method must remove the roads and rivers types from the datastore. It must also close all
      * connections to the datastore if it has connections and get rid of any temporary files.
      * 
-     * @param data
-     *            DOCUMENT ME!
-     * 
-     * 
      * @throws Exception
      */
     public abstract DataStore tearDownDataStore(DataStore data) throws Exception;
@@ -154,6 +151,9 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         rd12Filter = ff.id(ff.featureId(roadFeatures[0].getID()),
                 ff.featureId(roadFeatures[1].getID()));
 
+        CoordinateReferenceSystem crs = CRS.decode("EPSG:4326", true);
+        riverBounds = new ReferencedEnvelope(riverBounds, crs);
+        roadBounds = new ReferencedEnvelope(roadBounds, crs);
     }
 
     /**
@@ -191,10 +191,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     @Test
     public void testFeatureEvents() throws Exception {
-        SimpleFeatureStore store1 = (SimpleFeatureStore) data.getFeatureSource(roadFeatures[0]
-                .getFeatureType().getTypeName());
-        SimpleFeatureStore store2 = (SimpleFeatureStore) data.getFeatureSource(roadFeatures[0]
-                .getFeatureType().getTypeName());
+        SimpleFeatureStore store1 = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
+        SimpleFeatureStore store2 = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
         store1.setTransaction(new DefaultTransaction());
         class Listener implements FeatureListener {
             String name;
@@ -220,11 +218,11 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         store1.addFeatureListener(listener1);
         store2.addFeatureListener(listener2);
 
-        FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
+        FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
 
         // test that only the listener listening with the current transaction gets the event.
         final SimpleFeature feature = roadFeatures[0];
-        Id fidFilter = ff.id(Collections.singleton(ff.featureId(feature.getID())));
+        Id fidFilter = ff.id(feature.getIdentifier());
 
         store1.removeFeatures(fidFilter);
 
@@ -242,7 +240,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         store1.getTransaction().commit();
 
         assertEquals(0, listener1.events.size());
-        assertEquals(2, listener2.events.size());
+        assertEquals(3, listener2.events.size());
 
         event = listener2.getEvent(0);
         assertEquals(feature.getBounds(), event.getBounds());
@@ -411,13 +409,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     /**
      * Like contain but based on match rather than equals
-     * 
-     * @param array
-     *            DOCUMENT ME!
-     * @param expected
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      */
     boolean containsLax(SimpleFeature[] array, SimpleFeature expected) {
         if ((array == null) || (array.length == 0)) {
@@ -437,13 +428,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     /**
      * Compare based on attributes not getID allows comparison of Diff contents
-     * 
-     * @param expected
-     *            DOCUMENT ME!
-     * @param actual
-     *            DOCUMENT ME!
-     * 
-     * @return DOCUMENT ME!
      */
     boolean match(SimpleFeature expected, SimpleFeature actual) {
         SimpleFeatureType type = expected.getFeatureType();
@@ -466,8 +450,23 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     @Test
     public void testGetSchema() throws IOException {
-        assertEquals(roadType, data.getSchema(getRoadTypeName()));
-        assertEquals(riverType, data.getSchema(getRiverTypeName()));
+        SimpleFeatureType road = data.getSchema(getRoadTypeName());
+        SimpleFeatureType river = data.getSchema(getRiverTypeName());
+
+        assertNotNull(road);
+        assertNotNull(river);
+
+        assertEquals(getRoadTypeName(), road.getTypeName());
+        assertEquals(getRiverTypeName(), river.getTypeName());
+
+        assertEquals(roadType.getAttributeCount(), road.getAttributeCount());
+        assertEquals(riverType.getAttributeCount(), river.getAttributeCount());
+
+        for (int i = 0; i < roadType.getAttributeCount(); i++) {
+            AttributeDescriptor expected = roadType.getDescriptor(i);
+            AttributeDescriptor actual = road.getDescriptor(i);
+            assertEquals(expected, actual);
+        }
     }
 
     void assertCovers(String msg, SimpleFeatureCollection c1, SimpleFeatureCollection c2) {
@@ -528,7 +527,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     }
 
     @Test
-    public void testGetFeatureReaderConcurancy() throws Exception {
+    public void testGetFeatureReaderConcurency() throws Exception {
         Query query = new Query(getRoadTypeName());
         FeatureReader<SimpleFeatureType, SimpleFeature> reader1 = data.getFeatureReader(query,
                 Transaction.AUTO_COMMIT);
@@ -598,7 +597,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         reader = data.getFeatureReader(new Query(getRoadTypeName(), rd1Filter),
                 Transaction.AUTO_COMMIT);
-        
+
         assertEquals(type, reader.getFeatureType());
         assertEquals(1, count(reader));
     }
@@ -940,9 +939,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     /**
      * Test two transactions one removing feature, and one adding a feature.
-     * 
-     * @throws Exception
-     *             DOCUMENT ME!
      */
     @Test
     public void testGetFeatureWriterTransaction() throws Exception {
@@ -985,7 +981,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         FINAL[i] = newRoad;
 
         // start of with ORIGINAL
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        final Query allRoadsQuery = new Query(getRoadTypeName());
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(covers(reader, ORIGIONAL));
 
         // writer 1 removes road.rd1 on t1
@@ -998,11 +995,11 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         }
 
         // still have ORIGIONAL and t1 has REMOVE
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
 
         assertTrue(covers(reader, ORIGIONAL));
 
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t1);
+        reader = data.getFeatureReader(allRoadsQuery, t1);
         assertTrue(covers(reader, REMOVE));
 
         // close writer1
@@ -1011,9 +1008,9 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         writer1.close();
 
         // We still have ORIGIONAL and t1 has REMOVE
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(covers(reader, ORIGIONAL));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t1);
+        reader = data.getFeatureReader(allRoadsQuery, t1);
         assertTrue(covers(reader, REMOVE));
 
         // writer 2 adds road.rd4 on t2
@@ -1024,9 +1021,9 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         writer2.write();
 
         // We still have ORIGIONAL and t2 has ADD
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(covers(reader, ORIGIONAL));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t2);
+        reader = data.getFeatureReader(allRoadsQuery, t2);
         assertTrue(coversLax(reader, ADD));
 
         // close writer2
@@ -1035,9 +1032,9 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         writer2.close();
 
         // Still have ORIGIONAL and t2 has ADD
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(covers(reader, ORIGIONAL));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t2);
+        reader = data.getFeatureReader(allRoadsQuery, t2);
         assertTrue(coversLax(reader, ADD));
 
         // commit t1
@@ -1048,11 +1045,11 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         // We now have REMOVE, as does t1 (which has not additional diffs)
         // t2 will have FINAL
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(covers(reader, REMOVE));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t1);
+        reader = data.getFeatureReader(allRoadsQuery, t1);
         assertTrue(covers(reader, REMOVE));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t2);
+        reader = data.getFeatureReader(allRoadsQuery, t2);
         assertTrue(coversLax(reader, FINAL));
 
         // commit t2
@@ -1061,12 +1058,12 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         t2.commit();
 
         // We now have Number( remove one and add one)
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
+        reader = data.getFeatureReader(allRoadsQuery, Transaction.AUTO_COMMIT);
         assertTrue(coversLax(reader, FINAL));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t1);
+        reader = data.getFeatureReader(allRoadsQuery, t1);
         assertTrue(coversLax(reader, FINAL));
-        reader = data.getFeatureReader(new Query(getRoadTypeName()), t2);
+        reader = data.getFeatureReader(allRoadsQuery, t2);
         assertTrue(coversLax(reader, FINAL));
     }
 
@@ -1134,8 +1131,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     public void testGetFeatureSourceRiver() throws Exception {
         SimpleFeatureSource river = data.getFeatureSource(getRiverTypeName());
 
-        assertEquals(riverType, river.getSchema());
-        assertEquals(data, river.getDataStore());
+        assertEquals(getRiverTypeName(), river.getSchema().getTypeName());
+        assertSame(data, river.getDataStore());
 
         SimpleFeatureCollection all = river.getFeatures();
         assertEquals(2, all.size());
@@ -1304,8 +1301,13 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     @Test
     public void testLockFeatures() throws IOException {
         FeatureLock lock = new FeatureLock("test", 3600);
-        SimpleFeatureLocking road;
-        road = (SimpleFeatureLocking) data.getFeatureSource(getRoadTypeName());
+        FeatureLocking<SimpleFeatureType, SimpleFeature> road;
+        SimpleFeatureSource source = data.getFeatureSource(getRoadTypeName());
+        if (!(source instanceof FeatureLocking)) {
+            LOGGER.info("testLockFeature ignored, store does not support locking");
+            return;
+        }
+        road = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
         road.setFeatureLock(lock);
 
         assertFalse(isLocked(getRoadTypeName(), roadFeatures[0].getID()));
@@ -1316,7 +1318,12 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     @Test
     public void testUnLockFeatures() throws IOException {
         FeatureLock lock = new FeatureLock("test", 360000);
-        SimpleFeatureLocking road = (SimpleFeatureLocking) data.getFeatureSource(getRoadTypeName());
+        SimpleFeatureSource source = data.getFeatureSource(getRoadTypeName());
+        if (!(source instanceof FeatureLocking)) {
+            LOGGER.info("testUnLockFeatures ignored, store does not support locking");
+            return;
+        }
+        FeatureLocking<SimpleFeatureType, SimpleFeature> road = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
         road.setFeatureLock(lock);
         road.lockFeatures();
 
@@ -1345,10 +1352,25 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         FeatureLock lockB = new FeatureLock("LockB", 3600);
         Transaction t1 = new DefaultTransaction();
         Transaction t2 = new DefaultTransaction();
-        SimpleFeatureLocking road1 = (SimpleFeatureLocking) data
-                .getFeatureSource(getRoadTypeName());
-        SimpleFeatureLocking road2 = (SimpleFeatureLocking) data
-                .getFeatureSource(getRoadTypeName());
+        FeatureLocking<SimpleFeatureType, SimpleFeature> road1;
+        FeatureLocking<SimpleFeatureType, SimpleFeature> road2;
+
+        {
+            SimpleFeatureSource source = data.getFeatureSource(getRoadTypeName());
+            if (!(source instanceof FeatureLocking)) {
+                LOGGER.info("testLockFeatureInteraction ignored, store does not support locking");
+                return;
+            }
+
+            road1 = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
+
+            source = data.getFeatureSource(getRoadTypeName());
+            if (!(source instanceof FeatureLocking)) {
+                LOGGER.info("testLockFeatureInteraction ignored, store does not support locking");
+                return;
+            }
+            road2 = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
+        }
         road1.setTransaction(t1);
         road2.setTransaction(t2);
         road1.setFeatureLock(lockA);
@@ -1397,7 +1419,15 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     @Test
     public void testGetFeatureLockingExpire() throws Exception {
         FeatureLock lock = new FeatureLock("Timed", 1);
-        SimpleFeatureLocking road = (SimpleFeatureLocking) data.getFeatureSource(getRoadTypeName());
+        FeatureLocking<SimpleFeatureType, SimpleFeature> road;
+        {
+            SimpleFeatureSource source = data.getFeatureSource(getRoadTypeName());
+            if (!(source instanceof FeatureLocking)) {
+                LOGGER.info("testLockFeatureInteraction ignored, store does not support locking");
+                return;
+            }
+            road = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
+        }
         road.setFeatureLock(lock);
         String fid = roadFeatures[0].getID();
         assertFalse(isLocked(getRoadTypeName(), fid));

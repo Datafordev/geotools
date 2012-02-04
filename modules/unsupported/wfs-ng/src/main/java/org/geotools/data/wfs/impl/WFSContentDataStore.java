@@ -18,10 +18,15 @@ import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
+import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.NameImpl;
+import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.Name;
+
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.impl.PackedCoordinateSequenceFactory;
 
 public class WFSContentDataStore extends ContentDataStore {
 
@@ -35,6 +40,12 @@ public class WFSContentDataStore extends ContentDataStore {
         this.client = client;
         this.names = new ConcurrentHashMap<Name, QName>();
         this.remoteFeatureTypes = new ConcurrentHashMap<QName, FeatureType>();
+
+        // default factories
+        setFilterFactory(CommonFactoryFinder.getFilterFactory(null));
+        setGeometryFactory(new GeometryFactory(PackedCoordinateSequenceFactory.DOUBLE_FACTORY));
+        setFeatureTypeFactory(new FeatureTypeFactoryImpl());
+        setFeatureFactory(CommonFactoryFinder.getFeatureFactory(null));
     }
 
     /**
@@ -93,7 +104,7 @@ public class WFSContentDataStore extends ContentDataStore {
     }
 
     public QName getRemoteTypeName(Name localTypeName) throws IOException {
-        if(names.isEmpty()){
+        if (names.isEmpty()) {
             createTypeNames();
         }
         QName qName = names.get(localTypeName);
@@ -117,7 +128,7 @@ public class WFSContentDataStore extends ContentDataStore {
                 request.setTypeName(remoteTypeName);
 
                 DescribeFeatureTypeResponse response = client.issueRequest(request);
-                
+
                 remoteFeatureType = response.getFeatureType();
                 remoteFeatureTypes.put(remoteTypeName, remoteFeatureType);
             }
@@ -135,6 +146,10 @@ public class WFSContentDataStore extends ContentDataStore {
         remoteSimpleFeatureType = EmfAppSchemaParser.toSimpleFeatureType(remoteFeatureType);
 
         return remoteSimpleFeatureType;
+    }
+
+    public WFSClient getWfsClient() {
+        return client;
     }
 
 }

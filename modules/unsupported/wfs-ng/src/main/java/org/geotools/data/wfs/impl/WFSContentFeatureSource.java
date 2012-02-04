@@ -15,6 +15,7 @@ import org.geotools.data.FeatureSource;
 import org.geotools.data.Query;
 import org.geotools.data.ReTypeFeatureReader;
 import org.geotools.data.Transaction;
+import org.geotools.data.Transaction.State;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.store.DiffTransactionState;
@@ -229,9 +230,10 @@ class WFSContentFeatureSource extends ContentFeatureSource {
         Transaction transaction = getTransaction();
         if (!Transaction.AUTO_COMMIT.equals(transaction)) {
             ContentEntry entry = getEntry();
-            DiffTransactionState state = (DiffTransactionState) transaction.getState(entry);
-            if (state != null) {
-                Diff diff = state.getDiff();
+            State state = transaction.getState(entry);
+            WFSDiffTransactionState wfsState = (WFSDiffTransactionState) state;
+            if (wfsState != null) {
+                Diff diff = wfsState.getDiff();
                 reader = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(reader, diff);
             }
         }

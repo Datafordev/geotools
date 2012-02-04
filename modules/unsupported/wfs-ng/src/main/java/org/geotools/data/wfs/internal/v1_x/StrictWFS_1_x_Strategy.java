@@ -21,6 +21,7 @@ import static org.geotools.data.wfs.internal.HttpMethod.GET;
 import static org.geotools.data.wfs.internal.HttpMethod.POST;
 import static org.geotools.data.wfs.internal.Loggers.debug;
 import static org.geotools.data.wfs.internal.Loggers.info;
+import static org.geotools.data.wfs.internal.Loggers.requestInfo;
 import static org.geotools.data.wfs.internal.Loggers.trace;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_CAPABILITIES;
 import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
@@ -49,17 +50,24 @@ import net.opengis.ows10.DomainType;
 import net.opengis.ows10.OperationType;
 import net.opengis.ows10.OperationsMetadataType;
 import net.opengis.ows10.RequestMethodType;
+import net.opengis.wfs.DeleteElementType;
 import net.opengis.wfs.DescribeFeatureTypeType;
 import net.opengis.wfs.FeatureTypeListType;
 import net.opengis.wfs.FeatureTypeType;
 import net.opengis.wfs.GetFeatureType;
+import net.opengis.wfs.InsertElementType;
 import net.opengis.wfs.OperationsType;
+import net.opengis.wfs.PropertyType;
 import net.opengis.wfs.QueryType;
 import net.opengis.wfs.ResultTypeType;
+import net.opengis.wfs.TransactionType;
+import net.opengis.wfs.UpdateElementType;
 import net.opengis.wfs.WFSCapabilitiesType;
 import net.opengis.wfs.WfsFactory;
 
 import org.eclipse.emf.ecore.EObject;
+import org.geotools.data.DataUtilities;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
@@ -69,6 +77,10 @@ import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
 import org.geotools.data.wfs.internal.HttpMethod;
 import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.TransactionRequest;
+import org.geotools.data.wfs.internal.TransactionRequest.Delete;
+import org.geotools.data.wfs.internal.TransactionRequest.Insert;
+import org.geotools.data.wfs.internal.TransactionRequest.TransactionElement;
+import org.geotools.data.wfs.internal.TransactionRequest.Update;
 import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSExtensions;
 import org.geotools.data.wfs.internal.WFSGetCapabilities;
@@ -76,9 +88,11 @@ import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSResponseFactory;
 import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.factory.GeoTools;
+import org.geotools.feature.FeatureCollection;
 import org.geotools.util.Version;
 import org.geotools.wfs.v1_0.WFS;
 import org.geotools.xml.Configuration;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.opengis.filter.capability.FilterCapabilities;
 import org.opengis.filter.sort.SortBy;
@@ -142,15 +156,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         String outputFormat = query.getOutputFormat();
         getFeature.setOutputFormat(outputFormat);
 
-        StringBuilder handle = new StringBuilder("GeoTools ").append(GeoTools.getVersion())
-                .append("(").append(GeoTools.getBuildRevision()).append(") WFS ")
-                .append(getVersion()).append(" DataStore @");
-        try {
-            handle.append(InetAddress.getLocalHost().getHostName());
-        } catch (Exception ignore) {
-            handle.append("<uknown host>");
-        }
-        getFeature.setHandle(handle.toString());
+        getFeature.setHandle(requestHandle());
 
         Integer maxFeatures = query.getMaxFeatures();
         if (maxFeatures != null) {
@@ -208,6 +214,18 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         return getFeature;
     }
 
+    private String requestHandle() {
+        StringBuilder handle = new StringBuilder("GeoTools ").append(GeoTools.getVersion())
+                .append("(").append(GeoTools.getBuildRevision()).append(") WFS ")
+                .append(getVersion()).append(" DataStore @");
+        try {
+            handle.append(InetAddress.getLocalHost().getHostName());
+        } catch (Exception ignore) {
+            handle.append("<uknown host>");
+        }
+        return handle.toString();
+    }
+
     @Override
     protected DescribeFeatureTypeType createDescribeFeatureTypeRequestPost(
             DescribeFeatureTypeRequest request) {
@@ -219,7 +237,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         Version version = getServiceVersion();
         dft.setService("WFS");
         dft.setVersion(version.toString());
-        dft.setHandle("GeoTools " + GeoTools.getVersion() + " WFS DataStore " + getVersion());
+        dft.setHandle(requestHandle());
 
         if (Versions.v1_0_0.equals(version)) {
             dft.setOutputFormat(null);
@@ -235,8 +253,110 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
 
     @Override
     protected EObject createTransactionRequest(TransactionRequest request) throws IOException {
-        // TODO Auto-generated method stub
-        return null;
+        final WfsFactory factory = WfsFactory.eINSTANCE;
+
+        TransactionType tx = factory.createTransactionType();
+        tx.setService("WFS");
+        tx.setHandle(requestHandle());
+        tx.setVersion(getVersion());
+
+        List<TransactionElement> transactionElements = request.getTransactionElements();
+        if (transactionElements.isEmpty()) {
+            requestInfo("Asked to perform transaction with no transaction elements");
+            return tx;
+        }
+
+        @SuppressWarnings("unchecked")
+        List<InsertElementType> inserts = tx.getInsert();
+        @SuppressWarnings("unchecked")
+        List<UpdateElementType> updates = tx.getUpdate();
+        @SuppressWarnings("unchecked")
+        List<DeleteElementType> deletes = tx.getDelete();
+
+        try {
+            for (TransactionElement elem : transactionElements) {
+                if (elem instanceof TransactionRequest.Insert) {
+                    InsertElementType insert = createInsert(factory, (Insert) elem);
+                    inserts.add(insert);
+                } else if (elem instanceof TransactionRequest.Update) {
+                    UpdateElementType update = createUpdate(factory, (Update) elem);
+                    updates.add(update);
+                } else if (elem instanceof TransactionRequest.Delete) {
+                    DeleteElementType delete = createDelete(factory, (Delete) elem);
+                    deletes.add(delete);
+                }
+            }
+        } catch (IOException e) {
+            throw e;
+        } catch (RuntimeException re) {
+            throw re;
+        } catch (Exception other) {
+            throw new RuntimeException(other);
+        }
+
+        return tx;
+    }
+
+    protected InsertElementType createInsert(WfsFactory factory, Insert elem) throws Exception {
+        InsertElementType insert = factory.createInsertElementType();
+
+        String srsName = getFeatureTypeInfo(elem.getTypeName()).getDefaultSRS();
+        insert.setSrsName(new URI(srsName));
+
+        List<SimpleFeature> features = elem.getFeatures();
+        SimpleFeatureCollection collection = DataUtilities.collection(features);
+
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        List<FeatureCollection> featureCollections = insert.getFeature();
+
+        featureCollections.add(collection);
+        return insert;
+    }
+
+    protected UpdateElementType createUpdate(WfsFactory factory, Update elem) throws Exception {
+
+        List<QName> propertyNames = elem.getPropertyNames();
+        List<Object> newValues = elem.getNewValues();
+        if (propertyNames.size() != newValues.size()) {
+            throw new IllegalArgumentException("Got " + propertyNames.size()
+                    + " property names and " + newValues.size() + " values");
+        }
+
+        UpdateElementType update = factory.createUpdateElementType();
+
+        QName typeName = elem.getTypeName();
+        update.setTypeName(typeName);
+        String srsName = getFeatureTypeInfo(typeName).getDefaultSRS();
+        update.setSrsName(new URI(srsName));
+
+        Filter filter = elem.getFilter();
+        update.setFilter(filter);
+
+        @SuppressWarnings("unchecked")
+        List<PropertyType> properties = update.getProperty();
+
+        for (int i = 0; i < propertyNames.size(); i++) {
+            QName propName = propertyNames.get(i);
+            Object value = newValues.get(i);
+            PropertyType property = factory.createPropertyType();
+            property.setName(propName);
+            property.setValue(value);
+
+            properties.add(property);
+        }
+
+        return update;
+    }
+
+    protected DeleteElementType createDelete(WfsFactory factory, Delete elem) throws Exception {
+        DeleteElementType delete = factory.createDeleteElementType();
+
+        QName typeName = elem.getTypeName();
+        delete.setTypeName(typeName);
+        Filter filter = elem.getFilter();
+        delete.setFilter(filter);
+
+        return delete;
     }
 
     /*---------------------------------------------------------------------
@@ -455,6 +575,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
             break;
         case TRANSACTION:
             parameterName = wfs1_0 ? "" : "inputFormat";
+            break;
         default:
             throw new UnsupportedOperationException("not yet implemented for " + operation);
         }

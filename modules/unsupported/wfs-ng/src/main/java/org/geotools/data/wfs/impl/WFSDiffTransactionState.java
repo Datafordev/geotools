@@ -43,7 +43,7 @@ import org.opengis.filter.Filter;
 /**
  * Transaction state responsible for holding an in memory {@link Diff} of any modifications.
  */
-class WFSContentEntryState extends DiffTransactionState {
+class WFSDiffTransactionState extends DiffTransactionState {
 
     /**
      * Transaction state responsible for holding an in memory {@link Diff}.
@@ -51,12 +51,14 @@ class WFSContentEntryState extends DiffTransactionState {
      * @param state
      *            ContentState for the transaction
      */
-    public WFSContentEntryState(ContentState state) {
+    public WFSDiffTransactionState(WFSContentState state) {
         super(state);
     }
 
     @Override
     public synchronized void commit() throws IOException {
+       System.err.println("Commit " + state.getFeatureType());
+        
 //        if (diff.isEmpty()) {
 //            return; // nothing to do
 //        }

@@ -27,6 +27,8 @@ public final class Loggers {
 
     public static final Level REQUEST_DEBUG_LEVEL = Level.INFO;// TODO: lower this
 
+    public static final Level REQUEST_INFO_LEVEL = Level.INFO;
+
     public static final Level RESPONSES_TRACE_LEVEL = Level.INFO;// TODO: lower this
 
     public static final Level RESPONSES_DEBUG_LEVEL = Level.INFO;// TODO: lower this
@@ -49,6 +51,10 @@ public final class Loggers {
 
     public static void requestDebug(Object... message) {
         log(REQUESTS, REQUEST_DEBUG_LEVEL, message);
+    }
+
+    public static void requestInfo(Object... message) {
+        log(REQUESTS, REQUEST_INFO_LEVEL, message);
     }
 
     public static void responseTrace(Object... message) {

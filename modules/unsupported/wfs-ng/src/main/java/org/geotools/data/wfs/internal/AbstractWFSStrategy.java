@@ -29,6 +29,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -496,7 +497,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     // return null;
     // }
 
-    protected Encoder prepareEncoder(WFSRequest request, EObject requestObject) {
+    protected Encoder prepareEncoder(WFSRequest request) {
         final Configuration configuration = getWfsConfiguration();
         Charset charset = getConfig().getDefaultEncoding();
         if (null == charset) {
@@ -506,14 +507,34 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         encoder.setEncoding(charset);
         encoder.setIndentSize(1);
 
-        QName typeName = request.getTypeName();
-        if (typeName != null && !XMLConstants.NULL_NS_URI.equals(typeName.getNamespaceURI())) {
-            String prefix = typeName.getPrefix();
-            if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
-                prefix = "type_ns";
+        Set<QName> typeNames = new HashSet<QName>();
+
+        if (request instanceof TransactionRequest) {
+            TransactionRequest tx = (TransactionRequest) request;
+            typeNames.addAll(tx.getTypeNames());
+        } else {
+            QName typeName = request.getTypeName();
+            if (typeName != null) {
+                typeNames.add(typeName);
             }
+        }
+        int i = 0;
+        for (QName typeName : typeNames) {
+
+            String prefix = typeName.getPrefix();
             String namespaceURI = typeName.getNamespaceURI();
+
+            if (XMLConstants.NULL_NS_URI.equals(namespaceURI)) {
+                continue;
+            }
+
+            if (XMLConstants.DEFAULT_NS_PREFIX.equals(prefix)) {
+                prefix = "type_ns" + i;
+            }
+
             encoder.getNamespaces().declarePrefix(prefix, namespaceURI);
+
+            i++;
         }
         return encoder;
     }
@@ -717,11 +738,14 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         EObject requestObject;
 
         switch (request.getOperation()) {
+        case DESCRIBE_FEATURETYPE:
+            requestObject = createDescribeFeatureTypeRequestPost((DescribeFeatureTypeRequest) request);
+            break;
         case GET_FEATURE:
             requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
             break;
-        case DESCRIBE_FEATURETYPE:
-            requestObject = createDescribeFeatureTypeRequestPost((DescribeFeatureTypeRequest) request);
+        case TRANSACTION:
+            requestObject = createTransactionRequest((TransactionRequest) request);
             break;
         default:
             throw new UnsupportedOperationException("not yet implemented for "
@@ -730,7 +754,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        final Encoder encoder = prepareEncoder(request, requestObject);
+        final Encoder encoder = prepareEncoder(request);
         final QName opName = getOperationName(request.getOperation());
 
         encoder.encode(requestObject, opName, out);

@@ -9,7 +9,7 @@ import org.geotools.data.Query;
 import org.geotools.data.QueryCapabilities;
 import org.geotools.data.ResourceInfo;
 import org.geotools.data.Transaction;
-import org.geotools.data.store.ContentDataStore;
+import org.geotools.data.Transaction.State;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
@@ -34,14 +34,18 @@ class WFSContentFeatureStore extends ContentFeatureStore {
         return delegate.canReproject();
     }
 
+    /**
+     * @return {@code false}, only in-process feature locking so far.
+     * @see org.geotools.data.store.ContentFeatureSource#canLock()
+     */
     @Override
     public boolean canLock() {
-        return false; // not yet
+        return false; //
     }
 
     @Override
     protected boolean canEvent() {
-        return false; // let the super classe take over this work
+        return true;
     }
 
     @Override
@@ -119,14 +123,9 @@ class WFSContentFeatureStore extends ContentFeatureStore {
         return delegate.canOffset();
     }
 
-    /**
-     * @return {@code false}, so that we rely on all the in-memory transaction state diff machinery
-     *         set up by {@link ContentDataStore}
-     * @see org.geotools.data.store.ContentFeatureSource#canTransact()
-     */
     @Override
     protected boolean canTransact() {
-        return false;
+        return true;
     }
 
     @Override
@@ -154,17 +153,27 @@ class WFSContentFeatureStore extends ContentFeatureStore {
     @Override
     protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query,
             final int flags) throws IOException {
+
         query = joinQuery(query);
         query = resolvePropertyNames(query);
 
-        WFSContentEntryState state = (WFSContentEntryState) getTransaction().getState(getEntry());
-
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
-
-        Diff diff = state.getDiff();
+        final FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
 
         FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-        writer = new DiffContentFeatureWriter(this, diff, reader);
+
+        final Transaction transaction = getTransaction();
+        if (Transaction.AUTO_COMMIT.equals(transaction)) {
+
+            writer = new WFSAutoCommitFeatureWriter(this, reader);
+
+        } else {
+            State state = transaction.getState(getEntry());
+            WFSDiffTransactionState wfsState = (WFSDiffTransactionState) state;
+
+            Diff diff = wfsState.getDiff();
+
+            writer = new DiffContentFeatureWriter(this, diff, reader);
+        }
 
         return writer;
     }

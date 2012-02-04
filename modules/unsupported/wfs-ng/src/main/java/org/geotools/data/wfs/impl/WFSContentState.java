@@ -7,7 +7,16 @@ public class WFSContentState extends ContentState {
 
     public WFSContentState(ContentEntry entry) {
         super(entry);
-        super.transactionState = new WFSContentEntryState(this);
+        super.transactionState = new WFSDiffTransactionState(this);
     }
 
+    WFSContentState(WFSContentState wfsContentState) {
+        super(wfsContentState);
+        super.transactionState = new WFSDiffTransactionState(this);
+    }
+
+    @Override
+    public WFSContentState copy() {
+        return new WFSContentState(this);
+    }
 }

@@ -1,17 +1,17 @@
 package org.geotools.data.wfs.integration;
 
-import java.io.IOException;
-import java.net.URL;
-
 import org.geotools.data.DataStore;
 import org.geotools.data.DataUtilities;
+import org.geotools.data.FeatureWriter;
+import org.geotools.data.Transaction;
 import org.geotools.data.wfs.impl.WFSContentDataStore;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.referencing.CRS;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class GeoServerIntegrationTest extends AbstractDataStoreTest {
@@ -31,6 +31,13 @@ public class GeoServerIntegrationTest extends AbstractDataStoreTest {
 
         roadType = DataUtilities.createSubType(roadType, null, wgs84LonLat);
         riverType = DataUtilities.createSubType(riverType, null, wgs84LonLat);
+    }
+
+    @Override
+    @Ignore
+    @Test
+    public void testCreateSchema() throws Exception {
+        // not supported
     }
 
     @Override
@@ -70,30 +77,23 @@ public class GeoServerIntegrationTest extends AbstractDataStoreTest {
         return "sf_river";
     }
 
+    @Override
     @Test
-    public void testGetFeatureTypes() {
-        super.testGetFeatureTypes();
-    }
+    public void testGetFeatureWriterRemove() throws Exception {
+        FeatureWriter<SimpleFeatureType, SimpleFeature> writer = data.getFeatureWriter(
+                getRoadTypeName(), Transaction.AUTO_COMMIT);
+        SimpleFeature feature;
 
-    @Test
-    public void testGetSchema() throws IOException {
-        SimpleFeatureType road = data.getSchema(getRoadTypeName());
-        SimpleFeatureType river = data.getSchema(getRiverTypeName());
+        while (writer.hasNext()) {
+            feature = writer.next();
 
-        assertNotNull(road);
-        assertNotNull(river);
-
-        assertEquals(getRoadTypeName(), road.getTypeName());
-        assertEquals(getRiverTypeName(), river.getTypeName());
-
-        assertEquals(roadType.getAttributeCount(), road.getAttributeCount());
-        assertEquals(riverType.getAttributeCount(), river.getAttributeCount());
-
-        for (int i = 0; i < roadType.getAttributeCount(); i++) {
-            AttributeDescriptor expected = roadType.getDescriptor(i);
-            AttributeDescriptor actual = road.getDescriptor(i);
-            assertEquals(expected, actual);
+            if (feature.getID().equals(roadFeatures[0].getID())) {
+                writer.remove();
+            }
         }
+
+        writer = data.getFeatureWriter(getRoadTypeName(), Transaction.AUTO_COMMIT);
+        assertEquals(roadFeatures.length - 1, count(writer));
     }
 
 }

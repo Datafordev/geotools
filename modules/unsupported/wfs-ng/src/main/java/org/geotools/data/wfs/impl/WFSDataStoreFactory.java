@@ -37,8 +37,14 @@ import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSStrategy;
+import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.ows.ServiceException;
 import org.geotools.xml.XMLHandlerHints;
+
+import com.vividsolutions.jts.geom.CoordinateSequenceFactory;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.impl.PackedCoordinateSequenceFactory;
 
 /**
  * A {@link DataStoreFactorySpi} to connect to a Web Feature Service.
@@ -385,6 +391,13 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
         }
 
         WFSContentDataStore dataStore = new WFSContentDataStore(wfsClient);
+        // factories
+        dataStore.setFilterFactory(CommonFactoryFinder.getFilterFactory(null));
+        dataStore.setGeometryFactory(new GeometryFactory(
+                PackedCoordinateSequenceFactory.DOUBLE_FACTORY));
+        dataStore.setFeatureTypeFactory(new FeatureTypeFactoryImpl());
+        dataStore.setFeatureFactory(CommonFactoryFinder.getFeatureFactory(null));
+        dataStore.setDataStoreFactory(this);
 
         return dataStore;
     }

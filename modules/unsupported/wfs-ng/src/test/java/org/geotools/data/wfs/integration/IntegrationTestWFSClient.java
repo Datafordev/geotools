@@ -1,13 +1,26 @@
 package org.geotools.data.wfs.integration;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.namespace.QName;
 
+import net.opengis.wfs.InsertedFeatureType;
+import net.opengis.wfs.TransactionResponseType;
+import net.opengis.wfs.WfsFactory;
+
+import org.geotools.data.DataUtilities;
+import org.geotools.data.Diff;
+import org.geotools.data.DiffFeatureReader;
+import org.geotools.data.FeatureReader;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
 import org.geotools.data.ows.Response;
@@ -21,21 +34,37 @@ import org.geotools.data.wfs.internal.GetCapabilitiesResponse;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureResponse;
+import org.geotools.data.wfs.internal.TransactionRequest;
+import org.geotools.data.wfs.internal.TransactionRequest.Delete;
+import org.geotools.data.wfs.internal.TransactionRequest.Insert;
+import org.geotools.data.wfs.internal.TransactionRequest.TransactionElement;
+import org.geotools.data.wfs.internal.TransactionRequest.Update;
+import org.geotools.data.wfs.internal.TransactionResponse;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
 import org.geotools.data.wfs.internal.WFSResponse;
 import org.geotools.data.wfs.internal.WFSStrategy;
+import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.ows.ServiceException;
+import org.geotools.wfs.WFS;
+import org.geotools.xml.Configuration;
+import org.geotools.xml.Encoder;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 import org.opengis.filter.Filter;
+import org.opengis.filter.FilterFactory2;
+import org.opengis.filter.identity.FeatureId;
 
-import com.sun.org.apache.bcel.internal.generic.GETSTATIC;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class IntegrationTestWFSClient extends WFSClient {
 
     private URL baseDirectory;
+
+    private Map<QName, Diff> diffs = new HashMap<QName, Diff>();
+
+    private Map<QName, SimpleFeatureType> featureTypes = new HashMap<QName, SimpleFeatureType>();
 
     public IntegrationTestWFSClient(String baseDirectory, WFSConfig config)
             throws ServiceException, IOException {
@@ -66,7 +95,11 @@ public class IntegrationTestWFSClient extends WFSClient {
             if (request instanceof GetFeatureRequest) {
                 return mockGetFeature((GetFeatureRequest) request);
             }
-        } catch (ServiceException e) {
+            if (request instanceof TransactionRequest) {
+                return mockTransaction((TransactionRequest) request);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new IOException(e.getCause());
         }
 
@@ -91,12 +124,15 @@ public class IntegrationTestWFSClient extends WFSClient {
         String outputFormat = request.getOutputFormat();
 
         HTTPResponse response = new TestHttpResponse(outputFormat, "UTF-8", contentUrl);
-        return new DescribeFeatureTypeResponse(request, response);
+        DescribeFeatureTypeResponse ret = new DescribeFeatureTypeResponse(request, response);
+        FeatureType featureType = ret.getFeatureType();
+        this.featureTypes.put(typeName, (SimpleFeatureType) featureType);
+        return ret;
     }
 
     private Response mockGetFeature(GetFeatureRequest request) throws IOException {
 
-        QName typeName = request.getTypeName();
+        final QName typeName = request.getTypeName();
         String simpleName = typeName.getPrefix() + "_" + typeName.getLocalPart();
 
         String resource = "GetFeature_" + simpleName + ".xml";
@@ -113,25 +149,37 @@ public class IntegrationTestWFSClient extends WFSClient {
         }
 
         final GetFeatureResponse gfr = (GetFeatureResponse) response;
-        WFSStrategy strategy = getStrategy();
-
-        Filter filter = request.getFilter();
-        Filter[] split = ((AbstractWFSStrategy) strategy).splitFilters(typeName, filter);
-        final Filter serverFiler = split[0];
-
         final GetFeatureParser allFeatures = gfr.getFeatures();
-        final List<SimpleFeature> serverFiltered = new ArrayList<SimpleFeature>();
+
+        final List<SimpleFeature> originalFeatures = new ArrayList<SimpleFeature>();
         {
             SimpleFeature feature;
             while ((feature = allFeatures.parse()) != null) {
-                if (serverFiler.evaluate(feature)) {
-                    serverFiltered.add(feature);
-                }
+                originalFeatures.add(feature);
             }
         }
-        final GetFeatureParser filteredParser = new GetFeatureParser() {
 
-            private Iterator<SimpleFeature> it = serverFiltered.iterator();
+        WFSStrategy strategy = getStrategy();
+
+        final Filter serverFiler = ((AbstractWFSStrategy) strategy).splitFilters(typeName,
+                request.getFilter())[0];
+
+        final Diff diff = diff(typeName);
+
+        for (Iterator<SimpleFeature> it = originalFeatures.iterator(); it.hasNext();) {
+            if (!serverFiler.evaluate(it.next())) {
+                it.remove();
+            }
+        }
+
+        FeatureReader<SimpleFeatureType, SimpleFeature> allFeaturesReader;
+        allFeaturesReader = DataUtilities.reader(originalFeatures);
+
+        final DiffFeatureReader<SimpleFeatureType, SimpleFeature> serverFilteredReader;
+        serverFilteredReader = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(
+                allFeaturesReader, diff);
+
+        final GetFeatureParser filteredParser = new GetFeatureParser() {
 
             @Override
             public void setGeometryFactory(GeometryFactory geometryFactory) {
@@ -140,10 +188,10 @@ public class IntegrationTestWFSClient extends WFSClient {
 
             @Override
             public SimpleFeature parse() throws IOException {
-                if (!it.hasNext()) {
+                if (!serverFilteredReader.hasNext()) {
                     return null;
                 }
-                return it.next();
+                return serverFilteredReader.next();
             }
 
             @Override
@@ -151,7 +199,7 @@ public class IntegrationTestWFSClient extends WFSClient {
                 if (-1 != allFeatures.getNumberOfFeatures()) {
                     // only if the original response included number of features (i.e. the server
                     // does advertise it)
-                    return serverFiltered.size();
+                    return originalFeatures.size();
                 }
                 return -1;
             }
@@ -172,5 +220,133 @@ public class IntegrationTestWFSClient extends WFSClient {
         } catch (ServiceException e) {
             throw new IOException(e);
         }
+    }
+
+    private AtomicInteger idseq = new AtomicInteger();
+
+    private Response mockTransaction(TransactionRequest request) throws Exception {
+
+        List<String> added = new ArrayList<String>();
+        int deleted = 0, updated = 0;
+
+        for (TransactionElement e : request.getTransactionElements()) {
+            QName typeName = e.getTypeName();
+            if (e instanceof Insert) {
+                Diff diff = diff(typeName);
+                for (SimpleFeature f : ((Insert) e).getFeatures()) {
+                    String newId = "wfs-generated-" + idseq.incrementAndGet();
+                    diff.add(f.getID(), f);
+                    added.add(newId);
+                }
+            }
+            if (e instanceof Delete) {
+                Diff diff = diff(typeName);
+                Filter filter = ((Delete) e).getFilter();
+                List<SimpleFeature> features = features(typeName);
+                for (SimpleFeature f : features) {
+                    if (filter.evaluate(f)) {
+                        diff.remove(f.getID());
+                        deleted++;
+                    }
+                }
+            }
+            if (e instanceof Update) {
+                Diff diff = diff(typeName);
+                Update u = (Update) e;
+                Filter filter = u.getFilter();
+                List<SimpleFeature> features = features(typeName);
+                List<QName> propertyNames = u.getPropertyNames();
+                List<Object> newValues = u.getNewValues();
+
+                for (SimpleFeature f : features) {
+                    if (!filter.evaluate(f)) {
+                        continue;
+                    }
+                    for (int i = 0; i < propertyNames.size(); i++) {
+                        QName propName = propertyNames.get(i);
+                        Object value = newValues.get(i);
+                        String attName = propName.getLocalPart();
+                        f.setAttribute(attName, value);
+                    }
+                    diff.modify(f.getID(), f);
+                    updated++;
+                }
+            }
+
+        }
+
+        String outputFormat = request.getOutputFormat();
+        String responseContents = createTransactionResponseXml(added, updated, deleted);
+        HTTPResponse httpResponse = new TestHttpResponse(outputFormat, "UTF-8", responseContents);
+
+        return request.createResponse(httpResponse);
+    }
+
+    private Diff diff(QName typeName) {
+        Diff diff = diffs.get(typeName);
+        if (diff == null) {
+            diff = new Diff();
+            diffs.put(typeName, diff);
+        }
+        return diff;
+    }
+
+    private List<SimpleFeature> features(QName typeName) throws IOException {
+
+        GetFeatureRequest gf = createGetFeatureRequest();
+        gf.setTypeName(typeName);
+
+        SimpleFeatureType featureType = featureTypes.get(typeName);
+        if (featureType == null) {
+            throw new IllegalStateException();
+        }
+        gf.setFullType(featureType);
+        gf.setQueryType(featureType);
+        gf.setFilter(Filter.INCLUDE);
+
+        GetFeatureResponse response = (GetFeatureResponse) mockGetFeature(gf);
+        GetFeatureParser features = response.getFeatures();
+        List<SimpleFeature> result = new ArrayList<SimpleFeature>();
+        SimpleFeature f;
+        while ((f = features.parse()) != null) {
+            result.add(f);
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String createTransactionResponseXml(List<String> added, int updated, int deleted)
+            throws IOException {
+        WfsFactory factory = WfsFactory.eINSTANCE;
+
+        TransactionResponseType tr = factory.createTransactionResponseType();
+        tr.setVersion(getStrategy().getVersion());
+
+        tr.setTransactionSummary(factory.createTransactionSummaryType());
+        tr.getTransactionSummary().setTotalInserted(BigInteger.valueOf(added.size()));
+        tr.getTransactionSummary().setTotalUpdated(BigInteger.valueOf(updated));
+        tr.getTransactionSummary().setTotalDeleted(BigInteger.valueOf(deleted));
+        tr.setTransactionResults(factory.createTransactionResultsType());
+        tr.setInsertResults(factory.createInsertResultsType());
+
+        if (!added.isEmpty()) {
+            FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2();
+            InsertedFeatureType inserted = factory.createInsertedFeatureType();
+            tr.getInsertResults().getFeature().add(inserted);
+            for (String addedId : added) {
+                FeatureId featureId = ff.featureId(addedId);
+                inserted.getFeatureId().add(featureId);
+            }
+        }
+
+        Configuration configuration = getStrategy().getWfsConfiguration();
+        Encoder enc = new Encoder(configuration);
+        enc.setEncoding(Charset.forName("UTF-8"));
+        enc.setIndenting(true);
+        enc.setIndentSize(1);
+
+        String encodedTransactionResponse = enc.encodeAsString(tr, WFS.TransactionResponse);
+        System.err.println(encodedTransactionResponse);
+        return encodedTransactionResponse;
     }
 }

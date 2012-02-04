@@ -319,13 +319,16 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
     }
 
     public TransactionRequest createTransaction() {
-        // TODO Auto-generated method stub
-        return null;
+        WFSStrategy strategy = getStrategy();
+        return new TransactionRequest(config, strategy);
     }
 
-    public TransactionResponse issueTransaction(TransactionRequest transactionRequest) {
-        // TODO Auto-generated method stub
-        return null;
+    public TransactionResponse issueTransaction(TransactionRequest request) throws IOException {
+
+        requestDebug("Sending Transaction request to ", request.getFinalURL());
+
+        Response response = internalIssueRequest(request);
+        return (TransactionResponse) response;
     }
 
     public GetFeatureResponse issueRequest(GetFeatureRequest request) throws IOException {
