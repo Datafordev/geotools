@@ -16,7 +16,6 @@
  */
 package org.geotools.data.wfs.internal;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,8 +24,6 @@ import java.util.Set;
 
 import javax.imageio.spi.ServiceRegistry;
 
-import org.eclipse.emf.ecore.EObject;
-import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wfs.impl.WFSDataStoreFactory;
 import org.geotools.factory.FactoryNotFoundException;
 

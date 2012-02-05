@@ -15,11 +15,12 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.impl.online;
+package org.geotools.data.wfs.online;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -437,7 +438,6 @@ public class GeoServerOnlineTest {
         WFSDataStoreReadTest.doFeatureReaderWithQuery(url_100, false, true, 0);
     }
 
-    
     @Test
     public void testFeatureReaderWithFilterBBoxGET() throws Exception {
         // minx,miny,maxx,maxy
@@ -447,18 +447,18 @@ public class GeoServerOnlineTest {
         Map<String, Serializable> m = new HashMap<String, Serializable>();
         m.put(WFSDataStoreFactory.URL.key, url_100);
         m.put(WFSDataStoreFactory.TIMEOUT.key, new Integer(100000));
+        m.put(WFSDataStoreFactory.PROTOCOL.key, Boolean.FALSE);// favor GET over POST
 
-        DataStore post = (WFS_1_0_0_DataStore) (new WFSDataStoreFactory()).createDataStore(m);
+        DataStore get = new WFSDataStoreFactory().createDataStore(m);
 
-        String typeName = post.getTypeNames()[0];
+        String typeName = get.getTypeNames()[0];
 
-        Envelope bbox = post.getFeatureSource(typeName).getBounds();
+        Envelope bbox = get.getFeatureSource(typeName).getBounds();
         WFSDataStoreReadTest.doFeatureReaderWithBBox(url_100, true, false, 0, bbox);
     }
 
     @Test
-    public void testFeatureReaderWithFilterBBoxPOST() throws NoSuchElementException,
-            IllegalAttributeException, IOException, SAXException, IllegalFilterException {
+    public void testFeatureReaderWithFilterBBoxPOST() throws Exception {
         if (url_100 == null)
             return;
 

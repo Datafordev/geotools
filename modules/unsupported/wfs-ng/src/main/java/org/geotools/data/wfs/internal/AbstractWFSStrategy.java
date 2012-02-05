@@ -17,7 +17,9 @@
 package org.geotools.data.wfs.internal;
 
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
+import static org.geotools.data.wfs.internal.Loggers.requestDebug;
 import static org.geotools.data.wfs.internal.Loggers.requestTrace;
+import static org.geotools.data.wfs.internal.Loggers.trace;
 import static org.geotools.data.wfs.internal.WFSOperationType.DESCRIBE_FEATURETYPE;
 
 import java.io.ByteArrayInputStream;
@@ -53,8 +55,11 @@ import org.geotools.xml.filter.FilterCompliancePreProcessor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.Id;
 import org.opengis.filter.capability.FilterCapabilities;
+import org.opengis.filter.capability.SpatialCapabilities;
+import org.opengis.filter.capability.SpatialOperators;
 import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.identity.Identifier;
+import org.opengis.filter.spatial.Intersects;
 
 /**
  * Base template-method class for {@link WFSStrategy} implementations that leverage the GeoTools
@@ -195,6 +200,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
     }
 
     protected Map<String, String> buildGetFeatureParametersForGET(GetFeatureRequest request) {
+        requestDebug("Creating GetFeature request parameters for ", request.getTypeName());
 
         Map<String, String> map = new HashMap<String, String>();
         map.put("SERVICE", "WFS");
@@ -242,6 +248,8 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
             Filter[] splitFilters = splitFilters(typeName, filter);
             supportedFilter = splitFilters[0];
             unsupportedFilter = splitFilters[1];
+            requestTrace("Supported filter: ", supportedFilter, ". Unsupported filter: ",
+                    unsupportedFilter);
         }
 
         request.setUnsupportedFilter(unsupportedFilter);
@@ -557,6 +565,24 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         Capabilities filterCaps = new Capabilities();
         if (filterCapabilities != null) {
             filterCaps.addAll(filterCapabilities);
+            /*
+             * General Fix for WFS 1.0 naming the "Intersects" spatial operation "Intersect", which
+             * will make the CapabilitiesFilterSplitter think Intersects is not supported at
+             * splitFilters
+             */
+            if (Versions.v1_0_0.equals(getServiceVersion())) {
+                SpatialCapabilities spatialCaps = filterCapabilities.getSpatialCapabilities();
+                if (spatialCaps != null) {
+                    SpatialOperators spatialOps = spatialCaps.getSpatialOperators();
+                    if (spatialOps != null) {
+                        if (null != spatialOps.getOperator("Intersect")) {
+                            trace("WFS 1.0 capabilities states the spatial operator Intersect. ",
+                                    "Assuming it is Intersects and adding Intersects as a supported filter type");
+                            filterCaps.addName(Intersects.NAME);
+                        }
+                    }
+                }
+            }
         }
         filter = simplify(filter);
 
@@ -601,91 +627,6 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         return filter;
     }
 
-    // /**
-    // * @see
-    // org.geotools.data.wfs.internal.WFSStrategy#issueDescribeFeatureTypeGET(java.lang.String,
-    // * org.opengis.referencing.crs.CoordinateReferenceSystem)
-    // */
-    // @Override
-    // public SimpleFeatureType issueDescribeFeatureTypeGET(final String prefixedTypeName,
-    // CoordinateReferenceSystem crs) throws IOException {
-    //
-    // File tmpFile = null;
-    // final URL describeUrl;
-    // {
-    // final boolean isAuthenticating = http.getUser() != null;
-    // if (isAuthenticating) {
-    // WFSResponse wfsResponse = describeFeatureTypeGET(prefixedTypeName);
-    // tmpFile = File.createTempFile("describeft", ".xsd");
-    // OutputStream output = new FileOutputStream(tmpFile);
-    // InputStream response = wfsResponse.getInputStream();
-    // try {
-    // IOUtils.copy(response, output);
-    // } finally {
-    // output.flush();
-    // output.close();
-    // response.close();
-    // }
-    // describeUrl = tmpFile.toURI().toURL();
-    // } else {
-    // describeUrl = buildDescribeFeatureTypeURLGet(prefixedTypeName);
-    // }
-    // }
-    //
-    // final Configuration wfsConfiguration = getWfsConfiguration();
-    // final QName featureDescriptorName = getFeatureTypeName(prefixedTypeName);
-    //
-    // SimpleFeatureType featureType;
-    // try {
-    // featureType = EmfAppSchemaParser.parseSimpleFeatureType(wfsConfiguration,
-    // featureDescriptorName, describeUrl, crs);
-    // } finally {
-    // if (tmpFile != null) {
-    // tmpFile.delete();
-    // }
-    // }
-    // return featureType;
-    // }
-
-    // @Override
-    // public TransactionResponse issueTransaction(final TransactionRequest transactionRequest)
-    // throws IOException {
-    //
-    // if (!supportsOperation(WFSOperationType.TRANSACTION, true)) {
-    // throw new IOException("WFS does not support transactions");
-    // }
-    //
-    // TransactionType transaction = unwrapTransaction(transactionRequest);
-    //
-    // // used to declare prefixes on the encoder later
-    // Set<QName> affectedTypes = new HashSet<QName>();
-    // for (TransactionElement e : transactionRequest.getTransactionElements()) {
-    // String localTypeName = e.getLocalTypeName();
-    // QName remoteTypeName = getFeatureTypeName(localTypeName);
-    // affectedTypes.add(remoteTypeName);
-    // }
-    //
-    // final Encoder encoder = new Encoder(getWfsConfiguration());
-    // // declare prefixes
-    // for (QName remoteType : affectedTypes) {
-    // if (XMLConstants.DEFAULT_NS_PREFIX.equals(remoteType.getPrefix())) {
-    // continue;
-    // }
-    // encoder.getNamespaces().declarePrefix(remoteType.getPrefix(),
-    // remoteType.getNamespaceURI());
-    // }
-    // encoder.setIndenting(true);
-    // encoder.setIndentSize(2);
-    //
-    // final URL operationURL = getOperationURL(WFSOperationType.TRANSACTION, true);
-    // final WFSResponse wfsResponse = issuePostRequest(transaction, operationURL, encoder);
-    // return toTransactionResult(wfsResponse);
-    // }
-    //
-    // private TransactionResponse toTransactionResult(WFSResponse wfsResponse) {
-    // return null;
-    // }
-
     @Override
     public URL buildUrlGET(WFSRequest request) {
         final WFSOperationType operation = request.getOperation();
@@ -706,7 +647,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         URL baseUrl = getOperationURL(operation, GET);
 
         URL finalURL = URIs.buildURL(baseUrl, requestParams);
-
+        requestDebug("Built GET request for ", operation, ": ", finalURL);
         return finalURL;
     }
 

@@ -34,28 +34,27 @@ import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Parameter;
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.data.wfs.internal.WFSConfig;
-import org.geotools.data.wfs.internal.WFSStrategy;
 import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.type.FeatureTypeFactoryImpl;
 import org.geotools.ows.ServiceException;
 import org.geotools.xml.XMLHandlerHints;
 
-import com.vividsolutions.jts.geom.CoordinateSequenceFactory;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.impl.PackedCoordinateSequenceFactory;
 
 /**
  * A {@link DataStoreFactorySpi} to connect to a Web Feature Service.
  * <p>
- * Produces a {@link WFSDataStore} is the correct set of connection parameters are provided. For
+ * Produces a {@link WFSDataStore} if the correct set of connection parameters are provided. For
  * instance, the only mandatory one is {@link #URL}.
  * </p>
  * <p>
  * As with all the DataStoreFactorySpi implementations, this one is not intended to be used directly
- * but through the {@link DataStoreFinder} mechanism, so client application should not have strong
- * dependencies over this module.
+ * but through the {@link DataStoreFinder} mechanism, hence client applications should not have
+ * strong dependencies over this module.
  * </p>
  * <p>
  * Upon a valid URL to a WFS GetCapabilities document, this factory will perform version negotiation
@@ -66,43 +65,15 @@ import com.vividsolutions.jts.geom.impl.PackedCoordinateSequenceFactory;
  * In the case the provided GetCapabilities URL explicitly contains a VERSION parameter and both the
  * server and client support that version, that version will be used.
  * </p>
- * <p>
- * That said, for the time being, the current default version is {@code 1.0.0} instead of
- * {@code 1.1.0}, since the former is the one that supports transactions. When further development
- * provides transaction support for the WFS 1.1.0 version, propper version negotiation capabilities
- * will be added.
- * </p>
- * <p>
- * Among feeding the wfs datastore with a {@link WFSStrategy} that can handle the WFS version agreed
- * upong the server and this client, this factory will try to provide the datastore with a
- * {@link WFSStrategy} appropriate for the WFS implementation, if that could be somehow guessed.
- * That is so the datastore itself nor the protocol need to worry about any implementation specific
- * limitation or deviation from the standard the actual server may have.
- * </p>
  * 
- * @author dzwiers
- * @author Gabriel Roldan (TOPP)
- * 
- * 
- * 
- * @source $URL$
- *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
- *         /data/wfs/WFSDataStoreFactory.java $
- * @see WFSDataStore
- * @see WFSStrategy
+ * @see WFSContentDataStore
+ * @see WFSClient
  */
 @SuppressWarnings({ "unchecked", "nls" })
 public class WFSDataStoreFactory extends AbstractDataStoreFactory {
 
     /**
      * A {@link Param} subclass that allows to provide a default value to the lookUp method.
-     * 
-     * @author Gabriel Roldan
-     * @version $Id$
-     * @since 2.5.x
-     * @source $URL:
-     *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/wfs/src/main/java/org/geotools
-     *         /data/wfs/WFSDataStoreFactory.java $
      */
     public static class WFSFactoryParam<T> extends Param {
         private T defaultValue;
@@ -372,7 +343,7 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             }
         }
 
-        final HTTPClient http = new MultithreadedHttpClient();
+        final HTTPClient http = new SimpleHttpClient();// new MultithreadedHttpClient();
         // TODO: let HTTPClient be configured for gzip
         // http.setTryGzip(tryGZIP);
         http.setUser(config.getUser());
@@ -473,7 +444,10 @@ public class WFSDataStoreFactory extends AbstractDataStoreFactory {
             URL url = (URL) URL.lookUp(params);
             if (!"http".equalsIgnoreCase(url.getProtocol())
                     && !"https".equalsIgnoreCase(url.getProtocol())) {
-                return false; // must be http or https since we use SimpleHTTPClient class
+                if (!Boolean.TRUE.equals(params.get("TESTING"))) {
+                    Loggers.MODULE.finest("Can't process non http or https GetCapabilities URL's");
+                    return false; // must be http or https since we use SimpleHTTPClient class
+                }
             }
         } catch (Exception e) {
             return false;

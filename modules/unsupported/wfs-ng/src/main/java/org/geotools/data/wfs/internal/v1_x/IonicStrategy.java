@@ -16,26 +16,13 @@
  */
 package org.geotools.data.wfs.internal.v1_x;
 
-import static org.geotools.data.wfs.internal.HttpMethod.GET;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
 
-import net.opengis.wfs.GetFeatureType;
-import net.opengis.wfs.QueryType;
-
-import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
-import org.geotools.data.wfs.internal.RequestComponents;
-import org.geotools.data.wfs.internal.URIs;
 import org.geotools.data.wfs.internal.WFSOperationType;
-import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.filter.Capabilities;
 import org.geotools.filter.v1_0.OGCConfiguration;
 import org.geotools.gml2.GML;

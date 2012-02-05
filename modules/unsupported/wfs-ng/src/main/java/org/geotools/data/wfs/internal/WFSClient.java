@@ -241,74 +241,14 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         return new GetFeatureRequest(config, strategy);
     }
 
-    // public int getCount(QName typeName, Filter filter, Integer maxFeatures) {
-    // if (!canCount()) {
-    // throw new IllegalStateException("can't count, should check the canCount() method first");
-    // }
-    //
-    // final WFSStrategy strategy = getStrategy();
-    // final Filter[] filters = strategy.splitFilters(filter);
-    // final Filter postFilter = filters[1];
-    // if (!Filter.INCLUDE.equals(postFilter)) {
-    // // Filter not fully supported, can't know without a full scan of the results
-    // return -1;
-    // }
-    //
-    // final FeatureType contentType = getFeatureType(typeName);
-    //
-    // WFSResponse response = executeGetFeatures(query, Transaction.AUTO_COMMIT, ResultType.HITS);
-    // response.setQueryType(contentType);
-    // response.setRemoteTypeName(strategy.getFeatureTypeName(getEntry().getTypeName()));
-    //
-    // Object process = WFSExtensions.process(response);
-    // if (!(process instanceof GetFeatureParser)) {
-    // LOGGER.info("GetFeature with resultType=hits resulted in " + process);
-    // }
-    // int hits = ((GetFeatureParser) process).getNumberOfFeatures();
-    // int maxFeatures = getMaxFeatures(query);
-    // if (hits != -1 && maxFeatures > 0) {
-    // hits = Math.min(hits, maxFeatures);
-    // }
-    // return hits;
-    // }
-
-    // public FeatureType getFeatureType(QName remoteTypeName) {
-    //
-    // final SimpleFeatureType featureType;
-    // CoordinateReferenceSystem crs = getFeatureTypeCRS(remoteTypeName);
-    // featureType = client.issueDescribeFeatureTypeGET(remoteTypeName, crs);
-    //
-    // // adapt the feature type name
-    // SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-    // builder.init(featureType);
-    // builder.setName(remoteTypeName);
-    // String namespaceOverride = entry.getName().getNamespaceURI();
-    // if (namespaceOverride != null) {
-    // builder.setNamespaceURI(namespaceOverride);
-    // }
-    // GeometryDescriptor defaultGeometry = featureType.getGeometryDescriptor();
-    // if (defaultGeometry != null) {
-    // builder.setDefaultGeometry(defaultGeometry.getLocalName());
-    // builder.setCRS(defaultGeometry.getCoordinateReferenceSystem());
-    // }
-    // final SimpleFeatureType adaptedFeatureType = builder.buildFeatureType();
-    // return adaptedFeatureType;
-    // }
-
     @Override
-    protected Response internalIssueRequest(Request request) throws IOException {
+    protected Response internalIssueRequest(Request request) throws IOException, WFSException {
         Response response;
         try {
             response = super.internalIssueRequest(request);
         } catch (ServiceException e) {
             throw new IOException(e);
         }
-
-        if (response instanceof ServiceExceptionReport) {
-            ServiceExceptionReport serviceException = (ServiceExceptionReport) response;
-            throw new IOException(serviceException.getExceptionMessage());
-        }
-
         return response;
     }
 

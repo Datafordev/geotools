@@ -26,12 +26,14 @@ public class WFSAutoCommitFeatureWriter extends DiffContentFeatureWriter {
 
     @Override
     public void write() throws IOException {
+        checkClosed();
         super.write();
         committingState.commit();
     }
 
     @Override
     public void remove() throws IOException {
+        checkClosed();
         super.remove();
         committingState.commit();
     }

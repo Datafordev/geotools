@@ -18,7 +18,6 @@ package org.geotools.data.wfs.integration;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
@@ -52,8 +51,8 @@ import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
+import org.opengis.feature.type.Name;
 import org.opengis.filter.Filter;
-import org.opengis.filter.FilterFactory;
 import org.opengis.filter.FilterFactory2;
 import org.opengis.filter.Id;
 import org.opengis.geometry.BoundingBox;
@@ -231,7 +230,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         FeatureEvent event = listener1.getEvent(0);
         assertEquals(feature.getBounds(), event.getBounds());
-        assertEquals(FeatureEvent.FEATURES_REMOVED, event.getEventType());
+        assertEquals(FeatureEvent.Type.REMOVED, event.getType());
 
         // test that commit only sends events to listener2.
         listener1.events.clear();
@@ -244,7 +243,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         event = listener2.getEvent(0);
         assertEquals(feature.getBounds(), event.getBounds());
-        assertEquals(FeatureEvent.FEATURES_REMOVED, event.getEventType());
+        assertEquals(FeatureEvent.Type.REMOVED, event.getType());
 
         // test add same as modify
         listener1.events.clear();
@@ -255,7 +254,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         assertEquals(1, listener1.events.size());
         event = listener1.getEvent(0);
         assertEquals(feature.getBounds(), event.getBounds());
-        assertEquals(FeatureEvent.FEATURES_ADDED, event.getEventType());
+        assertEquals(FeatureEvent.Type.ADDED, event.getType());
         assertEquals(0, listener2.events.size());
 
         // test that rollback only sends events to listener1.
@@ -267,7 +266,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         assertEquals(1, listener1.events.size());
         event = listener1.getEvent(0);
         assertNull(event.getBounds());
-        assertEquals(FeatureEvent.FEATURES_CHANGED, event.getEventType());
+        assertEquals(FeatureEvent.Type.CHANGED, event.getType());
 
         assertEquals(0, listener2.events.size());
     }
@@ -920,9 +919,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         writer = data.getFeatureWriter(getRoadTypeName(), Filter.EXCLUDE, Transaction.AUTO_COMMIT);
         assertFalse(writer.hasNext());
 
-        // TODO: This assert sucks since it EXPECTS an emptyFeatureWriter...well, we got A writer...
-        // and it was empty; that's good enough dammit!
-        // assertTrue(writer instanceof EmptyFeatureWriter);
         assertEquals(0, count(writer));
 
         writer = data.getFeatureWriter(getRoadTypeName(), Filter.INCLUDE, Transaction.AUTO_COMMIT);
@@ -931,9 +927,6 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         writer = data.getFeatureWriter(getRoadTypeName(), rd1Filter, Transaction.AUTO_COMMIT);
 
-        // TODO: Do we care what type it is? In fact, we'll never get FilteringFeatureWriter
-        // since the filtering is done on the DB side!
-        // assertTrue(writer instanceof JDBCFeatureWriter);//FilteringFeatureWriter);
         assertEquals(1, count(writer));
     }
 
@@ -1150,7 +1143,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     @Test
     public void testGetFeatureStoreModifyFeatures1() throws IOException {
         SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
-        AttributeDescriptor name = roadType.getDescriptor(getNameAttribute());
+        Name name = roadType.getDescriptor(getNameAttribute()).getName();
         road.modifyFeatures(name, "changed", rd1Filter);
 
         SimpleFeatureCollection results = road.getFeatures(rd1Filter);
@@ -1160,9 +1153,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     @Test
     public void testGetFeatureStoreModifyFeatures2() throws IOException {
         SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
-        AttributeDescriptor name = roadType.getDescriptor(getNameAttribute());
-        road.modifyFeatures(new AttributeDescriptor[] { name, }, new Object[] { "changed", },
-                rd1Filter);
+        Name name = roadType.getDescriptor(getNameAttribute()).getName();
+        road.modifyFeatures(name, new Object[] { "changed", }, rd1Filter);
 
         SimpleFeatureCollection results = road.getFeatures(rd1Filter);
         assertEquals("changed", results.features().next().getAttribute(getNameAttribute()));
@@ -1210,24 +1202,24 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         road2.setTransaction(t2);
 
         SimpleFeature feature;
-        SimpleFeature[] ORIGIONAL = roadFeatures;
-        SimpleFeature[] REMOVE = new SimpleFeature[ORIGIONAL.length - 1];
-        SimpleFeature[] ADD = new SimpleFeature[ORIGIONAL.length + 1];
-        SimpleFeature[] FINAL = new SimpleFeature[ORIGIONAL.length];
+        SimpleFeature[] ORIGINAL = roadFeatures;
+        SimpleFeature[] REMOVE = new SimpleFeature[ORIGINAL.length - 1];
+        SimpleFeature[] ADD = new SimpleFeature[ORIGINAL.length + 1];
+        SimpleFeature[] FINAL = new SimpleFeature[ORIGINAL.length];
         int i;
         int index;
         index = 0;
 
-        for (i = 0; i < ORIGIONAL.length; i++) {
-            feature = ORIGIONAL[i];
+        for (i = 0; i < ORIGINAL.length; i++) {
+            feature = ORIGINAL[i];
 
             if (!feature.getID().equals(roadFeatures[0].getID())) {
                 REMOVE[index++] = feature;
             }
         }
 
-        for (i = 0; i < ORIGIONAL.length; i++) {
-            ADD[i] = ORIGIONAL[i];
+        for (i = 0; i < ORIGINAL.length; i++) {
+            ADD[i] = ORIGINAL[i];
         }
 
         ADD[i] = newRoad;
@@ -1239,7 +1231,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         FINAL[i] = newRoad;
 
         // start of with ORIGINAL
-        assertTrue(covers(road.getFeatures().features(), ORIGIONAL));
+        assertTrue(covers(road.getFeatures().features(), ORIGINAL));
 
         // road1 removes road.rd1 on t1
         // -------------------------------
@@ -1247,7 +1239,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         road1.removeFeatures(rd1Filter);
 
         // still have ORIGIONAL and t1 has REMOVE
-        assertTrue(covers(road.getFeatures().features(), ORIGIONAL));
+        assertTrue(covers(road.getFeatures().features(), ORIGINAL));
         assertTrue(covers(road1.getFeatures().features(), REMOVE));
 
         // road2 adds road.rd4 on t2
@@ -1258,7 +1250,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         road2.addFeatures(collection);
 
         // We still have ORIGIONAL, t1 has REMOVE, and t2 has ADD
-        assertTrue(covers(road.getFeatures().features(), ORIGIONAL));
+        assertTrue(covers(road.getFeatures().features(), ORIGINAL));
         assertTrue(covers(road1.getFeatures().features(), REMOVE));
         assertTrue(coversLax(road2.getFeatures().features(), ADD));
 
@@ -1298,6 +1290,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     /*
      * Test for void lockFeatures()
      */
+    @SuppressWarnings("unchecked")
     @Test
     public void testLockFeatures() throws IOException {
         FeatureLock lock = new FeatureLock("test", 3600);
@@ -1323,6 +1316,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
             LOGGER.info("testUnLockFeatures ignored, store does not support locking");
             return;
         }
+        @SuppressWarnings("unchecked")
         FeatureLocking<SimpleFeatureType, SimpleFeature> road = (FeatureLocking<SimpleFeatureType, SimpleFeature>) source;
         road.setFeatureLock(lock);
         road.lockFeatures();
@@ -1346,6 +1340,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         road.unLockFeatures();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testLockFeatureInteraction() throws IOException {
         FeatureLock lockA = new FeatureLock("LockA", 3600);
@@ -1416,6 +1411,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
         assertFalse(isLocked(getRoadTypeName(), roadFeatures[2].getID()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testGetFeatureLockingExpire() throws Exception {
         FeatureLock lock = new FeatureLock("Timed", 1);

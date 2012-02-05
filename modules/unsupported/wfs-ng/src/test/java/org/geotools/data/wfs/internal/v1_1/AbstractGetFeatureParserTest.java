@@ -36,7 +36,6 @@ import javax.xml.namespace.QName;
 import org.geotools.data.DataUtilities;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
-import org.geotools.data.wfs.internal.v1_x.StreamingParserFeatureReader;
 import org.geotools.referencing.CRS;
 import org.geotools.test.TestData;
 import org.geotools.wfs.v1_1.WFSConfiguration;

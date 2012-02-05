@@ -15,10 +15,10 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.impl.online;
+package org.geotools.data.wfs.online;
 
-import static org.geotools.data.wfs.impl.online.WFSOnlineTestSupport.doFeatureReader;
-import static org.geotools.data.wfs.impl.online.WFSOnlineTestSupport.getDataStore;
+import static org.geotools.data.wfs.online.WFSOnlineTestSupport.doFeatureReader;
+import static org.geotools.data.wfs.online.WFSOnlineTestSupport.getDataStore;
 import static org.junit.Assert.assertEquals;
 
 import java.io.InputStream;

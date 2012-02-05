@@ -28,6 +28,7 @@ import org.geotools.filter.FilterCapabilities;
 import org.geotools.filter.function.FilterFunction_distance;
 import org.geotools.filter.function.FilterFunction_geometryType;
 import org.geotools.filter.function.math.FilterFunction_abs;
+import org.geotools.wfs.v1_0.WFSCapabilities;
 import org.geotools.xml.DocumentFactory;
 
 /**

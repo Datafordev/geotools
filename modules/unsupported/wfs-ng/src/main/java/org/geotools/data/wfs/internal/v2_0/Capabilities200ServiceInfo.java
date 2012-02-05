@@ -30,7 +30,6 @@ import net.opengis.ows11.ServiceIdentificationType;
 import net.opengis.ows11.ServiceProviderType;
 import net.opengis.wfs20.WFSCapabilitiesType;
 
-import org.eclipse.emf.common.util.EList;
 import org.geotools.data.ServiceInfo;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 

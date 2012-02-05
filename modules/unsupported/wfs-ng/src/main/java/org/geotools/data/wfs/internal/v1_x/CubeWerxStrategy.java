@@ -101,7 +101,7 @@ public class CubeWerxStrategy extends StrictWFS_1_x_Strategy {
 
         GetFeatureType requestObject = createGetFeatureRequestPost((GetFeatureRequest) request);
 
-        final Encoder encoder = prepareEncoder(request, requestObject);
+        final Encoder encoder = prepareEncoder(request);
         final QName opName = getOperationName(request.getOperation());
 
         Document dom;

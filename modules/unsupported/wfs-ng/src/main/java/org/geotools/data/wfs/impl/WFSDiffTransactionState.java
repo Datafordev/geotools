@@ -17,28 +17,9 @@
 package org.geotools.data.wfs.impl;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
-import org.geotools.data.DataSourceException;
 import org.geotools.data.Diff;
-import org.geotools.data.FeatureWriter;
-import org.geotools.data.TransactionStateDiff;
-import org.geotools.data.store.ContentDataStore;
-import org.geotools.data.store.ContentEntry;
-import org.geotools.data.store.ContentFeatureSource;
-import org.geotools.data.store.ContentFeatureStore;
-import org.geotools.data.store.ContentState;
 import org.geotools.data.store.DiffTransactionState;
-import org.geotools.data.wfs.internal.TransactionRequest;
-import org.geotools.data.wfs.internal.TransactionRequest.Insert;
-import org.geotools.factory.Hints;
-import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.IllegalAttributeException;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
-import org.opengis.filter.Filter;
 
 /**
  * Transaction state responsible for holding an in memory {@link Diff} of any modifications.

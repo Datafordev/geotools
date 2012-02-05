@@ -1,7 +1,7 @@
 package org.geotools.data.wfs.internal;
 
-import static org.geotools.data.wfs.internal.HttpMethod.*;
-import static org.geotools.data.wfs.internal.WFSOperationType.GET_FEATURE;
+import static org.geotools.data.wfs.internal.HttpMethod.GET;
+import static org.geotools.data.wfs.internal.HttpMethod.POST;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +16,6 @@ import org.apache.commons.io.IOUtils;
 import org.geotools.data.ows.AbstractRequest;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
-import org.geotools.data.wfs.internal.WFSConfig.PreferredHttpMethod;
 import org.geotools.factory.FactoryNotFoundException;
 
 public abstract class WFSRequest extends AbstractRequest implements Request {

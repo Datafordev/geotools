@@ -24,15 +24,9 @@ import org.geotools.data.wfs.internal.parsers.ExceptionReportParser;
  * A Java Exception that mirrors a WFS {@code ExceptionReport} and is meant to be produced by
  * {@link ExceptionReportParser}.
  * 
- * @author Gabriel Roldan (OpenGeo)
- * @version $Id$
- * @since 2.6
- * 
- * 
- * 
- * @source $URL$
  */
 public class WFSException extends IOException {
+    private static final long serialVersionUID = -2828901359361793862L;
 
     private StringBuilder msg;
 

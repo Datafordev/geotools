@@ -10,10 +10,8 @@ import java.net.URL;
 
 import javax.xml.namespace.QName;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.TeeOutputStream;
-import org.geotools.data.DataUtilities;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.ows.ServiceException;

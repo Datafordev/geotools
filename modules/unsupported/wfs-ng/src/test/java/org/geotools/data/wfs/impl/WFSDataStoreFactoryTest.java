@@ -16,36 +16,24 @@
  */
 package org.geotools.data.wfs.impl;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.geotools.data.ows.HTTPClient;
-import org.geotools.data.wfs.internal.URIs;
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
 import org.geotools.data.wfs.internal.Versions;
-import org.geotools.data.wfs.internal.WFSConfig;
-import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
-import org.geotools.data.wfs.internal.v1_x.GeoServerPre200Strategy;
-import org.geotools.data.wfs.internal.v1_x.IonicStrategy;
-import org.geotools.test.TestData;
+import org.geotools.util.Version;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.w3c.dom.Document;
 
 /**
  * 
@@ -86,75 +74,70 @@ public class WFSDataStoreFactoryTest {
         assertTrue(dsf.canProcess(params));
     }
 
-//    @SuppressWarnings("nls")
-//    @Test
-//    public void testDetermineWFS1_1_0_Strategy() throws IOException {
-//        URL url;
-//        InputStream in;
-//        Document capabilitiesDoc;
-//        WFSStrategy strategy;
-//
-//        WFSConfig config = mock(WFSConfig.class);
-//        when(config.getWfsStrategy()).thenReturn("geoserver");
-//
-//        url = TestData.url(this, "geoserver_capabilities_1_1_0.xml");
-//        in = url.openStream();
-//        capabilitiesDoc = WFSDataStoreFactory.parseDocument(in);
-//        strategy = WFSDataStoreFactory.determineCorrectStrategy(Versions.v1_1_0, config,
-//                capabilitiesDoc);
-//        assertNotNull(strategy);
-//        assertEquals(GeoServerPre200Strategy.class, strategy.getClass());
-//
-//        // try override
-//        url = TestData.url(this, "geoserver_capabilities_1_1_0.xml");
-//        in = url.openStream();
-//        capabilitiesDoc = WFSDataStoreFactory.parseDocument(in);
-//        when(config.getWfsStrategy()).thenReturn("cubewerx");
-//        strategy = WFSDataStoreFactory.determineCorrectStrategy(Versions.v1_1_0, config,
-//                capabilitiesDoc);
-//        assertNotNull(strategy);
-//        assertEquals(CubeWerxStrategy.class, strategy.getClass());
-//
-//        url = TestData.url(this, "cubewerx_capabilities_1_1_0.xml");
-//        in = url.openStream();
-//        capabilitiesDoc = WFSDataStoreFactory.parseDocument(in);
-//        when(config.getWfsStrategy()).thenReturn(null);
-//        strategy = WFSDataStoreFactory.determineCorrectStrategy(Versions.v1_1_0, config,
-//                capabilitiesDoc);
-//        assertNotNull(strategy);
-//        assertEquals(CubeWerxStrategy.class, strategy.getClass());
-//
-//        url = TestData.url(this, "ionic_capabilities_1_1_0.xml");
-//        in = url.openStream();
-//        capabilitiesDoc = WFSDataStoreFactory.parseDocument(in);
-//        when(config.getWfsStrategy()).thenReturn(null);
-//        strategy = WFSDataStoreFactory.determineCorrectStrategy(Versions.v1_1_0, config,
-//                capabilitiesDoc);
-//        assertNotNull(strategy);
-//        assertEquals(IonicStrategy.class, strategy.getClass());
-//    }
-
     @Test
-    public void testCreateDataStoreWFS_1_1_0() throws IOException {
-        String capabilitiesFile;
-        capabilitiesFile = "geoserver_capabilities_1_1_0.xml";
-        testCreateDataStore_WFS_1_1_0(capabilitiesFile);
+    public void testCreateDataStore() throws IOException {
+        testCreateDataStore("CubeWerx_4.12.6/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+        testCreateDataStore("CubeWerx_4.12.6/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("CubeWerx_4.7.5/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("CubeWerx_5.6.3/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("CubeWerx_nsdi/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("Deegree_unknown/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
 
-        capabilitiesFile = "deegree_capabilities_1_1_0.xml";
-        testCreateDataStore_WFS_1_1_0(capabilitiesFile);
+        // not yet testCreateDataStore("Deegree_3.0/2.0.0/GetCapabilities.xml", Versions.v2_0_0);
+        testCreateDataStore("Galdos_unknown/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+
+        testCreateDataStore("GeoServer_1.7.x/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("GeoServer_2.0/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+        testCreateDataStore("GeoServer_2.2.x/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+        // not yet testCreateDataStore("GeoServer_2.2.x/2.0.0/GetCapabilities.xml",
+        // Versions.v2_0_0);
+
+        testCreateDataStore("Ionic_unknown/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+        testCreateDataStore("Ionic_unknown/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+
+        testCreateDataStore("MapServer_4.2-beta1/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+        testCreateDataStore("MapServer_5.6.5/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
+        testCreateDataStore("MapServer_5.6.5/1.1.0/GetCapabilities.xml", Versions.v1_1_0);
+
+        testCreateDataStore("PCIGeoMatics_unknown/1.0.0/GetCapabilities.xml", Versions.v1_0_0);
     }
 
-    private void testCreateDataStore_WFS_1_1_0(final String capabilitiesFile) throws IOException {
+    /**
+     * @param capabilitiesFile
+     *            the name of the GetCapabilities document under
+     *            {@code /org/geotools/data/wfs/impl/test-data}
+     */
+    private WFSContentDataStore testCreateDataStore(final String capabilitiesFile,
+            final Version expectedVersion) throws IOException {
 
         Map<String, Serializable> params = new HashMap<String, Serializable>();
-        final URL capabilitiesUrl = TestData.getResource(this, capabilitiesFile);
+        params.put("TESTING", Boolean.TRUE);
+
+        final URL capabilitiesUrl = getClass().getResource(
+                "/org/geotools/data/wfs/impl/test-data/" + capabilitiesFile);
         if (capabilitiesUrl == null) {
             throw new IllegalArgumentException(capabilitiesFile + " not found");
         }
         params.put(WFSDataStoreFactory.URL.key, capabilitiesUrl);
 
-        WFSContentDataStore dataStore = dsf.createDataStore(params);
+        DataStore dataStore = DataStoreFinder.getDataStore(params);
+        assertNotNull(dataStore);
         assertTrue(dataStore instanceof WFSContentDataStore);
+
+        WFSContentDataStore wfsDs = (WFSContentDataStore) dataStore;
+
+        assertEquals(expectedVersion.toString(), wfsDs.getInfo().getVersion());
+
+        return wfsDs;
     }
 
+    @Test
+    public void testCreateNewDataStore() throws IOException {
+        try {
+            dsf.createNewDataStore(params);
+            fail("Expected UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            assertTrue(true);
+        }
+    }
 }

@@ -1,8 +1,19 @@
 package org.geotools.data.wfs.impl;
 
-import static org.junit.Assert.*;
-import static org.geotools.data.DataUtilities.*;
-import static org.mockito.Mockito.*;
+import static org.geotools.data.DataUtilities.createType;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.same;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -12,7 +23,6 @@ import java.util.NoSuchElementException;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.DataUtilities;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.DescribeFeatureTypeResponse;
