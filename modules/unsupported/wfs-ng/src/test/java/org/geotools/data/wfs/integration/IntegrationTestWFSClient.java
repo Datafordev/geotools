@@ -198,7 +198,24 @@ public class IntegrationTestWFSClient extends WFSClient {
                 if (-1 != allFeatures.getNumberOfFeatures()) {
                     // only if the original response included number of features (i.e. the server
                     // does advertise it)
-                    return originalFeatures.size();
+
+                    FeatureReader<SimpleFeatureType, SimpleFeature> all;
+                    try {
+                        all = DataUtilities.reader(originalFeatures);
+                        final DiffFeatureReader<SimpleFeatureType, SimpleFeature> serverFiltered;
+                        serverFiltered = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(
+                                all, diff);
+
+                        int count = 0;
+                        while (serverFiltered.hasNext()) {
+                            serverFiltered.next();
+                            count++;
+                        }
+                        return count;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
                 }
                 return -1;
             }

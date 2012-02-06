@@ -3,6 +3,10 @@ package org.geotools.data.wfs.impl;
 import static org.geotools.data.wfs.internal.Loggers.info;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,16 +15,18 @@ import java.util.Set;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.Diff;
 import org.geotools.data.Transaction;
 import org.geotools.data.Transaction.State;
 import org.geotools.data.TransactionStateDiff;
+import org.geotools.data.wfs.impl.WFSDiff.BatchUpdate;
 import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.TransactionRequest.Delete;
 import org.geotools.data.wfs.internal.TransactionRequest.Insert;
+import org.geotools.data.wfs.internal.TransactionRequest.Update;
 import org.geotools.data.wfs.internal.TransactionResponse;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
+import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
@@ -29,31 +35,31 @@ import org.opengis.filter.FilterFactory;
 import org.opengis.filter.identity.FeatureId;
 import org.opengis.filter.identity.Identifier;
 
-class WFSDataStoreTransactionState implements State {
+class WFSRemoteTransactionState implements State {
 
     private final WFSContentDataStore dataStore;
 
     private Transaction transaction;
 
-    private Map<Name, Diff> diffs;
+    private Map<Name, WFSDiff> diffs;
 
-    public WFSDataStoreTransactionState(WFSContentDataStore dataStore) {
+    public WFSRemoteTransactionState(WFSContentDataStore dataStore) {
         this.dataStore = dataStore;
-        this.diffs = new HashMap<Name, Diff>();
+        this.diffs = new HashMap<Name, WFSDiff>();
     }
 
-    public synchronized Diff getDiff(final Name typeName) {
-        Diff diff = diffs.get(typeName);
+    public synchronized WFSDiff getDiff(final Name typeName) {
+        WFSDiff diff = diffs.get(typeName);
         if (diff == null) {
 
-            diff = new Diff();
+            diff = new WFSDiff();
             diffs.put(typeName, diff);
 
         }
         return diff;
     }
 
-    public void putDiff(Name typeName, Diff diff) {
+    public void putDiff(Name typeName, WFSDiff diff) {
         diffs.put(typeName, diff);
     }
 
@@ -64,7 +70,7 @@ class WFSDataStoreTransactionState implements State {
 
     @Override
     public void rollback() throws IOException {
-        diffs.clear(); // rollback differences
+        clear(); // rollback differences
         // state.fireBatchFeatureEvent(false);
     }
 
@@ -75,18 +81,32 @@ class WFSDataStoreTransactionState implements State {
 
     @Override
     public synchronized void commit() throws IOException {
+        try {
+            commitInternal();
+        } finally {
+            // If the commit fails or succeeds, state is reset
+            clear();
+        }
+    }
+
+    /**
+     * This state takes ownership of each type's diff, so lets clear them all
+     */
+    private void clear() {
+        for (WFSDiff typeDiff : diffs.values()) {
+            typeDiff.clear();
+        }
+    }
+
+    private void commitInternal() throws IOException {
         if (this.diffs.isEmpty()) {
             return;
         }
-        // If the commit fails state is reset
-        Map<Name, Diff> diffs = this.diffs;
-        this.diffs = new HashMap<Name, Diff>();
-
         WFSClient wfs = dataStore.getWfsClient();
         TransactionRequest transactionRequest = wfs.createTransaction();
 
         for (Name typeName : diffs.keySet()) {
-            Diff diff = diffs.get(typeName);
+            WFSDiff diff = diffs.get(typeName);
             applyDiff(typeName, diff, transactionRequest);
         }
 
@@ -96,24 +116,31 @@ class WFSDataStoreTransactionState implements State {
         int updatedCount = transactionResponse.getUpdatedCount();
         info(getClass().getSimpleName(), "::commit(): Updated: ", updatedCount, ", Deleted: ",
                 deleteCount, ", Inserted: ", insertedFids);
+
         // TODO: update generated fids? issue events?
     }
 
-    private void applyDiff(final Name localTypeName, Diff diff,
+    private void applyDiff(final Name localTypeName, WFSDiff diff,
             TransactionRequest transactionRequest) throws IOException {
 
         final QName remoteTypeName = dataStore.getRemoteTypeName(localTypeName);
 
-        final SimpleFeatureType remoteType = dataStore.getRemoteSimpleFeatureType(remoteTypeName);
+        applyBatchUpdates(remoteTypeName, diff, transactionRequest);
 
-        SimpleFeatureBuilder builder = new SimpleFeatureBuilder(remoteType);
+        final Set<String> ignored = diff.getBatchModified();
+
+        final SimpleFeatureType remoteType = dataStore.getRemoteSimpleFeatureType(remoteTypeName);
 
         // Create a single insert element with all the inserts for this type
         final Map<String, SimpleFeature> added = diff.getAdded();
         if (added.size() > 0) {
             Insert insert = transactionRequest.createInsert(remoteTypeName);
 
+            SimpleFeatureBuilder builder = new SimpleFeatureBuilder(remoteType);
             for (String fid : diff.getAddedOrder()) {
+                if (ignored.contains(fid)) {
+                    continue;
+                }
                 SimpleFeature localFeature = added.get(fid);
 
                 SimpleFeature remoteFeature = SimpleFeatureBuilder.retype(localFeature, builder);
@@ -132,6 +159,9 @@ class WFSDataStoreTransactionState implements State {
                 continue;// not a delete
             }
             String rid = entry.getKey();
+            if (ignored.contains(rid)) {
+                continue;
+            }
             Identifier featureId = featureId(rid);
             ids.add(featureId);
         }
@@ -141,12 +171,70 @@ class WFSDataStoreTransactionState implements State {
             transactionRequest.add(delete);
         }
 
-        // Create a single update element with all the updates for this type
+        // Create one update element per modified feature. Batch modified ones should have been
+        // added as a single update element at applyBatchUpdate before
         for (Map.Entry<String, SimpleFeature> entry : modified.entrySet()) {
-            if (TransactionStateDiff.NULL == entry.getValue()) {
+            String fid = entry.getKey();
+            SimpleFeature feature = entry.getValue();
+
+            if (TransactionStateDiff.NULL == feature) {
                 continue;// not an update
             }
+            if (ignored.contains(fid)) {
+                continue;
+            }
+            applySingleUpdate(remoteTypeName, feature, transactionRequest);
         }
+    }
+
+    private void applySingleUpdate(QName remoteTypeName, SimpleFeature feature,
+            TransactionRequest transactionRequest) throws IOException {
+
+        // so bad, this is going to update a lot of unnecessary properties. We'd need to make
+        // DiffContentFeatureWriter's live and current attributes protected and extend write so that
+        // it records the truly modified attributes instead
+
+        Collection<Property> properties = feature.getProperties();
+
+        List<QName> propertyNames = new ArrayList<QName>();
+        List<Object> newValues = new ArrayList<Object>();
+
+        for (Property p : properties) {
+            QName attName = new QName(remoteTypeName.getNamespaceURI(), p.getName().getLocalPart());
+            Object attValue = p.getValue();
+            propertyNames.add(attName);
+            newValues.add(attValue);
+        }
+
+        Filter updateFilter = dataStore.getFilterFactory().id(
+                Collections.singleton(feature.getIdentifier()));
+
+        Update update = transactionRequest.createUpdate(remoteTypeName, propertyNames, newValues,
+                updateFilter);
+        transactionRequest.add(update);
+    }
+
+    private void applyBatchUpdates(QName remoteTypeName, WFSDiff diff,
+            TransactionRequest transactionRequest) {
+
+        List<BatchUpdate> batchUpdates = diff.getBatchUpdates();
+
+        for (BatchUpdate batch : batchUpdates) {
+
+            List<QName> propertyNames = new ArrayList<QName>(batch.properties.length);
+            for (Name attName : batch.properties) {
+                propertyNames.add(new QName(remoteTypeName.getNamespaceURI(), attName
+                        .getLocalPart()));
+            }
+            List<Object> newValues = Arrays.asList(batch.values);
+            Filter updateFilter = batch.filter;
+
+            Update update = transactionRequest.createUpdate(remoteTypeName, propertyNames,
+                    newValues, updateFilter);
+
+            transactionRequest.add(update);
+        }
+
     }
 
     private Identifier featureId(final String rid) {

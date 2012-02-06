@@ -865,8 +865,9 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     @Test
     public void testGetFeaturesWriterModify() throws Exception {
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer = data.getFeatureWriter(
-                getRoadTypeName(), Transaction.AUTO_COMMIT);
+        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
+        writer = data.getFeatureWriter(getRoadTypeName(), Transaction.AUTO_COMMIT);
+
         SimpleFeature feature;
 
         while (writer.hasNext()) {
@@ -1129,7 +1130,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         SimpleFeatureCollection all = river.getFeatures();
         assertEquals(2, all.size());
-        assertEquals(riverBounds, all.getBounds());
+        ReferencedEnvelope bounds = all.getBounds();
+        assertEquals(riverBounds, bounds);
         assertTrue("RIVERS", covers(all.features(), riverFeatures));
 
         SimpleFeatureCollection expected = DataUtilities.collection(riverFeatures);
@@ -1154,7 +1156,7 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
     public void testGetFeatureStoreModifyFeatures2() throws IOException {
         SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
         Name name = roadType.getDescriptor(getNameAttribute()).getName();
-        road.modifyFeatures(name, new Object[] { "changed", }, rd1Filter);
+        road.modifyFeatures(new Name[] { name }, new Object[] { "changed", }, rd1Filter);
 
         SimpleFeatureCollection results = road.getFeatures(rd1Filter);
         assertEquals("changed", results.features().next().getAttribute(getNameAttribute()));
@@ -1181,11 +1183,13 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     @Test
     public void testGetFeatureStoreSetFeatures() throws IOException {
-        FeatureReader<SimpleFeatureType, SimpleFeature> reader = DataUtilities
-                .reader(new SimpleFeature[] { newRoad, });
+        FeatureReader<SimpleFeatureType, SimpleFeature> reader;
+        reader = DataUtilities.reader(new SimpleFeature[] { newRoad, });
         SimpleFeatureStore road = (SimpleFeatureStore) data.getFeatureSource(getRoadTypeName());
 
+        assertEquals(3, road.getFeatures().size());
         road.setFeatures(reader);
+        assertEquals(1, count(data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT)));
         assertEquals(1, road.getFeatures().size());
     }
 

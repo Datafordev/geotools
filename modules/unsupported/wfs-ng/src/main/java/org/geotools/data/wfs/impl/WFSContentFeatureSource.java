@@ -230,7 +230,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
         if (!Transaction.AUTO_COMMIT.equals(transaction)) {
             ContentEntry entry = getEntry();
             State state = transaction.getState(entry);
-            WFSDiffTransactionState wfsState = (WFSDiffTransactionState) state;
+            WFSLocalTransactionState wfsState = (WFSLocalTransactionState) state;
             if (wfsState != null) {
                 Diff diff = wfsState.getDiff();
                 reader = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(reader, diff);

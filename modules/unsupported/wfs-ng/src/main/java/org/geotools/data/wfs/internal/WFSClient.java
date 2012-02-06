@@ -27,6 +27,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.ows.ServiceException;
 import org.geotools.util.Version;
 import org.geotools.util.logging.Logging;
+import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -292,6 +293,19 @@ public class WFSClient extends AbstractOpenWebService<WFSGetCapabilities, QName>
         return (DescribeFeatureTypeResponse) response;
     }
 
+    /**
+     * Splits the filter provided by the geotools query into the server supported and unsupported
+     * ones.
+     * 
+     * @param typeName
+     * 
+     * @return a two-element array where the first element is the supported filter and the second
+     *         the one to post-process
+     * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
+     */
+    public Filter[] splitFilters(QName typeName, Filter filter) {
+        return getStrategy().splitFilters(typeName, filter);
+    }
     public CoordinateReferenceSystem getDefaultCRS(QName typeName) {
         final WFSStrategy strategy = getStrategy();
         FeatureTypeInfo typeInfo = strategy.getFeatureTypeInfo(typeName);

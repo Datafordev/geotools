@@ -557,9 +557,8 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
      *         the one to post-process
      * @see org.geotools.data.wfs.internal.WFSStrategy#splitFilters(org.opengis.filter.Filter)
      */
+    @Override
     public Filter[] splitFilters(QName typeName, Filter filter) {
-
-        final Set<String> supportedCRSIdentifiers = getSupportedCRSIdentifiers(typeName);
 
         FilterCapabilities filterCapabilities = getFilterCapabilities();
         Capabilities filterCaps = new Capabilities();
@@ -603,7 +602,7 @@ public abstract class AbstractWFSStrategy extends WFSStrategy {
         Id fidFilter = compliancePreProcessor.getFidFilter();
         if (!fidFilter.getIdentifiers().isEmpty()) {
             server = fidFilter;
-            post = filter;
+            post = Filter.EXCLUDE.equals(filter) ? Filter.INCLUDE : filter;
         } else {
 
             CapabilitiesFilterSplitter splitter = new CapabilitiesFilterSplitter(filterCaps, null,

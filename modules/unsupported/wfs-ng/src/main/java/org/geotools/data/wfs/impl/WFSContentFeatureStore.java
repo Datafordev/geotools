@@ -2,7 +2,11 @@ package org.geotools.data.wfs.impl;
 
 import java.io.IOException;
 
+import javax.xml.namespace.QName;
+
 import org.geotools.data.Diff;
+import org.geotools.data.FeatureEvent;
+import org.geotools.data.FeatureEvent.Type;
 import org.geotools.data.FeatureReader;
 import org.geotools.data.FeatureWriter;
 import org.geotools.data.Query;
@@ -14,11 +18,13 @@ import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
 import org.geotools.data.store.DiffContentFeatureWriter;
+import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.FeatureVisitor;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.Name;
+import org.opengis.filter.Filter;
 
 class WFSContentFeatureStore extends ContentFeatureStore {
 
@@ -168,7 +174,7 @@ class WFSContentFeatureStore extends ContentFeatureStore {
 
         } else {
             State state = transaction.getState(getEntry());
-            WFSDiffTransactionState wfsState = (WFSDiffTransactionState) state;
+            WFSLocalTransactionState wfsState = (WFSLocalTransactionState) state;
 
             Diff diff = wfsState.getDiff();
 
@@ -178,4 +184,82 @@ class WFSContentFeatureStore extends ContentFeatureStore {
         return writer;
     }
 
+    @Override
+    public void modifyFeatures(Name[] properties, Object[] values, Filter filter)
+            throws IOException {
+        if (filter == null) {
+            throw new IllegalArgumentException("filter is null");
+        }
+
+        filter = resolvePropertyNames(filter);
+
+        {
+            QName typeName = getDataStore().getRemoteTypeName(getName());
+            WFSClient wfsClient = getDataStore().getWfsClient();
+            Filter[] splitFilters = wfsClient.splitFilters(typeName, filter);
+            Filter unsupported = splitFilters[1];
+
+            if (!Filter.INCLUDE.equals(unsupported)) {
+                // Filter not fully supported, lets modify one by one
+                super.modifyFeatures(properties, values, filter);
+                return;
+            }
+        }
+
+        // Filter fully supported, lets batch modify
+        final ContentState contentState = getState();
+
+        ReferencedEnvelope affectedBounds = new ReferencedEnvelope(getInfo().getCRS());
+        if (contentState.hasListener()) {
+            // gather bounds before modification
+            ReferencedEnvelope before = getBounds(new Query(getSchema().getTypeName(), filter));
+            if (before != null && !before.isEmpty()) {
+                affectedBounds = before;
+            }
+        }
+        final Transaction transaction = getTransaction();
+
+        FeatureReader<SimpleFeatureType, SimpleFeature> oldFeatures = getReader(filter);
+        try {
+            if (!oldFeatures.hasNext()) {
+                // don't bother
+                oldFeatures.close();
+                return;
+            }
+        } catch (IOException e) {
+            oldFeatures.close();
+            throw e;
+        } catch (RuntimeException e) {
+            oldFeatures.close();
+            throw e;
+        }
+
+        if (Transaction.AUTO_COMMIT.equals(transaction)) {
+            // we're in auto commit. Do a batch update and commit right away
+            WFSRemoteTransactionState comittingState = new WFSRemoteTransactionState(getDataStore());
+            WFSDiff diff = comittingState.getDiff(getName());
+
+            ReferencedEnvelope bounds;
+            bounds = diff.batchModify(properties, values, filter, oldFeatures, contentState);
+            affectedBounds.expandToInclude(bounds);
+            comittingState.commit();
+
+        } else {
+            // we're in a transaction, record to local state and wait for commit to be called
+            WFSLocalTransactionState localState;
+            localState = (WFSLocalTransactionState) transaction.getState(getEntry());
+            WFSDiff diff = localState.getDiff();
+
+            ReferencedEnvelope bounds;
+            bounds = diff.batchModify(properties, values, filter, oldFeatures, contentState);
+            affectedBounds.expandToInclude(bounds);
+        }
+
+        if (contentState.hasListener()) {
+            // issue notificaiton
+            FeatureEvent event = new FeatureEvent(this, Type.CHANGED, affectedBounds, filter);
+            contentState.fireFeatureEvent(event);
+        }
+
+    }
 }
