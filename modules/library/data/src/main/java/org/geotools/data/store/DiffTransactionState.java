@@ -34,17 +34,17 @@ import org.opengis.filter.Filter;
 /**
  * Transaction state responsible for holding an in memory {@link Diff} of any modifications.
  */
-public class DiffTransactionState implements Transaction.State {
-    protected Diff diff;
+class DiffTransactionState implements Transaction.State {
+    Diff diff;
     
     /** The transaction (ie session) associated with this state */
-    protected Transaction transaction;
+    Transaction transaction;
 
     /**
      * ContentState for this transaction used to hold information for
      * FeatureReader implementations
      */
-    protected ContentState state;
+    ContentState state;
 
     /**
      * Transaction state responsible for holding an in memory {@link Diff}.
