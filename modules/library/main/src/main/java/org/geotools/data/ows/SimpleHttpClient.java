@@ -157,8 +157,16 @@ public class SimpleHttpClient implements HTTPClient {
 
         private InputStream responseStream;
 
-        public SimpleHTTPResponse(final URLConnection connection) {
+        public SimpleHTTPResponse(final URLConnection connection) throws IOException {
             this.connection = connection;
+            InputStream inputStream = connection.getInputStream();
+
+            final String contentEncoding = connection.getContentEncoding();
+
+            if (contentEncoding != null && connection.getContentEncoding().indexOf("gzip") != -1) {
+                inputStream = new GZIPInputStream(inputStream);
+            }
+            responseStream = inputStream;
         }
 
         /**
@@ -199,19 +207,6 @@ public class SimpleHttpClient implements HTTPClient {
          * @see org.geotools.data.ows.HTTPResponse#getResponseStream()
          */
         public InputStream getResponseStream() throws IOException {
-
-            if (responseStream == null) {
-                InputStream inputStream = connection.getInputStream();
-
-                final String contentEncoding = connection.getContentEncoding();
-
-                if (contentEncoding != null
-                        && connection.getContentEncoding().indexOf("gzip") != -1) {
-                    inputStream = new GZIPInputStream(inputStream);
-                }
-                responseStream = inputStream;
-            }
-
             return responseStream;
         }
     }

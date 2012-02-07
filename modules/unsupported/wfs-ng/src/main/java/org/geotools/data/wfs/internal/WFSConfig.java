@@ -70,8 +70,14 @@ public class WFSConfig {
 
         Boolean preferPost = (Boolean) PROTOCOL.lookUp(params);
 
-        config.preferredMethod = preferPost == null ? PreferredHttpMethod.AUTO : (preferPost
-                .booleanValue() ? PreferredHttpMethod.HTTP_POST : PreferredHttpMethod.HTTP_GET);
+        if (preferPost == null) {
+            config.preferredMethod = PreferredHttpMethod.AUTO;
+        } else {
+            config.preferredMethod = preferPost.booleanValue() ? PreferredHttpMethod.HTTP_POST
+                    : PreferredHttpMethod.HTTP_GET;
+        }
+
+        config.preferredMethod = PreferredHttpMethod.HTTP_POST;// remove this line
 
         config.user = (String) USERNAME.lookUp(params);
         config.pass = (String) PASSWORD.lookUp(params);

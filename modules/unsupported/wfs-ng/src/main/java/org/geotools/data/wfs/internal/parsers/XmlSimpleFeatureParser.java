@@ -51,6 +51,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import com.sun.xml.internal.messaging.saaj.util.TeeInputStream;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -101,6 +102,8 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
     public XmlSimpleFeatureParser(final InputStream getFeatureResponseStream,
             final SimpleFeatureType targetType, QName featureDescriptorName) throws IOException {
 
+        //this.inputStream = new TeeInputStream(inputStream, System.err);
+        
         this.inputStream = getFeatureResponseStream;
         this.featureNamespace = featureDescriptorName.getNamespaceURI();
         this.featureName = featureDescriptorName.getLocalPart();

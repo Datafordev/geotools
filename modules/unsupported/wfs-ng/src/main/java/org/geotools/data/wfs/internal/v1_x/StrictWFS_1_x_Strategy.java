@@ -29,7 +29,6 @@ import static org.geotools.data.wfs.internal.WFSOperationType.TRANSACTION;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -87,20 +86,14 @@ import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSResponseFactory;
 import org.geotools.data.wfs.internal.WFSStrategy;
-import org.geotools.factory.GeoTools;
 import org.geotools.feature.FeatureCollection;
-import org.geotools.filter.Capabilities;
 import org.geotools.util.Version;
 import org.geotools.wfs.v1_0.WFS;
 import org.geotools.xml.Configuration;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.filter.Filter;
 import org.opengis.filter.capability.FilterCapabilities;
-import org.opengis.filter.capability.SpatialCapabilities;
-import org.opengis.filter.capability.SpatialOperator;
-import org.opengis.filter.capability.SpatialOperators;
 import org.opengis.filter.sort.SortBy;
-import org.opengis.filter.spatial.Intersects;
 
 /**
  * 
@@ -161,7 +154,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         String outputFormat = query.getOutputFormat();
         getFeature.setOutputFormat(outputFormat);
 
-        getFeature.setHandle(requestHandle());
+        getFeature.setHandle(query.getHandle());
 
         Integer maxFeatures = query.getMaxFeatures();
         if (maxFeatures != null) {
@@ -219,18 +212,6 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         return getFeature;
     }
 
-    private String requestHandle() {
-        StringBuilder handle = new StringBuilder("GeoTools ").append(GeoTools.getVersion())
-                .append("(").append(GeoTools.getBuildRevision()).append(") WFS ")
-                .append(getVersion()).append(" DataStore @");
-        try {
-            handle.append(InetAddress.getLocalHost().getHostName());
-        } catch (Exception ignore) {
-            handle.append("<uknown host>");
-        }
-        return handle.toString();
-    }
-
     @Override
     protected DescribeFeatureTypeType createDescribeFeatureTypeRequestPost(
             DescribeFeatureTypeRequest request) {
@@ -242,7 +223,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
         Version version = getServiceVersion();
         dft.setService("WFS");
         dft.setVersion(version.toString());
-        dft.setHandle(requestHandle());
+        dft.setHandle(request.getHandle());
 
         if (Versions.v1_0_0.equals(version)) {
             dft.setOutputFormat(null);
@@ -262,7 +243,7 @@ public class StrictWFS_1_x_Strategy extends AbstractWFSStrategy {
 
         TransactionType tx = factory.createTransactionType();
         tx.setService("WFS");
-        tx.setHandle(requestHandle());
+        tx.setHandle(request.getHandle());
         tx.setVersion(getVersion());
 
         List<TransactionElement> transactionElements = request.getTransactionElements();

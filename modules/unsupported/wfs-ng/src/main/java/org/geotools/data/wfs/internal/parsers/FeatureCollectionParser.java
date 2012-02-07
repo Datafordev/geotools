@@ -44,7 +44,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
  * 
  * 
  * @source $URL$
- * @see Gml31GetFeatureResponseParserFactory
+ * @see GmlGetFeatureResponseParserFactory
  */
 public class FeatureCollectionParser implements WFSResponseParser {
 

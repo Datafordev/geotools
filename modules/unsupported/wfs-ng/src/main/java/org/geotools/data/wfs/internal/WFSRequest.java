@@ -17,6 +17,7 @@ import org.geotools.data.ows.AbstractRequest;
 import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.ows.Request;
 import org.geotools.factory.FactoryNotFoundException;
+import org.geotools.util.logging.Logging;
 
 public abstract class WFSRequest extends AbstractRequest implements Request {
 
@@ -32,6 +33,8 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     private String outputFormat;
 
+    private String handle;
+
     public WFSRequest(final WFSOperationType operation, final WFSConfig config,
             final WFSStrategy strategy) {
 
@@ -39,6 +42,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         this.operation = operation;
         this.config = config;
         this.strategy = strategy;
+        this.handle = strategy.newRequestHandle(operation);
 
         switch (config.getPreferredMethod()) {
         case HTTP_POST:
@@ -62,6 +66,14 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
     public String getOutputFormat() {
         return outputFormat;
+    }
+
+    public String getHandle() {
+        return handle;
+    }
+
+    public void setHandle(String handle) {
+        this.handle = handle;
     }
 
     /**
@@ -100,7 +112,7 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
             method = suportsPost ? POST : GET;
             break;
         default:
-            method = suportsGet ? GET : POST;
+            method = suportsPost ? POST : GET;
             break;
         }
 
@@ -161,6 +173,17 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
 
         final String contentType = response.getContentType();
 
+        if (contentType == null) {
+            Logging.getLogger(WFSRequest.class).warning(
+                    this.getOperation() + " request returned null content type for URL "
+                            + getFinalURL());
+            InputStream responseStream = response.getResponseStream();
+            System.err.println("<------->");
+            IOUtils.copy(responseStream, System.err);
+            System.err.println("<------->");
+            System.err.flush();
+        }
+
         WFSResponseFactory responseFactory;
         try {
             responseFactory = WFSExtensions.findResponseFactory(this, contentType);
@@ -181,5 +204,21 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
         WFSResponse wfsResponse = responseFactory.createResponse(this, response);
 
         return wfsResponse;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(getOperation().toString());
+        sb.append("[");
+        sb.append("\n\thandle: ").append(handle);
+        sb.append("\n\toutputFormat: <").append(outputFormat).append(">");
+        sb.append("\n\tmethod: ").append(doPost ? "POST" : "GET");
+        sb.append("\n\tonlineResource: <").append(onlineResource).append(">");
+        try {
+            sb.append("\n\tfinal URL: <").append(getFinalURL()).append(">");
+        } catch (Exception e) {
+            sb.append("\n\tfinal URL error: <").append(e.getMessage()).append(">");
+        }
+        return sb.append("\n]").toString();
     }
 }

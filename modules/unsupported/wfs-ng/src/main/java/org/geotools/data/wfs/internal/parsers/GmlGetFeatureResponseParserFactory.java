@@ -26,6 +26,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.xml.namespace.QName;
@@ -36,6 +37,7 @@ import org.geotools.data.ows.HTTPResponse;
 import org.geotools.data.wfs.internal.GetFeatureParser;
 import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureResponse;
+import org.geotools.data.wfs.internal.Loggers;
 import org.geotools.data.wfs.internal.WFSOperationType;
 import org.geotools.data.wfs.internal.WFSRequest;
 import org.geotools.data.wfs.internal.WFSResponse;
@@ -46,13 +48,14 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.FeatureType;
 
 /**
- * A WFS response parser factory for GetFeature requests in {@code text/xml; subtype=gml/3.1.1}
- * output format.
+ * A WFS response parser factory for GetFeature requests in GML output formats.
+ * <p>
+ * At this time supports GML 2 and GML 3.1
  */
 @SuppressWarnings("nls")
-public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory {
+public class GmlGetFeatureResponseParserFactory implements WFSResponseFactory {
 
-    private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
+    private static final Logger LOGGER = Loggers.MODULE;
 
     private static final List<String> SUPPORTED_FORMATS = Collections.unmodifiableList(Arrays
             .asList(//
@@ -69,7 +72,9 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
                     "text/xml", // oddly, GeoServer returns plain 'text/xml' instead of the propper
                                 // subtype when resultType=hits. Guess we should make this something
                                 // the specific strategy can hanlde?
-                    "text/gml; subtype=gml/3.1.1"// the incorrectly advertised GeoServer format
+                    "text/gml; subtype=gml/3.1.1",// the incorrectly advertised GeoServer format
+                    "GML2",//
+                    "text/xml; subtype=gml/2.1.2"//
             ));
 
     /**
@@ -96,15 +101,15 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
         }
         // String outputFormat = ((GetFeatureRequest) request).getOutputFormat();
         boolean matches = SUPPORTED_FORMATS.contains(contentType);
-        // if (!matches) {
-        // // fuzy search, "
-        // for (String supported : SUPPORTED_FORMATS) {
-        // if (supported.startsWith(contentType) || contentType.startsWith(supported)) {
-        // matches = true;
-        // break;
-        // }
-        // }
-        // }
+        if (!matches) {
+            // fuzy search, "
+            for (String supported : SUPPORTED_FORMATS) {
+                if (supported.startsWith(contentType) || contentType.startsWith(supported)) {
+                    matches = true;
+                    break;
+                }
+            }
+        }
         return matches;
     }
 
@@ -134,7 +139,12 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
             // CubeWerx, upon a successful GetFeature request, set the response's content-type
             // header to plain "text/xml" instead of "text/xml;subtype=gml/3.1.1". So we'll do a bit
             // of heuristics to find out what it actually returned
-            final int buffSize = 256;
+            final int buffSize;
+            if (LOGGER.isLoggable(Level.FINER)) {
+                buffSize = 4096;
+            } else {
+                buffSize = 512;
+            }
             PushbackInputStream pushbackIn = new PushbackInputStream(response.getResponseStream(),
                     buffSize);
             byte[] buff = new byte[buffSize];
@@ -156,19 +166,21 @@ public class Gml31GetFeatureResponseParserFactory implements WFSResponseFactory 
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     new ByteArrayInputStream(buff), charset));
-            StringBuilder sb = new StringBuilder();
+            StringBuilder head = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                sb.append(line).append('\n');
+                head.append(line).append('\n');
             }
-            String head = sb.toString();
-            LOGGER.fine("response head: " + head);
-
+            if(LOGGER.isLoggable(Level.FINER)){
+                System.err.println("Response head:");
+                System.err.println(head);
+            }
+            
             pushbackIn.unread(buff, 0, readCount);
 
-            if (head.contains("FeatureCollection")) {
+            if (head.indexOf("FeatureCollection") > 0) {
                 parser = parser(getFeature, pushbackIn);
-            } else if (head.contains("ExceptionReport")) {
+            } else if (head.indexOf("ExceptionReport") > 0) {
                 // parser = new ExceptionReportParser();
                 // TODO: return ExceptionResponse or so
                 throw new UnsupportedOperationException("implement!");

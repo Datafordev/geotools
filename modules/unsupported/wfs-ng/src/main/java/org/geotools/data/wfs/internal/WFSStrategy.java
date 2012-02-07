@@ -18,15 +18,20 @@ package org.geotools.data.wfs.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.Specification;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
+import org.geotools.factory.GeoTools;
 import org.geotools.util.Version;
 import org.geotools.xml.Configuration;
 import org.opengis.filter.Filter;
@@ -48,6 +53,19 @@ import org.opengis.filter.capability.FilterCapabilities;
  * </p>
  */
 public abstract class WFSStrategy extends Specification {
+
+    private Map<WFSOperationType, AtomicLong> requestHandleSequences;
+
+    public WFSStrategy() {
+        requestHandleSequences = new HashMap<WFSOperationType, AtomicLong>();
+        requestHandleSequences.put(WFSOperationType.GET_CAPABILITIES, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.DESCRIBE_FEATURETYPE, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.GET_FEATURE, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.GET_FEATURE_WITH_LOCK, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.GET_GML_OBJECT, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.LOCK_FEATURE, new AtomicLong());
+        requestHandleSequences.put(WFSOperationType.TRANSACTION, new AtomicLong());
+    }
 
     public abstract void setCapabilities(WFSGetCapabilities capabilities);
 
@@ -190,5 +208,20 @@ public abstract class WFSStrategy extends Specification {
     public abstract WFSServiceInfo getServiceInfo();
 
     public abstract Configuration getWfsConfiguration();
+
+    public String newRequestHandle(WFSOperationType operation) {
+        StringBuilder handle = new StringBuilder("GeoTools ").append(GeoTools.getVersion())
+                .append("(").append(GeoTools.getBuildRevision()).append(") WFS ")
+                .append(getVersion()).append(" DataStore @");
+        try {
+            handle.append(InetAddress.getLocalHost().getHostName());
+        } catch (Exception ignore) {
+            handle.append("<uknown host>");
+        }
+
+        AtomicLong reqHandleSeq = requestHandleSequences.get(operation);
+        handle.append('#').append(reqHandleSeq.incrementAndGet());
+        return handle.toString();
+    }
 
 }
