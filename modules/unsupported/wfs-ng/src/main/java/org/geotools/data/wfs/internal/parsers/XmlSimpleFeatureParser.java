@@ -575,11 +575,43 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
             throws XmlPullParserException, IOException, NoSuchAuthorityCodeException,
             FactoryException {
         parser.require(START_TAG, GML.NAMESPACE, GML.LinearRing.getLocalPart());
-        parser.nextTag();
-        final QName coordsName = new QName(parser.getNamespace(), parser.getName());
 
+        crs = crs(crs);
+        Coordinate[] lineCoords = parseLineStringInternal(dimension, crs);
+
+        parser.require(END_TAG, GML.NAMESPACE, GML.LinearRing.getLocalPart());
+
+        LinearRing linearRing = geomFac.createLinearRing(lineCoords);
+        linearRing.setUserData(crs);
+        return linearRing;
+    }
+
+    private LineString parseLineString(int dimension, CoordinateReferenceSystem crs)
+            throws XmlPullParserException, IOException, NoSuchAuthorityCodeException,
+            FactoryException {
+
+        parser.require(START_TAG, GML.NAMESPACE, GML.LineString.getLocalPart());
+
+        crs = crs(crs);
+        Coordinate[] coordinates = parseLineStringInternal(dimension, crs);
+
+        parser.require(END_TAG, GML.NAMESPACE, GML.LineString.getLocalPart());
+
+        LineString geom = geomFac.createLineString(coordinates);
+        geom.setUserData(crs);
+        return geom;
+    }
+
+    private Coordinate[] parseLineStringInternal(int dimension, CoordinateReferenceSystem crs)
+            throws XmlPullParserException, IOException {
+
+        final QName lineElementName = new QName(parser.getNamespace(), parser.getName());
+
+        parser.nextTag();
+        Coordinate[] lineCoords;
+
+        final QName coordsName = new QName(parser.getNamespace(), parser.getName());
         String tagName = parser.getName();
-        Coordinate[] shellCoords;
         if (GML.pos.equals(coordsName)) {
             Coordinate[] point;
             List<Coordinate> coords = new ArrayList<Coordinate>();
@@ -592,39 +624,34 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
                 eventType = parser.getEventType();
             } while (eventType == START_TAG && tagName == GML.pos.getLocalPart());
 
-            shellCoords = coords.toArray(new Coordinate[coords.size()]);
+            lineCoords = coords.toArray(new Coordinate[coords.size()]);
 
         } else if (GML.posList.equals(coordsName)) {
             // parser.require(START_TAG, GML.NAMESPACE,
             // GML.posList.getLocalPart());
-            crs = crs(crs);
-            shellCoords = parseCoordList(dimension);
+            lineCoords = parseCoordList(dimension);
             parser.nextTag();
         } else if (GML.coordinates.equals(coordsName)) {
-            shellCoords = parseCoordinates(dimension);
+            lineCoords = parseCoordinates(dimension);
             parser.nextTag();
+        } else if (GML.coord.equals(coordsName)) {
+            Coordinate point;
+            List<Coordinate> coords = new ArrayList<Coordinate>();
+            int eventType;
+            do {
+                point = parseCoord();
+                coords.add(point);
+                parser.nextTag();
+                tagName = parser.getName();
+                eventType = parser.getEventType();
+            } while (eventType == START_TAG && GML.coord.getLocalPart().equals(tagName));
+
+            lineCoords = coords.toArray(new Coordinate[coords.size()]);
         } else {
             throw new IllegalStateException("Expected posList or pos inside LinearRing: " + tagName);
         }
-        parser.require(END_TAG, GML.NAMESPACE, GML.LinearRing.getLocalPart());
-        LinearRing linearRing = geomFac.createLinearRing(shellCoords);
-        linearRing.setUserData(crs);
-        return linearRing;
-    }
-
-    private LineString parseLineString(int dimension, CoordinateReferenceSystem crs)
-            throws XmlPullParserException, IOException, NoSuchAuthorityCodeException,
-            FactoryException {
-        LineString geom;
-        parser.nextTag();
-        parser.require(START_TAG, GML.NAMESPACE, GML.posList.getLocalPart());
-        crs = crs(crs);
-        Coordinate[] coords = parseCoordList(dimension);
-        geom = geomFac.createLineString(coords);
-        geom.setUserData(crs);
-        parser.nextTag();
-        parser.require(END_TAG, GML.NAMESPACE, GML.LineString.getLocalPart());
-        return geom;
+        parser.require(END_TAG, lineElementName.getNamespaceURI(), lineElementName.getLocalPart());
+        return lineCoords;
     }
 
     private Point parsePoint(int dimension, CoordinateReferenceSystem crs)
@@ -633,17 +660,59 @@ public class XmlSimpleFeatureParser implements GetFeatureParser {
 
         parser.require(START_TAG, GML.NAMESPACE, GML.Point.getLocalPart());
 
+        crs = crs(crs);
+
         Point geom;
         parser.nextTag();
-        parser.require(START_TAG, GML.NAMESPACE, GML.pos.getLocalPart());
-        crs = crs(crs);
-        Coordinate[] coords = parseCoordList(dimension);
-        geom = geomFac.createPoint(coords[0]);
-        geom.setUserData(crs);
-        parser.nextTag();
+        parser.require(START_TAG, GML.NAMESPACE, null);
+        Coordinate point;
+        if (GML.pos.getLocalPart().equals(parser.getName())) {
+            Coordinate[] coords = parseCoordList(dimension);
+            point = coords[0];
+            parser.nextTag();
+        } else if (GML.coordinates.getLocalPart().equals(parser.getName())) {
+            Coordinate[] coords = parseCoordinates(dimension);
+            point = coords[0];
+            parser.nextTag();
+        } else if (GML.coord.getLocalPart().equals(parser.getName())) {
+            point = parseCoord();
+            parser.nextTag();
+        } else {
+            throw new IllegalStateException("Unknown coordinate element for Point: "
+                    + parser.getName());
+        }
 
         parser.require(END_TAG, GML.NAMESPACE, GML.Point.getLocalPart());
+
+        geom = geomFac.createPoint(point);
+        geom.setUserData(crs);
         return geom;
+    }
+
+    private Coordinate parseCoord() throws XmlPullParserException, IOException {
+        parser.require(START_TAG, GML.NAMESPACE, GML.coord.getLocalPart());
+
+        Coordinate point;
+        double x, y, z = 0;
+        parser.nextTag();
+        parser.require(START_TAG, GML.NAMESPACE, "X");
+
+        x = Double.parseDouble(parser.nextText());
+
+        parser.nextTag();
+        parser.require(START_TAG, GML.NAMESPACE, "Y");
+
+        y = Double.parseDouble(parser.nextText());
+
+        parser.nextTag();
+        if (START_TAG == parser.getEventType()) {
+            parser.require(START_TAG, GML.NAMESPACE, "Z");
+            z = Double.parseDouble(parser.nextText());
+            parser.nextTag();
+        }
+        parser.require(END_TAG, GML.NAMESPACE, GML.coord.getLocalPart());
+        point = new Coordinate(x, y, z);
+        return point;
     }
 
     private CoordinateReferenceSystem crs(CoordinateReferenceSystem defaultValue)

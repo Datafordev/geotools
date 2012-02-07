@@ -16,7 +16,7 @@
  */
 package org.geotools.data.wfs.internal.parsers;
 
-import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_GOVUNITCE;
+import static org.geotools.data.wfs.impl.WFSTestData.*;
 import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_ROADSEG;
 import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ARCHSITES_11;
 import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ROADS_11;
@@ -233,6 +233,26 @@ public abstract class AbstractGetFeatureParserTest {
         testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
     }
 
+    @Test
+    public void testParseGeoServer_Poi_100() throws Exception {
+        final QName featureName = GEOS_POI_10.TYPENAME;
+        final int expectedCount = 3;
+        final URL schemaLocation = GEOS_POI_10.SCHEMA;
+        final URL data = GEOS_POI_10.DATA;
+
+        final String[] properties = { "the_geom", "NAME", "THUMBNAIL", "MAINPAGE" };
+        final SimpleFeatureType featureType;
+        featureType = getTypeView(featureName, schemaLocation, GEOS_POI_10.CRS, properties);
+
+        final FeatureVisitor assertor = new FeatureAssertor(featureType);
+
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, data);
+
+        int nof = parser.getNumberOfFeatures();
+        assertEquals(-1, nof);
+        testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
+    }
+
     /**
      * Verifies correctness on parsing a normal geoserver WFS 1.1.0 GetFeature response for the
      * usual topp:states feature type (multipolygon).
@@ -347,7 +367,7 @@ public abstract class AbstractGetFeatureParserTest {
     }
 
     @Test
-    public void testParseGeoServer_roads_MultiLineString() throws Exception {
+    public void testParseGeoServer_roads_MultiLineString_110() throws Exception {
         final QName featureName = GEOS_ROADS_11.TYPENAME;
         final int expectedCount = 1;
         final URL schemaLocation = GEOS_ROADS_11.SCHEMA;
@@ -363,6 +383,27 @@ public abstract class AbstractGetFeatureParserTest {
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
+
+        testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
+    }
+
+    @Test
+    public void testParseGeoServer_roads_MultiLineString_100() throws Exception {
+        final QName featureName = GEOS_ROADS_10.TYPENAME;
+        final int expectedCount = 2;
+        final URL schemaLocation = GEOS_ROADS_10.SCHEMA;
+
+        final String[] properties = { "the_geom", "label" };
+        final SimpleFeatureType featureType;
+        featureType = getTypeView(featureName, schemaLocation, GEOS_ROADS_10.CRS, properties);
+
+        final FeatureVisitor assertor = new FeatureAssertor(featureType);
+
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                GEOS_ROADS_10.DATA);
+
+        int nof = parser.getNumberOfFeatures();
+        assertEquals(-1, nof);
 
         testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
     }
