@@ -51,17 +51,17 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class DiffContentFeatureWriter implements FeatureWriter<SimpleFeatureType, SimpleFeature> {
     protected FeatureReader<SimpleFeatureType, SimpleFeature> reader;
 
-    protected ContentState state;
+    ContentState state;
 
     protected Diff diff;
 
-    protected SimpleFeature next; // next value aquired by hasNext()
+    SimpleFeature next; // next value aquired by hasNext()
 
-    protected SimpleFeature live; // live value supplied by FeatureReader
+    SimpleFeature live; // live value supplied by FeatureReader
 
-    protected SimpleFeature current; // duplicate provided to user
+    SimpleFeature current; // duplicate provided to user
 
-    protected ContentFeatureStore store;
+    ContentFeatureStore store;
 
     /**
      * DiffFeatureWriter construction.
