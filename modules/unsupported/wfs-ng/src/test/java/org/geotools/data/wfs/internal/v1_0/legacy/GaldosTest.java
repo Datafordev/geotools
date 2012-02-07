@@ -29,35 +29,6 @@ import org.geotools.feature.IllegalAttributeException;
 import org.xml.sax.SAXException;
 
 /**
- * summary sentence.
- * <p>
- * Paragraph ...
- * </p>
- * <p>
- * Responsibilities:
- * <ul>
- * <li>
- * <li>
- * </ul>
- * </p>
- * <p>
- * Example:
- * 
- * <pre>
- * <code>
- * GeoServer x = new GeoServer( ... );
- * TODO code example
- * </code>
- * </pre>
- * 
- * </p>
- * 
- * @author dzwiers
- * @since 0.6.0
- * 
- * 
- * 
- * @source $URL$
  */
 public class GaldosTest extends TestCase {
 

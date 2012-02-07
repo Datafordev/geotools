@@ -12,6 +12,7 @@ import javax.xml.namespace.QName;
 
 import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.wfs.impl.WFSTestData;
 import org.geotools.data.wfs.internal.v1_x.CubeWerxStrategy;
 import org.geotools.data.wfs.internal.v1_x.IonicStrategy;
 import org.geotools.data.wfs.internal.v1_x.StrictWFS_1_x_Strategy;
@@ -35,16 +36,6 @@ public class WFSClientTest {
     public void tearDown() throws Exception {
     }
 
-    private URL url(String capabilitiesResource) {
-
-        String absoluteResouce = "/org/geotools/data/wfs/impl/test-data/" + capabilitiesResource;
-
-        URL capabilitiesURL = getClass().getResource(absoluteResouce);
-
-        assertNotNull("resource not found: " + absoluteResouce, capabilitiesURL);
-        return capabilitiesURL;
-    }
-
     private WFSClient testInit(String resource, String expectedVersion) throws IOException,
             ServiceException {
 
@@ -56,7 +47,7 @@ public class WFSClientTest {
     }
 
     private WFSClient newClient(String resource) throws IOException, ServiceException {
-        URL capabilitiesURL = url(resource);
+        URL capabilitiesURL = WFSTestData.url(resource);
         HTTPClient httpClient = new SimpleHttpClient();
 
         WFSClient client = new WFSClient(capabilitiesURL, httpClient, config);

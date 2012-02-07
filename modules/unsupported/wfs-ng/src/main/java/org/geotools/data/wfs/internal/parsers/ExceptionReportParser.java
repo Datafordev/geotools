@@ -54,8 +54,6 @@ import org.geotools.xml.Parser;
 @SuppressWarnings({ "nls", "unchecked" })
 public class ExceptionReportParser implements WFSResponseParser {
 
-    private static final Logger LOGGER = Logging.getLogger("org.geotools.data.wfs");
-
     /**
      * @param response
      *            a response handle to a service exception report
@@ -63,42 +61,43 @@ public class ExceptionReportParser implements WFSResponseParser {
      * @see WFSResponseParser#parse(WFSStrategy, WFSResponse)
      */
     public Object parse(WFSResponse response) {
-        WFSConfiguration configuration = new WFSConfiguration();
-        Parser parser = new Parser(configuration);
-        InputStream responseStream = response.getInputStream();
-        Charset responseCharset = response.getCharacterEncoding();
-        Reader reader = new InputStreamReader(responseStream, responseCharset);
-        Object parsed;
-        try {
-            parsed = parser.parse(reader);
-            if (!(parsed instanceof net.opengis.ows10.ExceptionReportType)) {
-                return new IOException("Unrecognized server error");
-            }
-        } catch (Exception e) {
-            return new WFSException("Exception parsing server exception report", e);
-        }
-        net.opengis.ows10.ExceptionReportType report = (ExceptionReportType) parsed;
-        List<ExceptionType> exceptions = report.getException();
-
-        EObject originatingRequest = response.getOriginatingRequest();
-        StringBuilder msg = new StringBuilder("WFS returned an exception.");
-        msg.append(" Target URL: " + response.getTargetUrl());
-        if (originatingRequest != null) {
-            try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                StrictWFS_1_1_Strategy.encode(originatingRequest, configuration, out,
-                        Charset.forName("UTF-8"));
-                String requestStr = out.toString("UTF-8");
-
-                msg.append(". Originating request is: \n").append(requestStr).append("\n");
-            } catch (Exception e) {
-                LOGGER.log(Level.FINE, "Error encoding request for exception report", e);
-            }
-        }
-        WFSException result = new WFSException(msg.toString());
-        for (ExceptionType ex : exceptions) {
-            result.addExceptionReport(String.valueOf(ex.getExceptionText()));
-        }
-        return result;
+        throw new UnsupportedOperationException("implement!");
+//        WFSConfiguration configuration = new WFSConfiguration();
+//        Parser parser = new Parser(configuration);
+//        InputStream responseStream = response.getInputStream();
+//        Charset responseCharset = response.getCharacterEncoding();
+//        Reader reader = new InputStreamReader(responseStream, responseCharset);
+//        Object parsed;
+//        try {
+//            parsed = parser.parse(reader);
+//            if (!(parsed instanceof net.opengis.ows10.ExceptionReportType)) {
+//                return new IOException("Unrecognized server error");
+//            }
+//        } catch (Exception e) {
+//            return new WFSException("Exception parsing server exception report", e);
+//        }
+//        net.opengis.ows10.ExceptionReportType report = (ExceptionReportType) parsed;
+//        List<ExceptionType> exceptions = report.getException();
+//
+//        EObject originatingRequest = response.getOriginatingRequest();
+//        StringBuilder msg = new StringBuilder("WFS returned an exception.");
+//        msg.append(" Target URL: " + response.getTargetUrl());
+//        if (originatingRequest != null) {
+//            try {
+//                ByteArrayOutputStream out = new ByteArrayOutputStream();
+//                StrictWFS_1_1_Strategy.encode(originatingRequest, configuration, out,
+//                        Charset.forName("UTF-8"));
+//                String requestStr = out.toString("UTF-8");
+//
+//                msg.append(". Originating request is: \n").append(requestStr).append("\n");
+//            } catch (Exception e) {
+//                LOGGER.log(Level.FINE, "Error encoding request for exception report", e);
+//            }
+//        }
+//        WFSException result = new WFSException(msg.toString());
+//        for (ExceptionType ex : exceptions) {
+//            result.addExceptionReport(String.valueOf(ex.getExceptionText()));
+//        }
+//        return result;
     }
 }

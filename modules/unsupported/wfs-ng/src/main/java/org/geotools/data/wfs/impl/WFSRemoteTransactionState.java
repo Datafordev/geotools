@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -105,9 +106,12 @@ class WFSRemoteTransactionState implements State {
         WFSClient wfs = dataStore.getWfsClient();
         TransactionRequest transactionRequest = wfs.createTransaction();
 
+        List<MutableFeatureId> requestedInsertFids = new ArrayList<MutableFeatureId>();
+
         for (Name typeName : diffs.keySet()) {
             WFSDiff diff = diffs.get(typeName);
-            applyDiff(typeName, diff, transactionRequest);
+            List<MutableFeatureId> addedFids = applyDiff(typeName, diff, transactionRequest);
+            requestedInsertFids.addAll(addedFids);
         }
 
         TransactionResponse transactionResponse = wfs.issueTransaction(transactionRequest);
@@ -117,11 +121,23 @@ class WFSRemoteTransactionState implements State {
         info(getClass().getSimpleName(), "::commit(): Updated: ", updatedCount, ", Deleted: ",
                 deleteCount, ", Inserted: ", insertedFids);
 
-        // TODO: update generated fids? issue events?
+        if (requestedInsertFids.size() != insertedFids.size()) {
+            throw new IllegalStateException("Asked to add " + requestedInsertFids.size()
+                    + " Features but got " + insertedFids.size() + " insert results");
+        }
+
+        for (int i = 0; i < requestedInsertFids.size(); i++) {
+            MutableFeatureId local = requestedInsertFids.get(i);
+            FeatureId inserted = insertedFids.get(i);
+            local.setID(inserted.getID());
+            local.setFeatureVersion(inserted.getFeatureVersion());
+        }
     }
 
-    private void applyDiff(final Name localTypeName, WFSDiff diff,
+    private List<MutableFeatureId> applyDiff(final Name localTypeName, WFSDiff diff,
             TransactionRequest transactionRequest) throws IOException {
+
+        List<MutableFeatureId> addedFeatureIds = new LinkedList<MutableFeatureId>();
 
         final QName remoteTypeName = dataStore.getRemoteTypeName(localTypeName);
 
@@ -142,6 +158,9 @@ class WFSRemoteTransactionState implements State {
                     continue;
                 }
                 SimpleFeature localFeature = added.get(fid);
+
+                MutableFeatureId addedFid = (MutableFeatureId) localFeature.getIdentifier();
+                addedFeatureIds.add(addedFid);
 
                 SimpleFeature remoteFeature = SimpleFeatureBuilder.retype(localFeature, builder);
 
@@ -185,6 +204,8 @@ class WFSRemoteTransactionState implements State {
             }
             applySingleUpdate(remoteTypeName, feature, transactionRequest);
         }
+
+        return addedFeatureIds;
     }
 
     private void applySingleUpdate(QName remoteTypeName, SimpleFeature feature,

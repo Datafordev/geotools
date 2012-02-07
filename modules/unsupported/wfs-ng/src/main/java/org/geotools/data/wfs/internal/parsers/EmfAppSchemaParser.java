@@ -118,7 +118,6 @@ public class EmfAppSchemaParser {
      * @return
      * @throws IOException
      */
-    @SuppressWarnings("unchecked")
     public static SimpleFeatureType parseSimpleFeatureType(final Configuration wfsConfiguration,
             final QName featureName, final URL schemaLocation, final CoordinateReferenceSystem crs)
             throws IOException {

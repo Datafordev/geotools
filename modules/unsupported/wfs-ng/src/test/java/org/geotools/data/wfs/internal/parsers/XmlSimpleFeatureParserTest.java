@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.parsers;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -24,7 +24,6 @@ import java.net.URL;
 import javax.xml.namespace.QName;
 
 import org.geotools.data.wfs.internal.GetFeatureParser;
-import org.geotools.data.wfs.internal.parsers.XmlSimpleFeatureParser;
 import org.opengis.feature.simple.SimpleFeatureType;
 
 /**
@@ -35,7 +34,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 public class XmlSimpleFeatureParserTest extends AbstractGetFeatureParserTest {
 
     @Override
-    protected GetFeatureParser getParser(final QName featureName, final String schemaLocation,
+    protected GetFeatureParser getParser(final QName featureName, final URL schemaLocation,
             final SimpleFeatureType featureType, final URL getFeaturesRequest) throws IOException {
 
         InputStream inputStream = new BufferedInputStream(getFeaturesRequest.openStream());
@@ -43,20 +42,4 @@ public class XmlSimpleFeatureParserTest extends AbstractGetFeatureParserTest {
         return parser;
     }
 
-    /**
-     * This is to be run as a normal java application in order to reproduce a GetFeature request to
-     * the nsdi server and thus being able to assess/profile the OutOfMemory errors I'm getting in
-     * uDig
-     * 
-     * @param argv
-     */
-    public static void main(String argv[]) {
-        XmlSimpleFeatureParserTest test;
-        test = new XmlSimpleFeatureParserTest();
-        try {
-            test.runGetFeaturesParsing();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

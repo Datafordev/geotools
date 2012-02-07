@@ -16,8 +16,9 @@
  */
 package org.geotools.data.wfs.impl;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -45,12 +46,12 @@ public class WFSTestData {
         /**
          * Location of a test data capabilities file
          */
-        public final String CAPABILITIES;
+        public final URL CAPABILITIES;
 
         /**
          * Location of a test DescribeFeatureType response for the given feature type
          */
-        public final String SCHEMA;
+        public final URL SCHEMA;
 
         /**
          * The type name, including namespace
@@ -70,7 +71,7 @@ public class WFSTestData {
         /**
          * Location of a sample GetFeature response for this feature type
          */
-        public final String DATA;
+        public final URL DATA;
 
         /**
          * @param folder
@@ -85,59 +86,48 @@ public class WFSTestData {
          */
         TestDataType(final String folder, final QName qName, final String featureTypeName,
                 final String crs) {
-            
+
             TYPENAME = qName;
             FEATURETYPENAME = featureTypeName;
             CRS = crs;
-            CAPABILITIES = folder + "/GetCapabilities_1_1_0.xml";
-            SCHEMA = folder + "/DescribeFeatureType_" + qName.getLocalPart() + ".xsd";
-            DATA = folder + "/GetFeature_" + qName.getLocalPart() + ".xml";
-
-            checkResource(CAPABILITIES);
-            checkResource(SCHEMA);
-            checkResource(DATA);
-        }
-
-        private void checkResource(String resource) {
-            try {
-                TestData.url(this, resource);
-            } catch (FileNotFoundException e) {
-                throw new IllegalArgumentException(e);
-            }
+            CAPABILITIES = url(folder + "/GetCapabilities.xml");
+            SCHEMA = url(folder + "/DescribeFeatureType_" + qName.getLocalPart() + ".xsd");
+            DATA = url(folder + "/GetFeature_" + qName.getLocalPart() + ".xml");
         }
 
     }
 
-    public static final TestDataType GEOS_ARCHSITES = new TestDataType("geoserver", new QName(
-            "http://www.openplans.org/spearfish", "archsites"), "sf:archsites", "EPSG:26713");
+    public static final TestDataType GEOS_ARCHSITES = new TestDataType("GeoServer_2.0/1.1.0",
+            new QName("http://www.openplans.org/spearfish", "archsites"), "sf:archsites",
+            "EPSG:26713");
 
-    public static final TestDataType GEOS_POI = new TestDataType("geoserver", new QName(
+    public static final TestDataType GEOS_POI = new TestDataType("GeoServer_2.0/1.1.0", new QName(
             "http://www.census.gov", "poi"), "tiger:poi", "EPSG:4326");
 
-    public static final TestDataType GEOS_ROADS = new TestDataType("geoserver", new QName(
-            "http://www.openplans.org/spearfish", "roads"), "sf:roads", "EPSG:26713");
+    public static final TestDataType GEOS_ROADS = new TestDataType("GeoServer_2.0/1.1.0",
+            new QName("http://www.openplans.org/spearfish", "roads"), "sf:roads", "EPSG:26713");
 
-    public static final TestDataType GEOS_STATES = new TestDataType("geoserver", new QName(
-            "http://www.openplans.org/topp", "states"), "topp:states", "EPSG:4326");
+    public static final TestDataType GEOS_STATES = new TestDataType("GeoServer_2.0/1.1.0",
+            new QName("http://www.openplans.org/topp", "states"), "topp:states", "EPSG:4326");
 
-    public static final TestDataType GEOS_TASMANIA_CITIES = new TestDataType("geoserver",
+    public static final TestDataType GEOS_TASMANIA_CITIES = new TestDataType("GeoServer_2.0/1.1.0",
             new QName("http://www.openplans.org/topp", "tasmania_cities"), "topp:tasmania_cities",
             "EPSG:4326");
 
-    public static final TestDataType GEOS_TIGER_ROADS = new TestDataType("geoserver", new QName(
-            "http://www.census.gov", "tiger_roads"), "tiger:tiger_roads", "EPSG:4326");
+    public static final TestDataType GEOS_TIGER_ROADS = new TestDataType("GeoServer_2.0/1.1.0",
+            new QName("http://www.census.gov", "tiger_roads"), "tiger:tiger_roads", "EPSG:4326");
 
-    public static final TestDataType CUBEWERX_GOVUNITCE = new TestDataType("CubeWerx_nsdi",
+    public static final TestDataType CUBEWERX_GOVUNITCE = new TestDataType("CubeWerx_nsdi/1.1.0",
             new QName("http://www.fgdc.gov/framework/073004/gubs", "GovernmentalUnitCE"),
             "gubs:GovernmentalUnitCE", "EPSG:4269");
 
-    public static final TestDataType CUBEWERX_ROADSEG = new TestDataType("CubeWerx_nsdi",
+    public static final TestDataType CUBEWERX_ROADSEG = new TestDataType("CubeWerx_nsdi/1.1.0",
             new QName("http://www.fgdc.gov/framework/073004/transportation", "RoadSeg"),
             "trans:RoadSeg", "EPSG:4269");
 
-    public static final TestDataType IONIC_STATISTICAL_UNIT = new TestDataType("Ionic", new QName(
-            "http://www.fgdc.gov/fgdc/gubs", "StatisticalUnit"), "gubs:StatisticalUnit",
-            "EPSG:4269");
+    public static final TestDataType IONIC_STATISTICAL_UNIT = new TestDataType(
+            "Ionic_unknown/1.1.0", new QName("http://www.fgdc.gov/fgdc/gubs", "StatisticalUnit"),
+            "gubs:StatisticalUnit", "EPSG:4269");
 
     /**
      * Creates the test {@link #wfs} with a default connection factory that parses the capabilities
@@ -215,6 +205,16 @@ public class WFSTestData {
             this.postCallbackContentLength = out.size();
             return mockResponse;
         }
+    }
+
+    public static URL url(String resource) {
+
+        String absoluteResouce = "/org/geotools/data/wfs/impl/test-data/" + resource;
+
+        URL url = WFSTestData.class.getResource(absoluteResouce);
+
+        assertNotNull("resource not found: " + absoluteResouce, url);
+        return url;
     }
 
 }

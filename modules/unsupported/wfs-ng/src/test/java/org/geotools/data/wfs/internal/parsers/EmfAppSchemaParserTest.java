@@ -14,8 +14,9 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.parsers;
 
+import static org.geotools.data.wfs.impl.WFSTestData.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -58,9 +59,10 @@ public class EmfAppSchemaParserTest {
      */
     @Test
     public void testParseGeoServerSimpleFeatureType() throws IOException {
-        final QName featureTypeName = WFSTestData.GEOS_STATES.TYPENAME;
-        final String schemaFileName = WFSTestData.GEOS_STATES.SCHEMA;
-        final URL schemaLocation = TestData.getResource(this, schemaFileName);
+        final QName featureTypeName = new QName("http://www.openplans.org/topp", "states");
+
+        final URL schemaLocation = url("GeoServer_2.0/1.1.0/DescribeFeatureType_states.xsd");
+
         final int expectedAttributeCount = 23;
 
         SimpleFeatureType ftype = testParseDescribeSimpleFeatureType(featureTypeName,
@@ -72,9 +74,12 @@ public class EmfAppSchemaParserTest {
 
     @Test
     public void testParseCubeWerx_GML_Level1_FeatureType() throws IOException {
-        final QName featureTypeName = WFSTestData.CUBEWERX_GOVUNITCE.TYPENAME;
-        final String schemaFileName = WFSTestData.CUBEWERX_GOVUNITCE.SCHEMA;
-        final URL schemaLocation = TestData.getResource(this, schemaFileName);
+        final QName featureTypeName = new QName("http://www.fgdc.gov/framework/073004/gubs",
+                "GovernmentalUnitCE");
+        new WFSTestData();
+        final URL schemaLocation = WFSTestData
+                .url("CubeWerx_nsdi/1.1.0/DescribeFeatureType_GovernmentalUnitCE.xsd");
+
         // Expect only the subset of simple attributes:
         // {typeAbbreviation:String,instanceName:String,officialDescription:String,
         // instanceCode:String,codingSystemReference:String,geometry:"gml:SurfacePropertyType",

@@ -1,23 +1,28 @@
 package org.geotools.data.wfs.impl;
 
-import static org.junit.Assert.*;
-import static org.geotools.data.DataUtilities.*;
-import static org.mockito.Mockito.*;
+import static org.geotools.data.DataUtilities.createType;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.DataUtilities;
+import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.store.ContentFeatureSource;
 import org.geotools.data.wfs.internal.WFSClient;
-import org.geotools.test.TestData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.opengis.filter.identity.FeatureId;
 
 public class WFSContentFeatureStoreTest {
 
@@ -55,7 +60,7 @@ public class WFSContentFeatureStoreTest {
         when(wfs.getRemoteTypeNames()).thenReturn(new HashSet<QName>(Arrays.asList(TYPE1, TYPE2)));
         when(wfs.supportsTransaction(TYPE1)).thenReturn(Boolean.TRUE);
         when(wfs.supportsTransaction(TYPE2)).thenReturn(Boolean.FALSE);
-        
+
         dataStore = spy(new WFSContentDataStore(wfs));
         doReturn(featureType1).when(dataStore).getRemoteFeatureType(TYPE1);
         doReturn(featureType2).when(dataStore).getRemoteFeatureType(TYPE2);
@@ -68,14 +73,15 @@ public class WFSContentFeatureStoreTest {
     }
 
     @Test
-    public void testAddFeatures() throws Exception {
+    public void testAddFeaturesAutoCommit() throws Exception {
         ContentFeatureSource source;
 
         source = dataStore.getFeatureSource(simpleTypeName1);
         assertNotNull(source);
         assertTrue(source instanceof WFSContentFeatureStore);
 
-        TestData
-        WFSContentFeatureStore store1 = (WFSContentFeatureStore) source;
+        WFSContentFeatureStore store = (WFSContentFeatureStore) source;
+        SimpleFeatureCollection collection = null;
+        List<FeatureId> fids = store.addFeatures(collection);
     }
 }

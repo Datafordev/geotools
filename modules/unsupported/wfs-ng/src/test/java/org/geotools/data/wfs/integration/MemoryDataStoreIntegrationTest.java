@@ -8,9 +8,9 @@ import org.geotools.referencing.CRS;
 import org.junit.Test;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public class MadTest extends AbstractDataStoreTest {
+public class MemoryDataStoreIntegrationTest extends AbstractDataStoreTest {
 
-    public MadTest() {
+    public MemoryDataStoreIntegrationTest() {
         super("MadWFSDataStoreTest");
     }
 

@@ -18,6 +18,7 @@ package org.geotools.data.wfs.internal.v2_0;
 
 import static org.geotools.data.wfs.internal.HttpMethod.GET;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,10 +35,15 @@ import net.opengis.wfs20.FeatureTypeListType;
 import net.opengis.wfs20.FeatureTypeType;
 import net.opengis.wfs20.WFSCapabilitiesType;
 
+import org.eclipse.emf.ecore.EObject;
 import org.geotools.data.wfs.impl.WFSServiceInfo;
 import org.geotools.data.wfs.internal.AbstractWFSStrategy;
+import org.geotools.data.wfs.internal.DescribeFeatureTypeRequest;
 import org.geotools.data.wfs.internal.FeatureTypeInfo;
+import org.geotools.data.wfs.internal.GetFeatureRequest;
 import org.geotools.data.wfs.internal.GetFeatureRequest.ResultType;
+import org.geotools.data.wfs.internal.HttpMethod;
+import org.geotools.data.wfs.internal.TransactionRequest;
 import org.geotools.data.wfs.internal.Versions;
 import org.geotools.data.wfs.internal.WFSGetCapabilities;
 import org.geotools.data.wfs.internal.WFSOperationType;
@@ -130,27 +136,27 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
 
     @Override
     public String getDefaultOutputFormat(WFSOperationType operation) {
-        switch (operation) {
-        case GET_FEATURE:
-            Set<String> serverFormats = getSupportedGetFeatureOutputFormats();
-            String outputFormat = findExact(PREFERRED_FORMATS, serverFormats);
-            if (outputFormat == null) {
-                outputFormat = findFuzzy(PREFERRED_FORMATS, serverFormats);
-                if (outputFormat != null) {
-                    // TODO: log
-                }
-            }
-            if (outputFormat == null) {
-                throw new IllegalArgumentException(
-                        "Server does not support any of the client's supported formats: "
-                                + serverFormats);
-            }
-            return outputFormat;
-
-        default:
+//        switch (operation) {
+//        case GET_FEATURE:
+//            Set<String> serverFormats = getSupportedGetFeatureOutputFormats();
+//            String outputFormat = findExact(PREFERRED_FORMATS, serverFormats);
+//            if (outputFormat == null) {
+//                outputFormat = findFuzzy(PREFERRED_FORMATS, serverFormats);
+//                if (outputFormat != null) {
+//                    // TODO: log
+//                }
+//            }
+//            if (outputFormat == null) {
+//                throw new IllegalArgumentException(
+//                        "Server does not support any of the client's supported formats: "
+//                                + serverFormats);
+//            }
+//            return outputFormat;
+//
+//        default:
             throw new UnsupportedOperationException(
-                    "Not implemented for other than GET_FEATURE yet");
-        }
+                    "Not implemented yet");
+//        }
     }
 
     private String findExact(List<String> preferredFormats, Set<String> serverFormats) {
@@ -203,5 +209,59 @@ public class StrictWFS_2_0_Strategy extends AbstractWFSStrategy {
         FilterCapabilitiesType filterCapabilities = capabilities.getFilterCapabilities();
         // TODO
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected EObject createDescribeFeatureTypeRequestPost(DescribeFeatureTypeRequest request) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected EObject createGetFeatureRequestPost(GetFeatureRequest query) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected EObject createTransactionRequest(TransactionRequest request) throws IOException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected String getOperationURI(WFSOperationType operation, HttpMethod method) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Set<String> getServerSupportedOutputFormats(WFSOperationType operation) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Set<String> getServerSupportedOutputFormats(QName typeName, WFSOperationType operation) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public List<String> getClientSupportedOutputFormats(WFSOperationType operation) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean supportsTransaction(QName typeName) {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Set<String> getSupportedCRSIdentifiers(QName typeName) {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

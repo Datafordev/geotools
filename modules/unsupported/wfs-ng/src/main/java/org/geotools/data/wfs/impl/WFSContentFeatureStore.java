@@ -4,11 +4,9 @@ import java.io.IOException;
 
 import javax.xml.namespace.QName;
 
-import org.geotools.data.Diff;
 import org.geotools.data.FeatureEvent;
 import org.geotools.data.FeatureEvent.Type;
 import org.geotools.data.FeatureReader;
-import org.geotools.data.FeatureWriter;
 import org.geotools.data.Query;
 import org.geotools.data.QueryCapabilities;
 import org.geotools.data.ResourceInfo;
@@ -17,7 +15,6 @@ import org.geotools.data.Transaction.State;
 import org.geotools.data.store.ContentEntry;
 import org.geotools.data.store.ContentFeatureStore;
 import org.geotools.data.store.ContentState;
-import org.geotools.data.store.DiffContentFeatureWriter;
 import org.geotools.data.wfs.internal.WFSClient;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.opengis.feature.FeatureVisitor;
@@ -157,29 +154,25 @@ class WFSContentFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    protected FeatureWriter<SimpleFeatureType, SimpleFeature> getWriterInternal(Query query,
-            final int flags) throws IOException {
+    protected WFSFeatureWriter getWriterInternal(Query query, final int flags) throws IOException {
 
         query = joinQuery(query);
         query = resolvePropertyNames(query);
 
-        final FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
-
-        FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
-
-        final Transaction transaction = getTransaction();
-        if (Transaction.AUTO_COMMIT.equals(transaction)) {
-
-            writer = new WFSAutoCommitFeatureWriter(this, reader);
-
+        final boolean autoCommit;
+        final WFSDiff diff;
+        if (Transaction.AUTO_COMMIT.equals(getTransaction())) {
+            diff = new WFSDiff();
+            autoCommit = true;
         } else {
+            autoCommit = false;
             State state = transaction.getState(getEntry());
             WFSLocalTransactionState wfsState = (WFSLocalTransactionState) state;
-
-            Diff diff = wfsState.getDiff();
-
-            writer = new DiffContentFeatureWriter(this, diff, reader);
+            diff = wfsState.getDiff();
         }
+
+        final FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
+        final WFSFeatureWriter writer = new WFSFeatureWriter(this, diff, reader, autoCommit);
 
         return writer;
     }

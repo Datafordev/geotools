@@ -14,7 +14,7 @@
  *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *    Lesser General Public License for more details.
  */
-package org.geotools.data.wfs.internal.v1_1;
+package org.geotools.data.wfs.internal.parsers;
 
 import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_GOVUNITCE;
 import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_ROADSEG;
@@ -35,9 +35,7 @@ import javax.xml.namespace.QName;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.wfs.internal.GetFeatureParser;
-import org.geotools.data.wfs.internal.parsers.EmfAppSchemaParser;
 import org.geotools.referencing.CRS;
-import org.geotools.test.TestData;
 import org.geotools.wfs.v1_1.WFSConfiguration;
 import org.geotools.xml.Configuration;
 import org.junit.Test;
@@ -127,18 +125,18 @@ public abstract class AbstractGetFeatureParserTest {
      * @param featureName
      *            the name of the Features produced for the target FeatureType (i.e.
      *            {@code topp:states} instead of {@code topp:states_Type})
-     * @param schemaName
-     *            the location of the schema file under {@code test-data/}
+     * @param schemaLocation2
+     *            the location of the schema file under
+     *            {@code org/geotools/data/wfs/impl/test-data/}
      * @param epsgCrsId
      *            the EPSG identifier for the feature type CRS (eg. {@code "EPSG:4326"})
      * @param properties
      *            the property names to include from the original schema in the one to be returned
      * @return a subset of the original featuretype containing only the required {@code properties}
      */
-    private SimpleFeatureType getTypeView(final QName featureName, final String schemaName,
+    private SimpleFeatureType getTypeView(final QName featureName, final URL schemaLocation,
             final String epsgCrsId, final String[] properties) throws Exception {
 
-        URL schemaLocation = TestData.getResource(this, schemaName);
         CoordinateReferenceSystem crs = CRS.decode(epsgCrsId);
 
         SimpleFeatureType originalType = EmfAppSchemaParser.parseSimpleFeatureType(
@@ -177,6 +175,7 @@ public abstract class AbstractGetFeatureParserTest {
         try {
             for (int i = 0; i < expectedFeatureCount; i++) {
                 feature = parser.parse();
+                assertNotNull(feature);
                 featureCount++;
                 assertor.visit(feature);
             }
@@ -203,7 +202,7 @@ public abstract class AbstractGetFeatureParserTest {
      * @return
      * @throws IOException
      */
-    protected abstract GetFeatureParser getParser(QName featureName, String schemaLocation,
+    protected abstract GetFeatureParser getParser(QName featureName, URL schemaLocation,
             SimpleFeatureType featureType, URL getFeaturesRequest) throws IOException;
 
     /**
@@ -217,7 +216,8 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseGeoServer_ArchSites_Point() throws Exception {
         final QName featureName = GEOS_ARCHSITES.TYPENAME;
         final int expectedCount = 3;
-        final String schemaLocation = GEOS_ARCHSITES.SCHEMA;
+        final URL schemaLocation = GEOS_ARCHSITES.SCHEMA;
+        final URL data = GEOS_ARCHSITES.DATA;
 
         final String[] properties = { "cat", "str1", "the_geom" };
         final SimpleFeatureType featureType;
@@ -225,8 +225,7 @@ public abstract class AbstractGetFeatureParserTest {
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
-        URL url = TestData.getResource(this, GEOS_ARCHSITES.DATA);
-        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, data);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -245,7 +244,7 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseGeoServer_States_polygon_with_hole() throws Exception {
         final QName featureName = GEOS_STATES.TYPENAME;
         final int expectedCount = 2;
-        final String schemaLocation = GEOS_STATES.SCHEMA;
+        final URL schemaLocation = GEOS_STATES.SCHEMA;
 
         final String[] properties = { "the_geom", "STATE_NAME", "STATE_FIPS", "SUB_REGION",
                 "SAMP_POP" };
@@ -283,8 +282,8 @@ public abstract class AbstractGetFeatureParserTest {
             }
         };
 
-        URL url = TestData.getResource(this, GEOS_STATES.DATA);
-        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                GEOS_STATES.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -296,7 +295,7 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseGeoServer_roads_MultiLineString() throws Exception {
         final QName featureName = GEOS_ROADS.TYPENAME;
         final int expectedCount = 1;
-        final String schemaLocation = GEOS_ROADS.SCHEMA;
+        final URL schemaLocation = GEOS_ROADS.SCHEMA;
 
         final String[] properties = { "the_geom", "label" };
         final SimpleFeatureType featureType;
@@ -304,8 +303,8 @@ public abstract class AbstractGetFeatureParserTest {
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
-        URL url = TestData.getResource(this, GEOS_ROADS.DATA);
-        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                GEOS_ROADS.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -317,7 +316,7 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseGeoServer_tasmania_cities_MultiPoint() throws Exception {
         final QName featureName = GEOS_TASMANIA_CITIES.TYPENAME;
         final int expectedCount = 1;
-        final String schemaLocation = GEOS_TASMANIA_CITIES.SCHEMA;
+        final URL schemaLocation = GEOS_TASMANIA_CITIES.SCHEMA;
 
         final String[] properties = { "the_geom", "CNTRY_NAME", "POP_CLASS" };
         final SimpleFeatureType featureType;
@@ -325,8 +324,8 @@ public abstract class AbstractGetFeatureParserTest {
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
-        URL url = TestData.getResource(this, GEOS_TASMANIA_CITIES.DATA);
-        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                GEOS_TASMANIA_CITIES.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -341,19 +340,21 @@ public abstract class AbstractGetFeatureParserTest {
      */
     @Test
     public void testParseCubeWerx_GovernmentalUnitCE() throws Exception {
-        final QName featureName = CUBEWERX_GOVUNITCE.TYPENAME;
-        final String schemaLocation = CUBEWERX_GOVUNITCE.SCHEMA;
+        QName featureName = CUBEWERX_GOVUNITCE.TYPENAME;
+        URL schemaLocation = CUBEWERX_GOVUNITCE.SCHEMA;
+        String srsName = CUBEWERX_GOVUNITCE.CRS;
+
         final int expectedCount = 3;
 
         final String[] properties = { "geometry", "instanceName", "instanceCode" };
 
-        final SimpleFeatureType featureType = getTypeView(featureName, schemaLocation,
-                CUBEWERX_GOVUNITCE.CRS, properties);
+        final SimpleFeatureType featureType = getTypeView(featureName, schemaLocation, srsName,
+                properties);
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
-        URL url = TestData.getResource(this, CUBEWERX_GOVUNITCE.DATA);
-        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                CUBEWERX_GOVUNITCE.DATA);
         int nof = parser.getNumberOfFeatures();
         assertEquals(-1, nof);
         testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
@@ -363,12 +364,12 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseCubeWerx_RoadSeg() throws Exception {
         final String[] properties = { "lastUpdateDate", "geometry", "status", "isAnchorSection" };
         final QName featureName = CUBEWERX_ROADSEG.TYPENAME;
-        final String schemaLocation = CUBEWERX_ROADSEG.SCHEMA;
+        final URL schemaLocation = CUBEWERX_ROADSEG.SCHEMA;
         final SimpleFeatureType featureType = getTypeView(featureName, schemaLocation,
                 CUBEWERX_ROADSEG.CRS, properties);
 
-        URL url = TestData.getResource(this, CUBEWERX_ROADSEG.DATA);
-        final GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        final GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                CUBEWERX_ROADSEG.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(-1, nof);
@@ -381,12 +382,12 @@ public abstract class AbstractGetFeatureParserTest {
     public void testParseIonic_StatisticalUnit() throws Exception {
         final String[] properties = { "unitId", "typeAbbreviation", "instanceName", "geometry" };
         final QName featureName = IONIC_STATISTICAL_UNIT.TYPENAME;
-        final String schemaLocation = IONIC_STATISTICAL_UNIT.SCHEMA;
+        final URL schemaLocation = IONIC_STATISTICAL_UNIT.SCHEMA;
         final SimpleFeatureType featureType = getTypeView(featureName, schemaLocation,
                 CUBEWERX_ROADSEG.CRS, properties);
 
-        URL url = TestData.getResource(this, IONIC_STATISTICAL_UNIT.DATA);
-        final GetFeatureParser parser = getParser(featureName, schemaLocation, featureType, url);
+        final GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                IONIC_STATISTICAL_UNIT.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(-1, nof);
@@ -395,51 +396,4 @@ public abstract class AbstractGetFeatureParserTest {
         testParseGetFeatures(featureName, featureType, parser, assertor, 2);
     }
 
-    protected void runGetFeaturesParsing() throws Exception {
-        GetFeatureParser reader;
-        {
-            final String[] properties = { "geometry", "instanceName", "instanceCode",
-                    "governmentalUnitType" };
-
-            final URL getFeatures = new URL(
-                    "http://frameworkwfs.usgs.gov/framework/wfs/wfs.cgi?DATASTORE=Framework&DATASTORE=Framework&"
-                            + "SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=gubs:GovernmentalUnitCE&"
-                            + "PROPERTYNAME=geometry,instanceName,instanceCode,governmentalUnitType&maxFeatures=100");
-
-            // create a subtype with only the required properties
-            final SimpleFeatureType featureType = getTypeView(CUBEWERX_GOVUNITCE.TYPENAME,
-                    CUBEWERX_GOVUNITCE.SCHEMA, CUBEWERX_GOVUNITCE.CRS, properties);
-
-            System.out.println("Getting parser for " + getFeatures.toExternalForm());
-            reader = getParser(CUBEWERX_GOVUNITCE.TYPENAME, CUBEWERX_GOVUNITCE.SCHEMA, featureType,
-                    getFeatures);
-
-            System.out.println("Got " + reader.getClass().getSimpleName());
-        }
-
-        int count = 0;
-        SimpleFeature feature;
-        Object defaultGeometry;
-        System.out.println("Parsing features...");
-
-        Runtime runtime = Runtime.getRuntime();
-        long initialMem = runtime.totalMemory() - runtime.freeMemory();
-        long startTime = System.currentTimeMillis();
-
-        while ((feature = reader.parse()) != null) {
-            defaultGeometry = feature.getDefaultGeometry();
-            count++;
-            System.out.print('.');
-            if (count % 100 == 0) {
-                System.out.print('\n');
-            }
-        }
-        long endTime = System.currentTimeMillis();
-        long totalTime = endTime - startTime;
-
-        long endMem = runtime.totalMemory() - runtime.freeMemory();
-        long memUsed = (endMem - initialMem) / (1024 * 1024);
-        System.out.println("\nFetched " + count + " features " + " in " + totalTime + "ms. (avg. "
-                + (totalTime / count) + "ms/feature) Mem. used: " + memUsed + "MB.");
-    }
 }
