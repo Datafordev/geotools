@@ -18,10 +18,11 @@ package org.geotools.data.wfs.internal.parsers;
 
 import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_GOVUNITCE;
 import static org.geotools.data.wfs.impl.WFSTestData.CUBEWERX_ROADSEG;
-import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ARCHSITES;
-import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ROADS;
-import static org.geotools.data.wfs.impl.WFSTestData.GEOS_STATES;
-import static org.geotools.data.wfs.impl.WFSTestData.GEOS_TASMANIA_CITIES;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ARCHSITES_11;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_ROADS_11;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_STATES_10;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_STATES_11;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_TASMANIA_CITIES_11;
 import static org.geotools.data.wfs.impl.WFSTestData.IONIC_STATISTICAL_UNIT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -214,14 +215,14 @@ public abstract class AbstractGetFeatureParserTest {
      */
     @Test
     public void testParseGeoServer_ArchSites_Point() throws Exception {
-        final QName featureName = GEOS_ARCHSITES.TYPENAME;
+        final QName featureName = GEOS_ARCHSITES_11.TYPENAME;
         final int expectedCount = 3;
-        final URL schemaLocation = GEOS_ARCHSITES.SCHEMA;
-        final URL data = GEOS_ARCHSITES.DATA;
+        final URL schemaLocation = GEOS_ARCHSITES_11.SCHEMA;
+        final URL data = GEOS_ARCHSITES_11.DATA;
 
         final String[] properties = { "cat", "str1", "the_geom" };
         final SimpleFeatureType featureType;
-        featureType = getTypeView(featureName, schemaLocation, GEOS_ARCHSITES.CRS, properties);
+        featureType = getTypeView(featureName, schemaLocation, GEOS_ARCHSITES_11.CRS, properties);
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
@@ -242,14 +243,14 @@ public abstract class AbstractGetFeatureParserTest {
      */
     @Test
     public void testParseGeoServer_States_polygon_with_hole() throws Exception {
-        final QName featureName = GEOS_STATES.TYPENAME;
+        final QName featureName = GEOS_STATES_11.TYPENAME;
         final int expectedCount = 2;
-        final URL schemaLocation = GEOS_STATES.SCHEMA;
+        final URL schemaLocation = GEOS_STATES_11.SCHEMA;
 
         final String[] properties = { "the_geom", "STATE_NAME", "STATE_FIPS", "SUB_REGION",
                 "SAMP_POP" };
         final SimpleFeatureType featureType;
-        featureType = getTypeView(featureName, schemaLocation, GEOS_STATES.CRS, properties);
+        featureType = getTypeView(featureName, schemaLocation, GEOS_STATES_11.CRS, properties);
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType) {
             @Override
@@ -283,7 +284,7 @@ public abstract class AbstractGetFeatureParserTest {
         };
 
         GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
-                GEOS_STATES.DATA);
+                GEOS_STATES_11.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -292,19 +293,73 @@ public abstract class AbstractGetFeatureParserTest {
     }
 
     @Test
+    public void testParseGeoServer_States_100() throws Exception {
+        final QName featureName = GEOS_STATES_10.TYPENAME;
+        final int expectedCount = 3;
+        final URL schemaLocation = GEOS_STATES_10.SCHEMA;
+
+        final String[] properties = { "the_geom", "STATE_NAME", "STATE_FIPS", "SUB_REGION",
+                "SAMP_POP" };
+        final SimpleFeatureType featureType;
+        featureType = getTypeView(featureName, schemaLocation, GEOS_STATES_11.CRS, properties);
+
+        final FeatureVisitor assertor = new FeatureAssertor(featureType) {
+            @Override
+            public void visit(final Feature feature) {
+                super.visit(feature);
+                final String fid = feature.getIdentifier().getID();
+                final int numPolygons;
+                final int expectedHoles;
+                if ("states.1".equals(fid)) {
+                    numPolygons = 2;
+                    expectedHoles = 1;
+                } else if ("states.2".equals(fid)) {
+                    numPolygons = 1;
+                    expectedHoles = 2;
+                } else if ("states.3".equals(fid)) {
+                    numPolygons = 1;
+                    expectedHoles = 0;
+                } else {
+                    throw new IllegalArgumentException("Expected states.1 or states.2, got " + fid);
+                }
+                GeometryAttribute defaultGeometryProperty = feature.getDefaultGeometryProperty();
+                assertNotNull(defaultGeometryProperty);
+                final Object value = defaultGeometryProperty.getValue();
+                assertNotNull(value);
+                assertTrue("value: " + value, value instanceof MultiPolygon);
+                MultiPolygon mp = (MultiPolygon) value;
+
+                assertEquals(numPolygons, mp.getNumGeometries());
+                for (int i = 0; i < numPolygons; i++) {
+                    Polygon p = (Polygon) mp.getGeometryN(i);
+                    assertEquals(expectedHoles, p.getNumInteriorRing());
+                }
+            }
+        };
+
+        GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
+                GEOS_STATES_10.DATA);
+
+        int nof = parser.getNumberOfFeatures();
+        assertEquals(-1, nof);
+
+        testParseGetFeatures(featureName, featureType, parser, assertor, expectedCount);
+    }
+
+    @Test
     public void testParseGeoServer_roads_MultiLineString() throws Exception {
-        final QName featureName = GEOS_ROADS.TYPENAME;
+        final QName featureName = GEOS_ROADS_11.TYPENAME;
         final int expectedCount = 1;
-        final URL schemaLocation = GEOS_ROADS.SCHEMA;
+        final URL schemaLocation = GEOS_ROADS_11.SCHEMA;
 
         final String[] properties = { "the_geom", "label" };
         final SimpleFeatureType featureType;
-        featureType = getTypeView(featureName, schemaLocation, GEOS_ROADS.CRS, properties);
+        featureType = getTypeView(featureName, schemaLocation, GEOS_ROADS_11.CRS, properties);
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
         GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
-                GEOS_ROADS.DATA);
+                GEOS_ROADS_11.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);
@@ -314,18 +369,19 @@ public abstract class AbstractGetFeatureParserTest {
 
     @Test
     public void testParseGeoServer_tasmania_cities_MultiPoint() throws Exception {
-        final QName featureName = GEOS_TASMANIA_CITIES.TYPENAME;
+        final QName featureName = GEOS_TASMANIA_CITIES_11.TYPENAME;
         final int expectedCount = 1;
-        final URL schemaLocation = GEOS_TASMANIA_CITIES.SCHEMA;
+        final URL schemaLocation = GEOS_TASMANIA_CITIES_11.SCHEMA;
 
         final String[] properties = { "the_geom", "CNTRY_NAME", "POP_CLASS" };
         final SimpleFeatureType featureType;
-        featureType = getTypeView(featureName, schemaLocation, GEOS_TASMANIA_CITIES.CRS, properties);
+        featureType = getTypeView(featureName, schemaLocation, GEOS_TASMANIA_CITIES_11.CRS,
+                properties);
 
         final FeatureVisitor assertor = new FeatureAssertor(featureType);
 
         GetFeatureParser parser = getParser(featureName, schemaLocation, featureType,
-                GEOS_TASMANIA_CITIES.DATA);
+                GEOS_TASMANIA_CITIES_11.DATA);
 
         int nof = parser.getNumberOfFeatures();
         assertEquals(expectedCount, nof);

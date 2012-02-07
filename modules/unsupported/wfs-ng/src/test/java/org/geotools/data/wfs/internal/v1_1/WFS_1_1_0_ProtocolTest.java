@@ -102,7 +102,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
     @Test
     public void testCreateStrict_1_1_0_Strategy() throws IOException {
         try {
-            createTestProtocol(GEOS_STATES.SCHEMA, new StrictWFS_1_1_Strategy());
+            createTestProtocol(GEOS_STATES_11.SCHEMA, new StrictWFS_1_1_Strategy());
             fail("Excpected IOException as a capabilities document was not provided");
         } catch (IOException e) {
             assertTrue(true);
@@ -115,7 +115,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
             assertTrue(true);
         }
 
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertNotNull(strategy);
         assertNotNull(strategy.capabilities);
@@ -129,7 +129,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetServiceVersion() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertSame(Versions.v1_1_0, strategy.getServiceVersion());
     }
@@ -141,7 +141,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetServiceTitle() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertEquals("My GeoServer WFS", strategy.getServiceTitle());
     }
@@ -153,7 +153,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetServiceAbstract() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertEquals("This is a description of your Web Feature Server.", strategy
                 .getServiceAbstract().trim());
@@ -166,7 +166,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetServiceKeywords() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         Set<String> serviceKeywords = strategy.getServiceKeywords();
         assertNotNull(serviceKeywords);
@@ -183,7 +183,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetServiceProviderUri() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertNotNull(strategy.getServiceProviderUri());
         assertEquals("http://www.geoserver.org", strategy.getServiceProviderUri().toString());
@@ -196,7 +196,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetSupportedGetFeatureOutputFormats() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         Set<String> supportedOutputFormats = strategy.getSupportedGetFeatureOutputFormats();
         assertNotNull(supportedOutputFormats);
@@ -219,10 +219,10 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetSupportedOutputFormatsByFeatureType() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         Set<String> archSitesOutputFormats = strategy
-                .getSupportedOutputFormats(GEOS_ARCHSITES.FEATURETYPENAME);
+                .getSupportedOutputFormats(GEOS_ARCHSITES_11.FEATURETYPENAME);
         assertNotNull(archSitesOutputFormats);
         assertEquals(8, archSitesOutputFormats.size());
 
@@ -245,7 +245,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
     public void testGetFeatureTypeNames() throws IOException {
 
         // test against a geoserver capabilities
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         Set<QName> featureTypeNames = strategy.getFeatureTypeNames();
         assertEquals(6, featureTypeNames.size());
@@ -253,12 +253,12 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         for (QName name : featureTypeNames) {
             assertFalse(name.toString(), XMLConstants.DEFAULT_NS_PREFIX.equals(name.getPrefix()));
         }
-        assertTrue(featureTypeNames.contains(GEOS_ARCHSITES.TYPENAME));
-        assertTrue(featureTypeNames.contains(GEOS_POI.TYPENAME));
-        assertTrue(featureTypeNames.contains(GEOS_ROADS.TYPENAME));
-        assertTrue(featureTypeNames.contains(GEOS_STATES.TYPENAME));
-        assertTrue(featureTypeNames.contains(GEOS_TASMANIA_CITIES.TYPENAME));
-        assertTrue(featureTypeNames.contains(GEOS_TIGER_ROADS.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_ARCHSITES_11.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_POI_11.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_ROADS_11.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_STATES_11.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_TASMANIA_CITIES_11.TYPENAME));
+        assertTrue(featureTypeNames.contains(GEOS_TIGER_ROADS_11.TYPENAME));
 
         // test against a cubewerx capabilities
         strategy = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, new StrictWFS_1_1_Strategy());
@@ -280,7 +280,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFeatureTypeNameGeoServer() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
 
         try {
@@ -291,15 +291,15 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         // test against a geoserver capabilities
-        assertEquals(GEOS_ARCHSITES.TYPENAME,
-                strategy.getFeatureTypeName(GEOS_ARCHSITES.FEATURETYPENAME));
-        assertEquals(GEOS_POI.TYPENAME, strategy.getFeatureTypeName(GEOS_POI.FEATURETYPENAME));
-        assertEquals(GEOS_ROADS.TYPENAME, strategy.getFeatureTypeName(GEOS_ROADS.FEATURETYPENAME));
-        assertEquals(GEOS_STATES.TYPENAME, strategy.getFeatureTypeName(GEOS_STATES.FEATURETYPENAME));
-        assertEquals(GEOS_TASMANIA_CITIES.TYPENAME,
-                strategy.getFeatureTypeName(GEOS_TASMANIA_CITIES.FEATURETYPENAME));
-        assertEquals(GEOS_TIGER_ROADS.TYPENAME,
-                strategy.getFeatureTypeName(GEOS_TIGER_ROADS.FEATURETYPENAME));
+        assertEquals(GEOS_ARCHSITES_11.TYPENAME,
+                strategy.getFeatureTypeName(GEOS_ARCHSITES_11.FEATURETYPENAME));
+        assertEquals(GEOS_POI_11.TYPENAME, strategy.getFeatureTypeName(GEOS_POI_11.FEATURETYPENAME));
+        assertEquals(GEOS_ROADS_11.TYPENAME, strategy.getFeatureTypeName(GEOS_ROADS_11.FEATURETYPENAME));
+        assertEquals(GEOS_STATES_11.TYPENAME, strategy.getFeatureTypeName(GEOS_STATES_11.FEATURETYPENAME));
+        assertEquals(GEOS_TASMANIA_CITIES_11.TYPENAME,
+                strategy.getFeatureTypeName(GEOS_TASMANIA_CITIES_11.FEATURETYPENAME));
+        assertEquals(GEOS_TIGER_ROADS_11.TYPENAME,
+                strategy.getFeatureTypeName(GEOS_TIGER_ROADS_11.FEATURETYPENAME));
 
         // test against a cubewerx capabilities
         strategy = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, new StrictWFS_1_1_Strategy());
@@ -318,7 +318,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFilterCapabilities() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         FilterCapabilities filterCapabilities = strategy.getFilterCapabilities();
         assertNotNull(filterCapabilities);
@@ -357,7 +357,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testSupportsOperation() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertTrue(strategy.supportsOperation(DESCRIBE_FEATURETYPE, false));
         // post was deliberately left off on the test capabilities file
@@ -377,7 +377,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetOperationURL() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         URL operationURL = strategy.getOperationURL(DESCRIBE_FEATURETYPE, false);
         assertNotNull(operationURL);
@@ -393,9 +393,9 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFeatureTypeTitle() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
-        assertEquals("archsites_Type", strategy.getFeatureTypeTitle(GEOS_ARCHSITES.FEATURETYPENAME));
+        assertEquals("archsites_Type", strategy.getFeatureTypeTitle(GEOS_ARCHSITES_11.FEATURETYPENAME));
     }
 
     /**
@@ -405,10 +405,10 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFeatureTypeAbstract() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         assertEquals("Generated from sfArchsites",
-                strategy.getFeatureTypeAbstract(GEOS_ARCHSITES.FEATURETYPENAME));
+                strategy.getFeatureTypeAbstract(GEOS_ARCHSITES_11.FEATURETYPENAME));
 
         strategy = createTestProtocol(CUBEWERX_GOVUNITCE.CAPABILITIES, new StrictWFS_1_1_Strategy());
         assertNull(strategy.getFeatureTypeAbstract(CUBEWERX_GOVUNITCE.FEATURETYPENAME));
@@ -428,7 +428,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFeatureTypeWGS84Bounds() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.getFeatureTypeAbstract("nonExistentTypeName");
@@ -438,7 +438,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         ReferencedEnvelope wgs84Bounds = strategy
-                .getFeatureTypeWGS84Bounds(GEOS_ARCHSITES.FEATURETYPENAME);
+                .getFeatureTypeWGS84Bounds(GEOS_ARCHSITES_11.FEATURETYPENAME);
 
         assertNotNull(wgs84Bounds);
         assertSame(DefaultGeographicCRS.WGS84, wgs84Bounds.getCoordinateReferenceSystem());
@@ -458,7 +458,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetDefaultCRS() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.getDefaultCRS("nonExistentTypeName");
@@ -467,8 +467,8 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
             assertTrue(true);
         }
 
-        assertEquals("EPSG:26713", strategy.getDefaultCRS(GEOS_ARCHSITES.FEATURETYPENAME));
-        assertEquals("EPSG:4326", strategy.getDefaultCRS(GEOS_STATES.FEATURETYPENAME));
+        assertEquals("EPSG:26713", strategy.getDefaultCRS(GEOS_ARCHSITES_11.FEATURETYPENAME));
+        assertEquals("EPSG:4326", strategy.getDefaultCRS(GEOS_STATES_11.FEATURETYPENAME));
     }
 
     /**
@@ -478,7 +478,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetSupportedCRSIdentifiers() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.getSupportedCRSIdentifiers("nonExistentTypeName");
@@ -488,7 +488,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         Set<String> supportedCRSs;
-        supportedCRSs = strategy.getSupportedCRSIdentifiers(GEOS_ARCHSITES.FEATURETYPENAME);
+        supportedCRSs = strategy.getSupportedCRSIdentifiers(GEOS_ARCHSITES_11.FEATURETYPENAME);
 
         // capabilities doesn't set other crs's for this feature type than the default one...
         assertNotNull(supportedCRSs);
@@ -511,7 +511,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetFeatureTypeKeywords() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.getFeatureTypeKeywords("nonExistentTypeName");
@@ -521,7 +521,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         Set<String> keywords;
-        keywords = strategy.getFeatureTypeKeywords(GEOS_ARCHSITES.FEATURETYPENAME);
+        keywords = strategy.getFeatureTypeKeywords(GEOS_ARCHSITES_11.FEATURETYPENAME);
 
         assertNotNull(keywords);
         assertEquals(1, keywords.size());
@@ -536,7 +536,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testGetDescribeFeatureTypeURLGet() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.buildDescribeFeatureTypeParametersForGET("nonExistentTypeName");
@@ -546,7 +546,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         URL url;
-        url = strategy.buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES.FEATURETYPENAME);
+        url = strategy.buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES_11.FEATURETYPENAME);
         assertNotNull(url);
         String externalForm = url.toExternalForm();
         externalForm = URLDecoder.decode(externalForm, "UTF-8");
@@ -568,7 +568,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testDescribeFeatureType_HTTP_GET() throws IOException {
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new StrictWFS_1_1_Strategy());
         try {
             strategy.describeFeatureTypeGET("nonExistentTypeName", "text/xml; subtype=gml/3.1.1");
@@ -581,12 +581,12 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
                 "mock-content");
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
 
-        strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES, mockHttp,
+        strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES, mockHttp,
                 new StrictWFS_1_1_Strategy());
 
         WFSResponse wfsResponse;
 
-        wfsResponse = strategy.describeFeatureTypeGET(GEOS_ARCHSITES.FEATURETYPENAME,
+        wfsResponse = strategy.describeFeatureTypeGET(GEOS_ARCHSITES_11.FEATURETYPENAME,
                 "text/xml; subtype=gml/3.1.1");
 
         URL baseUrl = mockHttp.targetUrl;
@@ -714,7 +714,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
      */
     @Test
     public void testIssueGetFeature_GET() throws IOException {
-        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES.DATA);
+        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES_11.DATA);
 
         final TestHttpResponse httpResponse;
         final String defaultWfs11OutputFormat = "text/xml; subtype=gml/3.1.1";
@@ -722,10 +722,10 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
 
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
 
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES, mockHttp,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES, mockHttp,
                 new GeoServerPre200Strategy());
 
-        Query query = new Query(GEOS_ARCHSITES.FEATURETYPENAME);
+        Query query = new Query(GEOS_ARCHSITES_11.FEATURETYPENAME);
         GetFeatureRequest getFeature = new GetFeatureQueryAdapter(query, defaultWfs11OutputFormat,
                 "EPSG:4326", ResultType.RESULTS);
 
@@ -748,7 +748,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         assertEquals("WFS", kvp.get("SERVICE"));
         assertEquals("1.1.0", kvp.get("VERSION"));
         assertEquals("GetFeature", kvp.get("REQUEST"));
-        assertEquals(GEOS_ARCHSITES.FEATURETYPENAME, kvp.get("TYPENAME"));
+        assertEquals(GEOS_ARCHSITES_11.FEATURETYPENAME, kvp.get("TYPENAME"));
         assertEquals(defaultWfs11OutputFormat, kvp.get("OUTPUTFORMAT"));
         assertNotNull(kvp.get("SRSNAME"));
         assertNull(kvp.get("PROPERTYNAME"));
@@ -760,17 +760,17 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
     @Test
     public void testIssueGetFeature_GET_OptionalParameters() throws Exception {
 
-        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES.DATA);
+        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES_11.DATA);
 
         final TestHttpResponse httpResponse;
         final String defaultWfs11OutputFormat = "text/xml; subtype=gml/3.1.1";
         httpResponse = new TestHttpResponse(defaultWfs11OutputFormat, "UTF-16", responseContent);
 
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
-        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES, mockHttp,
+        StrictWFS_1_1_Strategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES, mockHttp,
                 new StrictWFS_1_1_Strategy());
 
-        Query query = new Query(GEOS_ARCHSITES.FEATURETYPENAME);
+        Query query = new Query(GEOS_ARCHSITES_11.FEATURETYPENAME);
         query.setMaxFeatures(1000);
         query.setPropertyNames(new String[] { "cat", "the_geom" });
         query.setCoordinateSystem(CRS.decode("EPSG:23030"));
@@ -781,10 +781,10 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
 
         WFSResponse response;
 
-        strategy = spy(createTestProtocol(GEOS_ARCHSITES.CAPABILITIES,
+        strategy = spy(createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES,
                 new GeoServerPre200Strategy()));
-        doReturn(TestData.url(this, GEOS_ARCHSITES.SCHEMA)).when(strategy)
-                .buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES.FEATURETYPENAME);
+        doReturn(TestData.url(this, GEOS_ARCHSITES_11.SCHEMA)).when(strategy)
+                .buildDescribeFeatureTypeParametersForGET(GEOS_ARCHSITES_11.FEATURETYPENAME);
         // strategy.setDescribeFeatureTypeURLOverride(TestData.url(this, GEOS_ARCHSITES.SCHEMA));
 
         GetFeatureRequest getFeature = new GetFeatureQueryAdapter(query, defaultWfs11OutputFormat,
@@ -837,17 +837,17 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
     @Test
     public void testIssueGetFeature_POST() throws IOException, ParserConfigurationException,
             SAXException {
-        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES.DATA);
+        final InputStream responseContent = TestData.openStream(this, GEOS_ARCHSITES_11.DATA);
 
         final TestHttpResponse httpResponse;
         final String defaultWfs11OutputFormat = "text/xml; subtype=gml/3.1.1";
         httpResponse = new TestHttpResponse(defaultWfs11OutputFormat, "UTF-16", responseContent);
 
         TestHTTPClient mockHttp = new TestHTTPClient(httpResponse);
-        WFSStrategy strategy = createTestProtocol(GEOS_ARCHSITES.CAPABILITIES, mockHttp,
+        WFSStrategy strategy = createTestProtocol(GEOS_ARCHSITES_11.CAPABILITIES, mockHttp,
                 new GeoServerPre200Strategy());
 
-        Query query = new Query(GEOS_ARCHSITES.FEATURETYPENAME);
+        Query query = new Query(GEOS_ARCHSITES_11.FEATURETYPENAME);
         GetFeatureRequest getFeature = new GetFeatureQueryAdapter(query, defaultWfs11OutputFormat,
                 "EPSG:4326", ResultType.RESULTS);
 
@@ -875,7 +875,7 @@ public class WFS_1_1_0_ProtocolTest extends WFSTestData {
         }
 
         // was the featuretype declaration included?
-        String expectedNsDecl = "xmlns:sf=\"" + GEOS_ARCHSITES.TYPENAME.getNamespaceURI() + "\"";
+        String expectedNsDecl = "xmlns:sf=\"" + GEOS_ARCHSITES_11.TYPENAME.getNamespaceURI() + "\"";
         assertTrue(issuedRequest, issuedRequest.contains(expectedNsDecl));
         Element root = dom.getDocumentElement();
         assertEquals(WFS.GetFeature.getLocalPart(), root.getLocalName());

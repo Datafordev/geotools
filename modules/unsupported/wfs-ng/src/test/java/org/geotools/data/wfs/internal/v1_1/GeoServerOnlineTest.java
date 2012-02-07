@@ -17,7 +17,7 @@
  */
 package org.geotools.data.wfs.internal.v1_1;
 
-import static org.geotools.data.wfs.impl.WFSTestData.GEOS_STATES;
+import static org.geotools.data.wfs.impl.WFSTestData.GEOS_STATES_11;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -52,7 +52,7 @@ public class GeoServerOnlineTest extends AbstractWfsDataStoreOnlineTest {
     public static final String SERVER_URL = "http://localhost:8080/geoserver/wfs?service=WFS&request=GetCapabilities&version=1.1.0"; //$NON-NLS-1$
 
     public GeoServerOnlineTest() {
-        super(SERVER_URL, GEOS_STATES, "the_geom", MultiPolygon.class, 49, ff.id(Collections
+        super(SERVER_URL, GEOS_STATES_11, "the_geom", MultiPolygon.class, 49, ff.id(Collections
                 .singleton(ff.featureId("states.1"))));
     }
 
