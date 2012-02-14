@@ -20,6 +20,7 @@ import org.geotools.ows.ServiceException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class WFSClientTest {
@@ -90,6 +91,7 @@ public class WFSClientTest {
     }
 
     @Test
+    @Ignore
     public void testInit_2_0() throws Exception {
         testInit("GeoServer_2.2.x/2.0.0/GetCapabilities.xml", "2.0.0");
         testInit("Degree_3.0/2.0.0/GetCapabilities.xml", "2.0.0");

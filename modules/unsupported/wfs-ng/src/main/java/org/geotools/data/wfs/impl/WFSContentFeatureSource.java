@@ -7,7 +7,6 @@ import javax.xml.namespace.QName;
 
 import org.geotools.data.DataSourceException;
 import org.geotools.data.DataUtilities;
-import org.geotools.data.Diff;
 import org.geotools.data.DiffFeatureReader;
 import org.geotools.data.EmptyFeatureReader;
 import org.geotools.data.FeatureReader;
@@ -232,7 +231,7 @@ class WFSContentFeatureSource extends ContentFeatureSource {
             State state = transaction.getState(entry);
             WFSLocalTransactionState wfsState = (WFSLocalTransactionState) state;
             if (wfsState != null) {
-                Diff diff = wfsState.getDiff();
+                WFSDiff diff = wfsState.getDiff();
                 reader = new DiffFeatureReader<SimpleFeatureType, SimpleFeature>(reader, diff);
             }
         }

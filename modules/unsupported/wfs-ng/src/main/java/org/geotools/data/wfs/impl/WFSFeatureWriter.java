@@ -7,7 +7,6 @@ import org.geotools.data.store.DiffContentFeatureWriter;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.Name;
 
 public class WFSFeatureWriter extends DiffContentFeatureWriter {
 
@@ -15,18 +14,18 @@ public class WFSFeatureWriter extends DiffContentFeatureWriter {
 
     final SimpleFeatureBuilder featureBuilder;
 
-    public WFSFeatureWriter(final WFSContentFeatureStore store, final WFSDiff diff,
+    public WFSFeatureWriter(final WFSContentFeatureStore store,
+            final WFSLocalTransactionState localSate,
             final FeatureReader<SimpleFeatureType, SimpleFeature> reader, final boolean autoCommit) {
 
-        super(store, diff, reader);
+        super(store, localSate.getDiff(), reader);
         featureBuilder = new SimpleFeatureBuilder(getFeatureType(),
                 new MutableIdentifierFeatureFactory());
 
         if (autoCommit) {
             WFSContentDataStore dataStore = (WFSContentDataStore) store.getDataStore();
             autoCommitState = new WFSRemoteTransactionState(dataStore);
-            Name typeName = store.getName();
-            autoCommitState.putDiff(typeName, (WFSDiff) super.diff);
+            autoCommitState.watch(localSate);
         } else {
             autoCommitState = null;
         }

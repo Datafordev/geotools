@@ -42,26 +42,20 @@ class WFSRemoteTransactionState implements State {
 
     private Transaction transaction;
 
-    private Map<Name, WFSDiff> diffs;
+    private Map<Name, WFSContentState> localStates;
 
     public WFSRemoteTransactionState(WFSContentDataStore dataStore) {
         this.dataStore = dataStore;
-        this.diffs = new HashMap<Name, WFSDiff>();
+        this.localStates = new HashMap<Name, WFSContentState>();
     }
 
     public synchronized WFSDiff getDiff(final Name typeName) {
-        WFSDiff diff = diffs.get(typeName);
-        if (diff == null) {
-
-            diff = new WFSDiff();
-            diffs.put(typeName, diff);
-
+        WFSContentState localState = localStates.get(typeName);
+        if (null == localState) {
+            throw new IllegalStateException("Not watching " + typeName);
         }
+        WFSDiff diff = localState.getLocalTransactionState().getDiff();
         return diff;
-    }
-
-    public void putDiff(Name typeName, WFSDiff diff) {
-        diffs.put(typeName, diff);
     }
 
     @Override
@@ -94,13 +88,15 @@ class WFSRemoteTransactionState implements State {
      * This state takes ownership of each type's diff, so lets clear them all
      */
     private void clear() {
-        for (WFSDiff typeDiff : diffs.values()) {
-            typeDiff.clear();
+        for (WFSContentState localState : localStates.values()) {
+            WFSLocalTransactionState localTransactionState = localState.getLocalTransactionState();
+            WFSDiff diff = localTransactionState.getDiff();
+            diff.clear();
         }
     }
 
     private void commitInternal() throws IOException {
-        if (this.diffs.isEmpty()) {
+        if (this.localStates.isEmpty()) {
             return;
         }
         WFSClient wfs = dataStore.getWfsClient();
@@ -108,9 +104,8 @@ class WFSRemoteTransactionState implements State {
 
         List<MutableFeatureId> requestedInsertFids = new ArrayList<MutableFeatureId>();
 
-        for (Name typeName : diffs.keySet()) {
-            WFSDiff diff = diffs.get(typeName);
-            List<MutableFeatureId> addedFids = applyDiff(typeName, diff, transactionRequest);
+        for (Name typeName : localStates.keySet()) {
+            List<MutableFeatureId> addedFids = applyDiff(typeName, transactionRequest);
             requestedInsertFids.addAll(addedFids);
         }
 
@@ -134,8 +129,13 @@ class WFSRemoteTransactionState implements State {
         }
     }
 
-    private List<MutableFeatureId> applyDiff(final Name localTypeName, WFSDiff diff,
+    private List<MutableFeatureId> applyDiff(final Name localTypeName,
             TransactionRequest transactionRequest) throws IOException {
+
+        final WFSContentState localState = localStates.get(localTypeName);
+        final WFSLocalTransactionState localTransactionState = localState
+                .getLocalTransactionState();
+        final WFSDiff diff = localTransactionState.getDiff();
 
         List<MutableFeatureId> addedFeatureIds = new LinkedList<MutableFeatureId>();
 
@@ -158,7 +158,7 @@ class WFSRemoteTransactionState implements State {
                     continue;
                 }
                 SimpleFeature localFeature = added.get(fid);
-
+                localState.fireFeatureAdded(source, feature);
                 MutableFeatureId addedFid = (MutableFeatureId) localFeature.getIdentifier();
                 addedFeatureIds.add(addedFid);
 
@@ -269,5 +269,10 @@ class WFSRemoteTransactionState implements State {
         }
         FeatureId featureId = ff.featureId(fid, featureVersion);
         return featureId;
+    }
+
+    public void watch(WFSContentState localState) {
+        Name typeName = localState.getEntry().getName();
+        localStates.put(typeName, localState);
     }
 }

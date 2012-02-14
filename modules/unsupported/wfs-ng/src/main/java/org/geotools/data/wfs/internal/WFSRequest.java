@@ -177,11 +177,6 @@ public abstract class WFSRequest extends AbstractRequest implements Request {
             Logging.getLogger(WFSRequest.class).warning(
                     this.getOperation() + " request returned null content type for URL "
                             + getFinalURL());
-            InputStream responseStream = response.getResponseStream();
-            System.err.println("<------->");
-            IOUtils.copy(responseStream, System.err);
-            System.err.println("<------->");
-            System.err.flush();
         }
 
         WFSResponseFactory responseFactory;

@@ -45,9 +45,7 @@ public class WFSContentState extends ContentState {
                     tx.putState(dataStore, remoteStateKeeper);
                 }
                 WFSLocalTransactionState localTransactionState = getLocalTransactionState();
-                WFSDiff localDiff = localTransactionState.getDiff();
-                Name typeName = super.getFeatureType().getName();
-                remoteStateKeeper.putDiff(typeName, localDiff);
+                remoteStateKeeper.watch(localTransactionState);
             }
         }
     }

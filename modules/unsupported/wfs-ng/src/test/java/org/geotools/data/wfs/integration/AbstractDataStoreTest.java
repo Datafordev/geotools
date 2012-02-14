@@ -44,6 +44,7 @@ import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.CRS;
 import org.geotools.util.logging.Logging;
@@ -128,6 +129,16 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
     protected void dataSetUp() throws Exception {
         super.dataSetUp();
+        // no UUID type in wfs
+        roadType = DataUtilities.createSubType(roadType, new String[] { "id", "geom", "name" });
+        newRoad = SimpleFeatureBuilder.retype(newRoad, roadType);
+
+        boolean longitudeFirst = true;
+        CoordinateReferenceSystem wgs84LonLat = CRS.decode("EPSG:4326", longitudeFirst);
+
+        roadType = DataUtilities.createSubType(roadType, null, wgs84LonLat);
+        riverType = DataUtilities.createSubType(riverType, null, wgs84LonLat);
+
         try {
             data = createDataStore();
         } catch (Exception e) {
@@ -1189,7 +1200,8 @@ public abstract class AbstractDataStoreTest extends DataTestCase {
 
         assertEquals(3, road.getFeatures().size());
         road.setFeatures(reader);
-        assertEquals(1, count(data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT)));
+        assertEquals(1,
+                count(data.getFeatureReader(new Query(getRoadTypeName()), Transaction.AUTO_COMMIT)));
         assertEquals(1, road.getFeatures().size());
     }
 

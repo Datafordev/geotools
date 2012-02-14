@@ -77,8 +77,8 @@ class WFSContentFeatureStore extends ContentFeatureStore {
     }
 
     @Override
-    public ContentState getState() {
-        return delegate.getState();
+    public WFSContentState getState() {
+        return (WFSContentState) delegate.getState();
     }
 
     @Override
@@ -160,19 +160,18 @@ class WFSContentFeatureStore extends ContentFeatureStore {
         query = resolvePropertyNames(query);
 
         final boolean autoCommit;
-        final WFSDiff diff;
+        WFSLocalTransactionState localState;
         if (Transaction.AUTO_COMMIT.equals(getTransaction())) {
-            diff = new WFSDiff();
+            localState = new WFSLocalTransactionState(getState());
             autoCommit = true;
         } else {
             autoCommit = false;
             State state = transaction.getState(getEntry());
-            WFSLocalTransactionState wfsState = (WFSLocalTransactionState) state;
-            diff = wfsState.getDiff();
+            localState = (WFSLocalTransactionState) state;
         }
 
         final FeatureReader<SimpleFeatureType, SimpleFeature> reader = getReader(query);
-        final WFSFeatureWriter writer = new WFSFeatureWriter(this, diff, reader, autoCommit);
+        final WFSFeatureWriter writer = new WFSFeatureWriter(this, localState, reader, autoCommit);
 
         return writer;
     }
@@ -229,13 +228,17 @@ class WFSContentFeatureStore extends ContentFeatureStore {
 
         if (Transaction.AUTO_COMMIT.equals(transaction)) {
             // we're in auto commit. Do a batch update and commit right away
-            WFSRemoteTransactionState comittingState = new WFSRemoteTransactionState(getDataStore());
-            WFSDiff diff = comittingState.getDiff(getName());
+            WFSLocalTransactionState localState = new WFSLocalTransactionState(getState());
+            WFSRemoteTransactionState committingState = new WFSRemoteTransactionState(
+                    getDataStore());
+            committingState.watch(localState);
+
+            WFSDiff diff = localState.getDiff();
 
             ReferencedEnvelope bounds;
             bounds = diff.batchModify(properties, values, filter, oldFeatures, contentState);
             affectedBounds.expandToInclude(bounds);
-            comittingState.commit();
+            committingState.commit();
 
         } else {
             // we're in a transaction, record to local state and wait for commit to be called

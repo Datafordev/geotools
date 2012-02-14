@@ -182,6 +182,7 @@
          <module>mongodb</module>
          <module>property-ng</module>
          <module>shapefile-ng</module>
+         <module>wfs-ng</module>
        </modules>
      </profile>
   </profiles>
