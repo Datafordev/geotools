@@ -35,6 +35,7 @@ import org.geotools.data.FilteringFeatureReader;
 import org.geotools.data.Query;
 import org.geotools.data.Transaction;
 import org.geotools.factory.CommonFactoryFinder;
+import org.geotools.filter.text.ecql.ECQL;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -48,7 +49,9 @@ import org.opengis.feature.type.FeatureType;
 import org.opengis.feature.type.PropertyDescriptor;
 import org.opengis.filter.Filter;
 import org.opengis.filter.FilterFactory2;
+import org.opengis.filter.expression.PropertyName;
 import org.opengis.filter.spatial.BBOX;
+import org.opengis.filter.spatial.Within;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
@@ -56,6 +59,8 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 
 /**
  * @author cdillard
@@ -295,14 +300,12 @@ public class SpatialFilterTest {
 
         // Build the filter
         Polygon p = buildPolygon(-9, -9, -8, -8);
-        Filter filter = ff.within(ff.literal(p), ff.property("SHAPE"));
+        Within filter = ff.within(ff.literal(p), ff.property("SHAPE"));
         runTestWithFilter(ft, filter, false);
 
         // now build the opposite filter, the polygon contains the shape
         p = buildPolygon(-1, -1, 1, 1);
         filter = ff.within(ff.property("SHAPE"), ff.literal(p));
-        runTestWithFilter(ft, filter, false);
-
         runTestWithFilter(ft, filter, false);
     }
 
@@ -341,7 +344,128 @@ public class SpatialFilterTest {
         runTestWithFilter(ft, filter, false);
     }
 
+    @Test
+    public void testDwithinFilter() throws Exception {
+        FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
+
+        // Available geometries:
+        // 1. POINT(0 0)
+        // 2. MULTIPOINT(0 0, 170 0)
+        // 3. LINESTRING(0 0, 170 80)
+        // 4. MULTILINESTRING((-170 -80, 170 80), (-170 80, 170 -80))
+        // 5. POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
+        // 6. MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160
+        // -80, -170 -80)) )
+        // 7. POINT EMPTY
+        // 8. null
+
+        final PropertyName property = ff.property("SHAPE");
+        Geometry geom;
+        Filter filter;
+
+        geom = geom("POINT(170 0)");
+        filter = ff.dwithin(property, ff.literal(geom), 1d, "");
+        runTestWithFilter(ft, filter, false, 1);
+
+        geom = geom("POINT(-1 -1)");
+        filter = ff.dwithin(property, ff.literal(geom), 0.1, "");
+        runTestWithFilter(ft, filter, false, 2);// geoms 4. and 6.
+    }
+
+    @Test
+    public void testBeyondFilter() throws Exception {
+        FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
+
+        // Available geometries:
+        // 1. POINT(0 0)
+        // 2. MULTIPOINT(0 0, 170 0)
+        // 3. LINESTRING(0 0, 170 80)
+        // 4. MULTILINESTRING((-170 -80, 170 80), (-170 80, 170 -80))
+        // 5. POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
+        // 6. MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160
+        // -80, -170 -80)) )
+        // 7. POINT EMPTY
+        // 8. null
+
+        final PropertyName property = ff.property("SHAPE");
+        Geometry geom;
+        Filter filter;
+
+        geom = geom("POINT(170 0)");
+        filter = ff.beyond(property, ff.literal(geom), 1d, "");
+        runTestWithFilter(ft, filter, false, 5);// all non null but geom 2.
+
+        geom = geom("POINT(-1 -1)");
+        filter = ff.beyond(property, ff.literal(geom), 0.1, "");
+        runTestWithFilter(ft, filter, false, 4);// all non null but geoms 4. and 6.
+    }
+
+    @Test
+    public void testTouches() throws Exception {
+        FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
+
+        // Available geometries:
+        // 1. POINT(0 0)
+        // 2. MULTIPOINT(0 0, 170 0)
+        // 3. LINESTRING(0 0, 170 80)
+        // 4. MULTILINESTRING((-170 -80, 170 80), (-170 80, 170 -80))
+        // 5. POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
+        // 6. MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160
+        // -80, -170 -80)) )
+        // 7. POINT EMPTY
+        // 8. null
+
+        final PropertyName property = ff.property("SHAPE");
+        Geometry geom;
+        Filter filter;
+
+        geom = findGeom("INT32_COL = 3");
+        filter = ff.touches(property, ff.literal(geom));
+        runTestWithFilter(ft, filter, false, 2);// features 2. and 3.
+
+        geom = findGeom("INT32_COL = 6");
+        filter = ff.touches(property, ff.literal(geom));
+        runTestWithFilter(ft, filter, true);// empty, polygon intersects
+
+        geom = findGeom("INT32_COL = 6").getBoundary();
+        filter = ff.touches(property, ff.literal(geom));
+        runTestWithFilter(ft, filter, false, 1);// true, polygon boundary touches polygon
+
+        geom = findGeom("INT32_COL = 4").getGeometryN(0);
+        filter = ff.touches(property, ff.literal(geom));
+        runTestWithFilter(ft, filter, false, 1);
+
+    }
+
+    /**
+     * @param string
+     * @return
+     */
+    private Geometry findGeom(String cql) throws Exception {
+
+        Query query = new Query(testData.getTempTableName());
+        query.setFilter(ECQL.toFilter(cql));
+        FeatureReader<SimpleFeatureType, SimpleFeature> fr = this.dataStore.getFeatureReader(query,
+                Transaction.AUTO_COMMIT);
+        SimpleFeature feature = fr.next();
+        fr.close();
+        return (Geometry) feature.getDefaultGeometry();
+    }
+
     private void runTestWithFilter(FeatureType ft, Filter filter, boolean empty) throws Exception {
+        runTestWithFilter(ft, filter, empty, null);
+    }
+
+    private Geometry geom(String wkt) {
+        try {
+            return new WKTReader().read(wkt);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    private void runTestWithFilter(FeatureType ft, Filter filter, boolean empty, /* Nullable */
+            Integer expectedCount) throws Exception {
         System.err.println("****************");
         System.err.println("**");
         System.err.println("** TESTING FILTER: " + filter);
@@ -350,7 +474,8 @@ public class SpatialFilterTest {
 
         // First, read using the slow, built-in mechanisms
         String[] propertyNames = safePropertyNames(ft);
-        Query allQuery = new Query(testData.getTempTableName(), Filter.INCLUDE, propertyNames);
+        final String typeName = testData.getTempTableName();
+        Query allQuery = new Query(typeName, Filter.INCLUDE, propertyNames);
         System.err.println("Performing slow read...");
 
         long startTime = System.currentTimeMillis();
@@ -379,6 +504,11 @@ public class SpatialFilterTest {
         System.err.println("Fast read took " + (endTime - startTime) + " milliseconds.");
 
         assertFeatureListsSimilar(slowResults, fastResults);
+
+        if (expectedCount != null) {
+            assertEquals(expectedCount.intValue(), slowResults.size());
+            assertEquals(expectedCount.intValue(), fastResults.size());
+        }
 
         if (empty) {
             assertEquals("Result was supposed to be empty", 0, fastResults.size());
