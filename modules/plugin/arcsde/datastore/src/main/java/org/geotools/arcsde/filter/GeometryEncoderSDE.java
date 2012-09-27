@@ -62,7 +62,6 @@ import org.opengis.filter.temporal.AnyInteracts;
 import org.opengis.filter.temporal.Before;
 import org.opengis.filter.temporal.Begins;
 import org.opengis.filter.temporal.BegunBy;
-import org.opengis.filter.temporal.BinaryTemporalOperator;
 import org.opengis.filter.temporal.During;
 import org.opengis.filter.temporal.EndedBy;
 import org.opengis.filter.temporal.Ends;
@@ -97,11 +96,12 @@ import com.vividsolutions.jts.geom.Polygon;
  * 
  * @author Gabriel Rold?n
  * 
- *
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/arcsde/datastore/src/main/java
  *         /org/geotools/arcsde/filter/GeometryEncoderSDE.java $
  */
+@SuppressWarnings("deprecation")
 public class GeometryEncoderSDE implements FilterVisitor {
     /** Standard java logger */
     private static Logger log = org.geotools.util.logging.Logging.getLogger("org.geotools.filter");
@@ -125,7 +125,7 @@ public class GeometryEncoderSDE implements FilterVisitor {
         capabilities.addType(Within.class);
     }
 
-    private List sdeSpatialFilters = null;
+    private List<SeShapeFilter> sdeSpatialFilters;
 
     private SeLayer sdeLayer;
 
@@ -165,7 +165,7 @@ public class GeometryEncoderSDE implements FilterVisitor {
      * overrides just to avoid the "WHERE" keyword
      */
     public void encode(Filter filter) throws GeometryEncoderException {
-        this.sdeSpatialFilters = new ArrayList();
+        this.sdeSpatialFilters = new ArrayList<SeShapeFilter>();
         if (Filter.INCLUDE.equals(filter)) {
             return;
         }
@@ -180,12 +180,10 @@ public class GeometryEncoderSDE implements FilterVisitor {
     /**
      * @param filter
      * @param sdeMethod
-     * @param truth
-     *            de default truth value for <code>sdeMethod</code>
-     * @param extraData
-     *            if an instanceof java.lang.Boolean, <code>truth</code> is and'ed with its boolean
-     *            value. May have been set by {@link #visit(Not, Object)} to revert the logical
-     *            evaluation criteria.
+     * @param truth de default truth value for <code>sdeMethod</code>
+     * @param extraData if an instanceof java.lang.Boolean, <code>truth</code> is and'ed with its
+     *        boolean value. May have been set by {@link #visit(Not, Object)} to revert the logical
+     *        evaluation criteria.
      */
     private void addSpatialFilter(final BinarySpatialOperator filter, final int sdeMethod,
             final boolean truth, final Object extraData) {
@@ -329,7 +327,8 @@ public class GeometryEncoderSDE implements FilterVisitor {
     public Object visit(Contains filter, Object extraData) {
         // SDE can assert only one way, we need to invert from contains to within in case the
         // assertion is the other way around
-        if (filter.getExpression1() instanceof PropertyName && filter.getExpression2() instanceof Literal) {
+        if (filter.getExpression1() instanceof PropertyName
+                && filter.getExpression2() instanceof Literal) {
             addSpatialFilter(filter, SeFilter.METHOD_PC, true, extraData);
         } else {
             addSpatialFilter(filter, SeFilter.METHOD_SC, true, extraData);
@@ -367,8 +366,8 @@ public class GeometryEncoderSDE implements FilterVisitor {
 
     public Object visit(Overlaps filter, Object extraData) {
         addSpatialFilter(filter, SeFilter.METHOD_II, true, extraData);
-        // AA: nope, Overlaps definition is The geometries have some but not all points in common, 
-        // they have the same dimension, and the intersection of the interiors of the two geometries 
+        // AA: nope, Overlaps definition is The geometries have some but not all points in common,
+        // they have the same dimension, and the intersection of the interiors of the two geometries
         // has the same dimension as the geometries themselves.
         // --> that is, one can be contained in the other and they still overlap
         // addSpatialFilter(filter, SeFilter.METHOD_PC, false, extraData);
@@ -379,7 +378,8 @@ public class GeometryEncoderSDE implements FilterVisitor {
     public Object visit(Within filter, Object extraData) {
         // SDE can assert only one way, we need to invert from contains to within in case the
         // assertion is the other way around
-        if (filter.getExpression1() instanceof PropertyName && filter.getExpression2() instanceof Literal) {
+        if (filter.getExpression1() instanceof PropertyName
+                && filter.getExpression2() instanceof Literal) {
             addSpatialFilter(filter, SeFilter.METHOD_SC, true, extraData);
         } else {
             addSpatialFilter(filter, SeFilter.METHOD_PC, true, extraData);
