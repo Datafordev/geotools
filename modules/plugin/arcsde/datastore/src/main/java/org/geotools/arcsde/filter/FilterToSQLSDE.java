@@ -182,6 +182,7 @@ public class FilterToSQLSDE extends FilterToSQL implements FilterVisitor {
 
         capabilities.addAll(FilterCapabilities.LOGICAL_OPENGIS);
         capabilities.addAll(FilterCapabilities.SIMPLE_COMPARISONS_OPENGIS);
+        capabilities.addType(FilterCapabilities.SIMPLE_ARITHMETIC);
         capabilities.addType(PropertyIsNull.class);
         capabilities.addType(PropertyIsBetween.class);
         capabilities.addType(Id.class);
