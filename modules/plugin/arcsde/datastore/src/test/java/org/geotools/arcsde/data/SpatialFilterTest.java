@@ -17,7 +17,8 @@
  */
 package org.geotools.arcsde.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +39,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.Feature;
 import org.opengis.feature.IllegalAttributeException;
@@ -58,19 +58,16 @@ import com.vividsolutions.jts.geom.LinearRing;
 import com.vividsolutions.jts.geom.Polygon;
 
 /**
- * This test case does not still use the ArcSDEDataStore testing data supplied with in
- * {@code test-data/import}, so it is excluded in project.xml.
- * 
  * @author cdillard
  * @author Gabriel Roldan
- *
- *
+ * 
+ * 
  * @source $URL$
  *         http://svn.geotools.org/geotools/trunk/gt/modules/plugin/arcsde/datastore/src/test/java
  *         /org/geotools/arcsde/data/FilterTest.java.fixme $
  * @version $Id$
  */
-public class FilterTest {
+public class SpatialFilterTest {
     private static final Comparator<SimpleFeature> FEATURE_COMPARATOR = new Comparator<SimpleFeature>() {
         public int compare(SimpleFeature f1, SimpleFeature f2) {
             return f1.getID().compareTo(f2.getID());
@@ -127,10 +124,8 @@ public class FilterTest {
     /**
      * Are the two collections similar?
      * 
-     * @param c1
-     *            Collection first
-     * @param c2
-     *            Collection second
+     * @param c1 Collection first
+     * @param c2 Collection second
      * @return true if they have the same content
      */
     private void assertFeatureListsSimilar(Collection<SimpleFeature> c1,
@@ -213,29 +208,32 @@ public class FilterTest {
     public void testContainsFilter() throws Exception {
         FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
 
-        // Build the filter with a polygon that is inside POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
+        // Build the filter with a polygon that is inside POLYGON((-10 -10, -10 10, 10 10, 10 -10,
+        // -10 -10))
         Polygon p = buildPolygon(-9, -9, -8, -8);
         Filter filter = ff.contains(ff.property("SHAPE"), ff.literal(p));
         runTestWithFilter(ft, filter, false);
-        
+
         // now build the opposite filter, the polygon contains the shape
         p = buildPolygon(-1, -1, 1, 1);
         filter = ff.contains(ff.literal(p), ff.property("SHAPE"));
         runTestWithFilter(ft, filter, false);
     }
-    
+
     @Test
     public void testContainsSDESemanticsFilter() throws Exception {
         FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
 
         // Build a filter so that SDE would actually catch more geometries, it would
-        // actually include "MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160 -80, -170 -80)) )"
-        // in the results as well. It seems the containment semantics is applied in or to the multigeometry
+        // actually include
+        // "MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160 -80, -170 -80)) )"
+        // in the results as well. It seems the containment semantics is applied in or to the
+        // multigeometry
         // components. We do in memory post filtering to get the right semantics
         Polygon p = buildPolygon(-1, -1, 1, 1);
         Filter filter = ff.contains(ff.property("SHAPE"), ff.literal(p));
         runTestWithFilter(ft, filter, false);
-        
+
         // now build the opposite filter, the polygon contains the shape
         p = buildPolygon(-1, -1, 1, 1);
         filter = ff.contains(ff.literal(p), ff.property("SHAPE"));
@@ -251,15 +249,16 @@ public class FilterTest {
 
         runTestWithFilter(ft, filter, false);
     }
-    
+
     @Test
     public void testOrBBoxFilter() throws Exception {
         FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
-        
-        System.out.println(this.dataStore.getFeatureSource(ft.getName().getLocalPart()).getBounds());
+
+        System.out
+                .println(this.dataStore.getFeatureSource(ft.getName().getLocalPart()).getBounds());
 
         // build a or of bbox so that
-        // - the intersection of the bboxes is empty 
+        // - the intersection of the bboxes is empty
         // - the union of the bboxes actually gets more data than necessary
         BBOX bbox1 = ff.bbox("SHAPE", -171, -90, -169, 90, "EPSG:4326");
         BBOX bbox2 = ff.bbox("SHAPE", 169, -90, 171, 90, "EPSG:4326");
@@ -298,7 +297,7 @@ public class FilterTest {
         Polygon p = buildPolygon(-9, -9, -8, -8);
         Filter filter = ff.within(ff.literal(p), ff.property("SHAPE"));
         runTestWithFilter(ft, filter, false);
-        
+
         // now build the opposite filter, the polygon contains the shape
         p = buildPolygon(-1, -1, 1, 1);
         filter = ff.within(ff.property("SHAPE"), ff.literal(p));
@@ -322,7 +321,6 @@ public class FilterTest {
      * TODO: resurrect testEqualFilter
      */
     @Test
-    @Ignore
     public void testEqualFilter() throws Exception {
         FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
 
@@ -379,10 +377,10 @@ public class FilterTest {
         fr.close();
         endTime = System.currentTimeMillis();
         System.err.println("Fast read took " + (endTime - startTime) + " milliseconds.");
-        
+
         assertFeatureListsSimilar(slowResults, fastResults);
-        
-        if(empty) {
+
+        if (empty) {
             assertEquals("Result was supposed to be empty", 0, fastResults.size());
         } else {
             assertTrue("Result was supposed to be non empty", fastResults.size() > 0);
