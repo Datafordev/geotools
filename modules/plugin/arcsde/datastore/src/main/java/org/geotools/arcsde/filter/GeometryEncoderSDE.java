@@ -34,6 +34,7 @@ import org.opengis.filter.FilterVisitor;
 import org.opengis.filter.Id;
 import org.opengis.filter.Not;
 import org.opengis.filter.Or;
+import org.opengis.filter.expression.Expression;
 import org.opengis.filter.expression.Literal;
 import org.opengis.filter.expression.PropertyName;
 import org.opengis.filter.spatial.BBOX;
@@ -354,13 +355,21 @@ public class GeometryEncoderSDE extends DefaultFilterVisitor implements FilterVi
         // assertion is the other way around
         PropertyName property;
         Literal literal;
-        if (filter.getExpression1() instanceof PropertyName
-                && filter.getExpression2() instanceof Literal) {
-            property = (PropertyName) filter.getExpression1();
-            literal = (Literal) filter.getExpression2();
-        } else {
-            property = (PropertyName) filter.getExpression2();
-            literal = (Literal) filter.getExpression1();
+        {
+            Expression expression1 = filter.getExpression1();
+            Expression expression2 = filter.getExpression2();
+
+            if (expression1 instanceof PropertyName && expression2 instanceof Literal) {
+                property = (PropertyName) expression1;
+                literal = (Literal) expression2;
+            } else if (expression2 instanceof PropertyName && expression1 instanceof Literal) {
+                property = (PropertyName) expression2;
+                literal = (Literal) expression1;
+            } else {
+                // not supported
+                throw new IllegalArgumentException("expected propertyname/literal, got "
+                        + expression1 + "/" + expression2);
+            }
         }
 
         final Geometry geom = literal.evaluate(null, Geometry.class);
