@@ -405,15 +405,17 @@ public class SpatialFilterTest {
         FeatureType ft = this.dataStore.getSchema(testData.getTempTableName());
 
         // Available geometries:
-        // 1. POINT(0 0)
-        // 2. MULTIPOINT(0 0, 170 0)
-        // 3. LINESTRING(0 0, 170 80)
-        // 4. MULTILINESTRING((-170 -80, 170 80), (-170 80, 170 -80))
-        // 5. POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
-        // 6. MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)), ((-170 -80, -170 -70, -160 -70, -160
-        // -80, -170 -80)) )
-        // 7. POINT EMPTY
-        // 8. null
+        // INT32_COL SHAPE
+        // --------- --------
+        // 1. ------ POINT(0 0)
+        // 2. ------ MULTIPOINT(0 0, 170 0)
+        // 3. ------ LINESTRING(0 0, 170 80)
+        // 4. ------ MULTILINESTRING((-170 -80, 170 80), (-170 80, 170 -80))
+        // 5. ------ POLYGON((-10 -10, -10 10, 10 10, 10 -10, -10 -10))
+        // 6. ------ MULTIPOLYGON( ((-1 -1, -1 1, 1 1, 1 -1, -1 -1)),
+        // ((-170 -80, -170 -70, -160 -70, -160 -80, -170 -80)) )
+        // 7. ------ POINT EMPTY
+        // 8. ------ null
 
         final PropertyName property = ff.property("SHAPE");
         Geometry geom;
@@ -421,7 +423,17 @@ public class SpatialFilterTest {
 
         geom = findGeom("INT32_COL = 3");
         filter = ff.touches(property, ff.literal(geom));
-        runTestWithFilter(ft, filter, false, 2);// features 2. and 3.
+        runTestWithFilter(ft, filter, false, 2);// features 1. and 2.
+
+        // doesn't touch itself
+        geom = findGeom("INT32_COL = 3");
+        filter = ff.and(ff.equals(ff.property("INT32_COL"), ff.literal(3)),
+                ff.touches(property, ff.literal(geom)));
+        runTestWithFilter(ft, filter, true);// empty
+
+        geom = findGeom("INT32_COL = 3").getBoundary().getGeometryN(0);// first point of 3.
+        filter = ff.touches(property, ff.literal(geom));
+        runTestWithFilter(ft, filter, false, 1);
 
         geom = findGeom("INT32_COL = 6");
         filter = ff.touches(property, ff.literal(geom));
