@@ -897,8 +897,7 @@ public class PostGISDialect extends BasicSQLDialect {
             dataStore.closeSafe(st);
         }
     }
-    
-    @Override
+
     public void postDropTable(String schemaName, SimpleFeatureType featureType, Connection cx)
             throws SQLException {
         Statement st = cx.createStatement();
